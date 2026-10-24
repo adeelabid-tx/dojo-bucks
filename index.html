@@ -491,6 +491,8 @@ body.lobby-on .tk-tag{font-size:17px}
 .confirm p{margin:0;font-weight:800;font-size:14px}
 
 /* roster */
+.add-welcome{grid-column:1 / -1}
+.add-welcome input{width:18px;height:18px}
 .addform{display:grid;grid-template-columns:2fr 1.2fr 1.1fr .9fr .9fr auto;gap:12px;align-items:end}
 @media (max-width:900px){ .addform{grid-template-columns:1fr 1fr} .addform .f:first-child{grid-column:1 / -1} }
 label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14px;color:var(--muted)}
@@ -683,6 +685,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
         <label class="f">Level<select id="newLevel"></select></label>
         <label class="f">Starting bucks<input id="newBucks" type="number" min="0" step="1" value="0" inputmode="numeric"></label>
         <button class="btn primary" type="submit" id="addBtn">Add ninja</button>
+        <label class="se-check add-welcome"><input type="checkbox" id="newWelcome"> 👋 Show on the lobby Welcome screen for 10 days</label>
       </form>
       <div class="swatches" id="swatches"><span class="eyebrow">Pick a ninja</span></div>
     </div>
@@ -1038,7 +1041,7 @@ async function sendRequest(type, data, msg){
 function rankOf(o){ return o.group==='junior' ? `JR Pink belt · Level ${o.level}` : `${BELTS[o.belt|0].name} belt · ${stepName(o.belt|0, o.level)}`; }
 function describeReq(r){
   const nm = id => `<b>${esc(S.ninjas[id]?.name || 'a removed ninja')}</b>`;
-  if(r.type==='add') return {ic:'🥷', html:`Add new ninja <b>${esc(r.name)}</b> · ${esc(rankOf(r))}${r.start?` · ${fmt(r.start)} starting bucks`:''}`};
+  if(r.type==='add') return {ic:'🥷', html:`Add new ninja <b>${esc(r.name)}</b> · ${esc(rankOf(r))}${r.start?` · ${fmt(r.start)} starting bucks`:''}${r.welcome===true?' · 👋 show on the lobby Welcome screen':''}`};
   if(r.type==='rank') return {ic:'🥋', html:`Change ${nm(r.ninjaId)} to ${esc(rankOf(r))}`};
   if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); return {ic:it?.img?badge(it.img,36):'⭐', html:`${esc(it?.label||'Level Up')} for ${(r.ninjaIds||[]).map(nm).join(', ')}`}; }
   if(r.type==='redeem'){ const it=findItem('redeem', r.item); return {ic:it?iconHTML(it,40):'🛍️', html:`${nm(r.ninjaId)} wants <b>${esc(it?.label||r.item)}</b> for ${fmt(r.cost)} bucks`}; }
@@ -1126,7 +1129,7 @@ async function downloadBackup(){
 async function approveReq(r){
   if(!isDir() || r.status!=='pending') return;
   let note='';
-  if(r.type==='add') await addNinja(r.name, r.group, r.belt|0, r.level||1, r.start||0, r.head|0);
+  if(r.type==='add') await addNinja(r.name, r.group, r.belt|0, r.level||1, r.start||0, r.head|0, r.welcome===true);
   else if(r.type==='rank'){ if(!S.ninjas[r.ninjaId]) note='Ninja was removed';
     else await api.update('ninjas', r.ninjaId, r.group==='junior' ? {group:'junior', level:r.level} : {group:'ninja', belt:r.belt|0, level:r.level}); }
   else if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]); if(it && ids.length) await give('earn', it, ids); else note='Nothing to apply'; }
@@ -1197,9 +1200,9 @@ async function undoAll(list){
     jobs.push(api.del('log',u.logId)); }
   try{ await Promise.all(jobs); toast('Undone.'); }catch{}
 }
-async function addNinja(name, group, belt, level, start=0, head=S.head){
+async function addNinja(name, group, belt, level, start=0, head=S.head, welcome=false){
   const id=uid(); start=Math.max(0, Math.round(start||0));
-  await api.set('ninjas', id, {name, group, belt, level, head, balance:start, earned:start, spent:0, lost:0, createdAt:Date.now()});
+  await api.set('ninjas', id, {name, group, belt, level, head, balance:start, earned:start, spent:0, lost:0, createdAt:Date.now(), ...(welcome?{welcome:true}:{})});
   if(start) await api.set('log', uid(), {ninjaId:id, name, kind:'setup', item:'setup', icon:'🛠️', label:'Starting bucks', amt:start, delta:start, at:Date.now()});
   toast(`Welcome to the dojo, ${name}!`);
 }
@@ -2009,6 +2012,7 @@ function renderDrawer(){
       <div class="medals">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),44,k+1===b.level?'cur':k+1>b.level?'dim':'',`${b.name} · ${stepName(b.i,k+1)}`)).join('')}</div>
       <span class="eyebrow" style="margin-top:8px">Belt collection</span>
       <div class="collection">${(b.i===JR?ALL_BELTS:MAIN_BELTS).map(k=>badge(DONE(k),44,(k<b.i || b.i===BLACK)?'':'dim',`${beltInfo(k).name} belt ${k<b.i||b.i===BLACK?'complete':''}`)).join('')}</div></div>
+    ${isDir() && n.createdAt && Date.now()-n.createdAt < LB_NEW_DAYS*DAY ? `<div class="card" style="padding:14px 16px"><label class="se-check"><input type="checkbox" id="editWelcome" ${n.welcome===true?'checked':''}> 👋 Show ${esc(n.name)} on the lobby Welcome screen <span class="hint">(until ${new Date(n.createdAt+LB_NEW_DAYS*DAY).toLocaleDateString('en-US',{month:'short',day:'numeric'})})</span></label></div>` : ''}
     ${isDir() ? familyCodeHTML(n) : ''}
     <div class="card" style="padding:16px"><h3 style="font-size:18px">Edit</h3>
       <div style="display:grid;gap:10px;margin-top:10px">
@@ -2016,7 +2020,7 @@ function renderDrawer(){
         <div class="f"><span>Birthday <span class="hint">(month and day, for the lobby birthday slide)</span></span><div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
           <select id="editBdayM" aria-label="Birthday month" ${isDir()?'':'disabled'}><option value="">Month</option>${MONTHS.map((m,k)=>{ const v=String(k+1).padStart(2,'0'); return `<option value="${v}" ${(bd ? bd.m===v : bdayOf(n)?.m===k+1)?'selected':''}>${m}</option>`; }).join('')}</select>
           <select id="editBdayD" aria-label="Birthday day" ${isDir()?'':'disabled'}><option value="">Day</option>${Array.from({length:31},(_,k)=>{ const v=String(k+1).padStart(2,'0'); return `<option value="${v}" ${(bd ? bd.d===v : bdayOf(n)?.d===k+1)?'selected':''}>${k+1}</option>`; }).join('')}</select></div>
-          ${bd && !!bd.m!==!!bd.d ? `<small class="hint">Pick the ${bd.m?'day':'month'} too to save.</small>`:''}</div>
+          ${''}${bd && !!bd.m!==!!bd.d ? `<small class="hint">Pick the ${bd.m?'day':'month'} too to save.</small>`:''}</div>
         <label class="f">Group<select id="editGroup"><option value="ninja" ${n.group==='ninja'?'selected':''}>Create (8+)</option><option value="junior" ${n.group==='junior'?'selected':''}>JR (5–7)</option></select></label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Belt<select id="editBelt">${beltOpts(b.i, ALL_BELTS)}</select></label>
         <label class="f">Level<select id="editLevel">${levelOpts(b.i, b.level)}</select></label></div>
@@ -2123,9 +2127,9 @@ function lbAchieve(){
     ${col('linear-gradient(135deg,#339AF0,#6C45D9)','📅 This week',`${f(wd)} – ${f(we)}`,achievements(ws))}
     ${col('linear-gradient(135deg,#9C36B5,#E5402B)','🏅 This month',MONTHS[md.getMonth()],achievements(ms))}</div>`;
 }
-// Ninjas who joined in the last 10 days, newest first.
+// Ninjas the director opted in to the Welcome screen, for 10 days after joining, newest first.
 const LB_NEW_DAYS = 10;
-const lbNewNinjas = () => ninjaList().filter(n=>n.createdAt && Date.now()-n.createdAt < LB_NEW_DAYS*DAY).sort((a,b)=>b.createdAt-a.createdAt);
+const lbNewNinjas = () => ninjaList().filter(n=>n.createdAt && n.welcome===true && Date.now()-n.createdAt < LB_NEW_DAYS*DAY).sort((a,b)=>b.createdAt-a.createdAt);
 function lbWelcome(){
   const L=lbNewNinjas(), shown=L.slice(0,5), more=L.length-shown.length, size=shown.length>3?150:190;
   const cards=shown.map((n,i)=>{ const b=beltFor(n), fresh=Date.now()-n.createdAt < 2*DAY, joined=new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'});
@@ -2304,6 +2308,7 @@ document.addEventListener('change', e=>{
   if(el.id==='lbGoalT'){ saveLobbyCfg({goalTarget:Math.max(0, Math.round(Number(el.value)||0))}); return; }
   if(el.id==='lbGoalP'){ saveLobbyCfg({goalPrize:el.value.trim()}); return; }
   if(el.id==='lbBday'){ saveLobbyCfg({bdayNote:el.value.trim()}); return; }
+  if(el.id==='editWelcome'){ if(isDir()) api.update('ninjas', S.drawer, {welcome:el.checked}).then(()=>toast(el.checked?'Shown on the lobby Welcome screen.':'Hidden from the lobby Welcome screen.')).catch(()=>{}); return; }
   if(el.id==='editBdayM' || el.id==='editBdayD'){
     // Save only once both month and day are picked (or both cleared); keep a half-picked date on screen meanwhile.
     const m=document.getElementById('editBdayM').value, d=document.getElementById('editBdayD').value;
@@ -2344,8 +2349,10 @@ document.addEventListener('submit', e=>{
 document.getElementById('addForm').addEventListener('submit', e=>{
   e.preventDefault(); const name=document.getElementById('newName').value.trim(); if(!name) return;
   const grp=document.getElementById('newGroup').value, bl=Math.max(0, +document.getElementById('newBelt').value), lv=+document.getElementById('newLevel').value, st=Math.max(0, Math.round(+document.getElementById('newBucks').value||0));
-  if(isDir()) addNinja(name, grp, bl, lv, st).catch(()=>{});
-  else sendRequest('add', {name, group:grp, belt:bl, level:lv, start:st, head:S.head}, `${name} is waiting for the Center Director to approve.`); document.getElementById('newName').value=''; document.getElementById('newBucks').value='0'; document.getElementById('newName').focus();
+  const wel=document.getElementById('newWelcome').checked;
+  if(isDir()) addNinja(name, grp, bl, lv, st, S.head, wel).catch(()=>{});
+  else sendRequest('add', {name, group:grp, belt:bl, level:lv, start:st, head:S.head, welcome:wel}, `${name} is waiting for the Center Director to approve.`);
+  document.getElementById('newWelcome').checked=false; document.getElementById('newName').value=''; document.getElementById('newBucks').value='0'; document.getElementById('newName').focus();
 });
 function route(){ const h=(location.hash||'').slice(1); S.view=['board','dash','award','shop','roster','admin','lobby'].includes(h)?h:'board'; S.confirm=null; render(); }
 addEventListener('hashchange', route);
