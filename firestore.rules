@@ -1,0 +1,59 @@
+rules_version = '2';
+// Dojo Bucks security rules. Paste into Firebase console > Firestore Database > Rules, then Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    // The dojo owner signs in with this email and is always Center Director.
+    function isOwner() { return signedIn() && request.auth.token.email == 'adeelabid.tx@gmail.com'; }
+    function staffDoc() { return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data; }
+    function isStaff() { return signedIn() && exists(/databases/$(database)/documents/staff/$(request.auth.uid)); }
+    function isDirector() { return isOwner() || (isStaff() && staffDoc().role == 'director'); }
+    function isSensei() { return isDirector() || (isStaff() && staffDoc().role == 'sensei'); }
+    function canView() { return isSensei() || (isStaff() && staffDoc().role == 'viewer'); }
+    function num(m, k) { return m.get(k, 0); }
+
+    // Names and roles shown on the sign-in screen (no kids' data here).
+    match /public/{doc} {
+      allow read: if true;
+      allow write: if isDirector();
+    }
+    match /staff/{uid} {
+      allow read: if canView() || (signedIn() && request.auth.uid == uid);
+      allow write: if isDirector();
+    }
+    match /settings/{doc} {
+      allow read: if canView();
+      allow write: if isDirector();
+    }
+    match /ninjas/{id} {
+      allow read: if canView();
+      allow create, delete: if isDirector();
+      // Senseis may only change bucks earned or lost (and the avatar). Belts, levels, names and spending need a director.
+      allow update: if isDirector() || (isSensei()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'earned', 'lost', 'head'])
+        && num(request.resource.data, 'balance') >= 0
+        && num(request.resource.data, 'balance') - num(resource.data, 'balance')
+           == (num(request.resource.data, 'earned') - num(resource.data, 'earned')) - (num(request.resource.data, 'lost') - num(resource.data, 'lost')));
+    }
+    match /log/{id} {
+      allow read: if canView();
+      allow create: if isDirector() || (isSensei()
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.kind in ['earn', 'penalty']
+        && !(request.resource.data.item in ['levelup', 'beltup', 'blackbelt']));
+      allow update: if isDirector();
+      allow delete: if isDirector() || (isSensei() && resource.data.by == request.auth.uid && resource.data.kind in ['earn', 'penalty']);
+    }
+    match /news/{id} {
+      allow read: if canView();
+      allow create: if isSensei() && request.resource.data.by == request.auth.uid;
+      allow delete: if isSensei();
+    }
+    match /requests/{id} {
+      allow read: if canView();
+      allow create: if isSensei() && request.resource.data.by == request.auth.uid && request.resource.data.status == 'pending';
+      allow update: if isDirector();
+      allow delete: if isDirector() || (isSensei() && resource.data.by == request.auth.uid && resource.data.status == 'pending');
+    }
+  }
+}

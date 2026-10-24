@@ -1,0 +1,1555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dojo Bucks</title>
+<link rel="icon" href="mascots/head0.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800;900&display=swap">
+<style>
+html{color-scheme:light}
+body{margin:0;font-size:14px}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: sticky tab bar over a night-dojo vault hero; dashboard is a 12-col grid of board, chart and feed that stacks on phones. */
+:root{
+  --bg:#F1EFFA; --surface:#FFFFFF; --sunk:#E7E3F5; --ink:#1E1A3C; --muted:#69658E; --line:#DCD7EE;
+  --accent:#E5402B; --accent-ink:#FFFFFF; --gold:#F6B60A; --gold-deep:#A86F00; --gold-soft:#FFF1C7;
+  --good:#16956A; --good-soft:#DDF5EB; --bad:#D33547; --bad-soft:#FCE3E6;
+  --junior:#0E9FB0; --senior:#6C45D9; --legend:#7B2CBF;
+  --hero:#221B4D; --hero-ink:#FFFFFF; --hero-muted:#BDB6EA;
+  --shadow:0 2px 0 rgba(30,26,60,.08), 0 10px 24px -12px rgba(30,26,60,.25);
+  --f-display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Nunito",ui-rounded,"Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#110E26; --surface:#1C1838; --sunk:#262148; --ink:#F2EFFF; --muted:#A7A1CC; --line:#2F2A57;
+  --accent:#FF6450; --accent-ink:#1A0B08; --gold:#FFC93C; --gold-deep:#FFD978; --gold-soft:#3A2F12;
+  --good:#3CCB8E; --good-soft:#123528; --bad:#FF6B7A; --bad-soft:#3D1620;
+  --junior:#3CC9D8; --senior:#9B7BFF; --legend:#C77DFF;
+  --hero:#2A2260; --hero-ink:#FFFFFF; --hero-muted:#C5BEF2;
+  --shadow:0 2px 0 rgba(0,0,0,.3), 0 10px 24px -12px rgba(0,0,0,.6); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#110E26; --surface:#1C1838; --sunk:#262148; --ink:#F2EFFF; --muted:#A7A1CC; --line:#2F2A57;
+  --accent:#FF6450; --accent-ink:#1A0B08; --gold:#FFC93C; --gold-deep:#FFD978; --gold-soft:#3A2F12;
+  --good:#3CCB8E; --good-soft:#123528; --bad:#FF6B7A; --bad-soft:#3D1620;
+  --junior:#3CC9D8; --senior:#9B7BFF; --legend:#C77DFF;
+  --hero:#2A2260; --hero-ink:#FFFFFF; --hero-muted:#C5BEF2;
+  --shadow:0 2px 0 rgba(0,0,0,.3), 0 10px 24px -12px rgba(0,0,0,.6); color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;font-weight:600}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;letter-spacing:.01em;margin:0;text-wrap:balance}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:10px}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand h1{font-size:26px;line-height:1}
+.brand small{display:block;font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+nav.tabs{display:flex;gap:6px;overflow-x:auto;max-width:100%;scrollbar-width:none}
+nav.tabs a{flex:none}
+nav.tabs a{display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--muted);font-weight:900;padding:9px 14px;border-radius:999px;font-size:15px}
+nav.tabs a:hover{background:var(--sunk);color:var(--ink)}
+nav.tabs a[aria-current="page"]{background:var(--ink);color:var(--surface)}
+.banner{background:var(--gold-soft);color:var(--ink);font-size:14px}
+.banner .wrap{padding-block:8px}
+
+main{padding-block:20px 60px}
+section.view{display:flex;flex-direction:column;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:22px}
+.eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* buttons & chips */
+.btn{border:0;border-radius:14px;padding:10px 16px;font-weight:900;background:var(--sunk);color:var(--ink)}
+.btn:hover{filter:brightness(.96)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.btn.gold{background:var(--gold);color:#2B1D00;box-shadow:0 3px 0 var(--gold-deep)}
+.btn.ghost{background:transparent;border:2px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.seg{display:inline-flex;background:var(--sunk);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px}
+.tag.jr{background:color-mix(in srgb,var(--junior) 18%,transparent);color:var(--junior)}
+.tag.sr{background:color-mix(in srgb,var(--senior) 18%,transparent);color:var(--senior)}
+.tag.sample{background:var(--sunk);color:var(--muted)}
+
+.coin{flex:none;display:inline-block;vertical-align:middle}
+.av{flex:none;display:block;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 70%, color-mix(in srgb,var(--b) 38%, var(--surface)) 0 55%, var(--surface) 75%);box-shadow:inset 0 0 0 3px var(--b)}
+.av img{display:block;width:84%;height:84%;margin:8% auto 0;object-fit:contain}
+.mascot{display:block;object-fit:contain;max-width:100%}
+.vault .hero-ninja{position:absolute;right:18px;bottom:-6px;height:150px;width:auto;filter:drop-shadow(0 8px 16px rgba(0,0,0,.35));pointer-events:none}
+section .vault{padding-right:230px}
+.vault .belts{gap:4px}
+.vault .vb img{width:40px;height:40px}
+.tip{display:flex;align-items:center;gap:14px;background:var(--gold-soft);border-radius:18px;padding:12px 16px}
+.tip img{height:84px;width:auto}
+.tip p{margin:0;font-weight:700}
+.setup{overflow-x:auto;margin-top:12px}
+.setup table{width:100%;border-collapse:collapse;min-width:560px}
+.setup th{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px}
+.setup td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:middle}
+.setup td .who{display:flex;align-items:center;gap:10px;font-weight:900}
+.setup input,.setup select{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 9px;font-weight:800;color:var(--ink);width:100%}
+.setup input{max-width:120px}
+.setup tr.changed td{background:var(--gold-soft)}
+.d.setup{color:var(--muted)}
+.role-chip{font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:var(--sunk);color:var(--muted);border-radius:999px;padding:5px 10px;display:inline-flex;gap:6px;align-items:center}
+/* header: brand top-left, Code Ninjas logo top-right, tabs on the row below */
+header.top .wrap.hdr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"brand . logo" "nav nav nav";align-items:center;column-gap:16px;row-gap:8px}
+header.top .hdr .brand{grid-area:brand;margin-right:0}
+header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
+.cn-logo{grid-area:logo;justify-self:end;height:34px;width:auto}
+@media (max-width:600px){ .cn-logo{height:26px} }
+.lock-btn{padding:6px 12px;font-size:13px}
+.signin{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:linear-gradient(to bottom, rgba(255,255,255,0) 30%, var(--bg)), url(mascots/valley.webp) center/cover;overflow:auto}
+.si-card{background:var(--surface);border-radius:26px;box-shadow:0 30px 60px -20px rgba(30,26,60,.45);width:min(560px,100%);padding:26px;display:flex;flex-direction:column;gap:18px}
+.si-top{display:flex;align-items:center;gap:12px}
+.si-top h1{font-size:28px;line-height:1}
+.si-top small{display:block;font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.si-logo{height:30px;width:auto;margin-left:auto}
+.si-h{font-family:var(--f-display);font-size:22px;margin:0}
+.si-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.si-person{border:2px solid var(--line);background:var(--sunk);border-radius:16px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.si-person b{font-family:var(--f-display);font-weight:400;font-size:20px}
+.si-person small{color:var(--muted);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.si-person:hover{border-color:var(--gold);background:var(--gold-soft)}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin:6px 0}
+.pin-dots i{width:18px;height:18px;border-radius:50%;border:3px solid var(--ink);display:block}
+.pin-dots i.on{background:var(--ink)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px;margin:0 auto;width:100%}
+.pin-pad button{border:0;background:var(--sunk);border-radius:16px;padding:16px 0;font-family:var(--f-display);font-size:28px;color:var(--ink)}
+.pin-pad button:active{transform:scale(.96)}
+.si-err{color:var(--bad);font-weight:800;text-align:center;min-height:20px;margin:0}
+.si-link{background:none;border:0;color:var(--muted);font-weight:800;text-decoration:underline;align-self:center}
+.si-form{display:grid;gap:10px}
+.role-chip.dir{background:color-mix(in srgb,var(--gold) 30%,var(--surface));color:var(--ink)}
+.role-chip button{border:0;border-radius:999px;padding:3px 9px;font-weight:900;font-size:11px;background:transparent;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.role-chip button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.nb{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;padding:0 6px;margin-left:4px}
+.req{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.req:first-child{border-top:0}
+.req .what{font-weight:700}
+.req .meta{font-size:13px;color:var(--muted);font-weight:700}
+.req .acts2{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.req .ic2{font-size:28px;text-align:center}
+.status{font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px}
+.status.pending{background:var(--gold-soft);color:var(--gold-deep)} .status.approved{background:var(--good-soft);color:var(--good)} .status.rejected{background:var(--bad-soft);color:var(--bad)}
+.code{font-family:ui-monospace,Menlo,monospace;font-weight:900;letter-spacing:.12em;background:var(--sunk);padding:3px 8px;border-radius:6px}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.roles div{background:var(--sunk);border-radius:14px;padding:14px}
+.roles b{font-family:var(--f-display);font-weight:400;font-size:20px;display:block;margin-bottom:4px}
+.roles ul{margin:6px 0 0;padding-left:18px;font-size:14px;font-weight:600}
+.needs{display:block;font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--gold-deep)}
+@media (max-width:600px){ .req{grid-template-columns:36px 1fr} .req .acts2{grid-column:1 / -1;justify-content:flex-start} .role-chip{display:none} }
+.item .pic{height:72px;width:auto;align-self:flex-start}
+
+/* hero vault */
+.vault{background:var(--hero);color:var(--hero-ink);border-radius:26px;padding:26px;position:relative;overflow:hidden;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
+.vault::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,201,60,.35),transparent 70%);pointer-events:none}
+.vault .eyebrow{color:var(--hero-muted)}
+.vault .big{font-family:var(--f-display);font-size:clamp(48px,9vw,88px);line-height:1;display:flex;align-items:center;gap:14px}
+.vault p{margin:8px 0 0;color:var(--hero-muted);font-weight:700}
+.vault .belts{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;align-items:end}
+.vb{display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--f-display);font-size:18px;line-height:1}
+.vb img{width:44px;height:44px}
+.vb.none{opacity:.35}
+.badge{display:block;flex:none;object-fit:contain}
+.badge.dim{opacity:.28;filter:grayscale(1)}
+.medals{display:flex;flex-wrap:wrap;gap:6px}
+.medals .badge.cur{filter:drop-shadow(0 0 6px var(--gold))}
+.collection{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px}
+.collection img{width:100%;height:auto;max-width:44px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.stat .v{font-family:var(--f-display);font-size:34px;line-height:1.05;display:flex;align-items:center;gap:8px}
+.stat .who{display:flex;align-items:center;gap:10px;min-width:0}
+.stat .who > div{display:flex;flex-direction:column}
+.stat .who b{font-family:var(--f-display);font-weight:400;font-size:24px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat small{color:var(--muted);font-weight:700}
+.stat.earn .v{color:var(--good)} .stat.spend .v{color:var(--gold-deep)} .stat.lost .v{color:var(--bad)}
+
+.dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px}
+.dash-grid > .card{grid-column:span 6}
+.lbview .board{padding:24px;position:relative;overflow:hidden}
+/* Code Ninjas valley as a sky banner that fades into the card behind the podium */
+.lbview .board::before{content:"";position:absolute;left:0;right:0;top:0;height:340px;pointer-events:none;
+  background:linear-gradient(to bottom, transparent 45%, var(--surface) 100%), url(mascots/valley.webp) center 58%/cover}
+.lbview .board > *{position:relative}
+.lbview .lb-title{color:#fff;text-shadow:0 2px 0 rgba(0,50,100,.35), 0 0 18px rgba(0,60,120,.25)}
+.lbview .board .seg{background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:blur(6px)}
+.lbview .pod .name{background:color-mix(in srgb,var(--surface) 80%,transparent);padding:1px 10px;border-radius:999px}
+.lb-title{font-size:clamp(26px,4vw,38px)}
+.lbview .podium{gap:18px;margin:26px 0 16px}
+.lbview .pod .name{font-size:20px}
+.lbview .pod.p1 .av{width:120px!important;height:120px!important}
+.lbview .pod.p2 .av,.lbview .pod.p3 .av{width:92px!important;height:92px!important}
+.lbview .pod.p1 .block{height:150px} .lbview .pod.p2 .block{height:118px} .lbview .pod.p3 .block{height:94px}
+.lbview .pod .block .place{font-size:40px} .lbview .pod .block .amt{font-size:22px}
+@media (min-width:1000px){ .lbview .lb{display:grid;grid-template-columns:1fr 1fr;column-gap:28px} }
+.lbview .lb .amt{font-size:22px}
+/* news ticker */
+.ticker{background:var(--hero);color:var(--hero-ink)}
+.tk-row{display:flex;align-items:center;gap:12px;padding-block:8px}
+.tk-label{flex:none;background:var(--accent);color:#fff;font-family:var(--f-display);font-size:15px;letter-spacing:.04em;padding:4px 10px;border-radius:8px;animation:tkpulse 2s ease-in-out infinite}
+@keyframes tkpulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent)}}
+.tk-viewport{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.tk-track{display:inline-flex;white-space:nowrap;will-change:transform}
+.tk-group{display:inline-flex;gap:44px;padding-right:44px}
+.tk-item{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:15px}
+.tk-item b{color:var(--gold)}
+.tk-item .badge{width:24px;height:24px}
+.tk-tag{background:var(--gold);color:#2B1D00;font-weight:900;font-size:11px;letter-spacing:.08em;padding:2px 7px;border-radius:5px}
+.tk-post{flex:none;border:0;background:rgba(255,255,255,.12);color:var(--hero-ink);font-weight:800;border-radius:10px;padding:6px 12px;font-size:13px}
+.tk-post:hover{background:rgba(255,255,255,.22)}
+.news-panel{background:var(--surface);border-bottom:1px solid var(--line)}
+.news-panel .wrap{padding-block:14px;display:flex;flex-direction:column;gap:10px}
+.news-panel form{display:flex;gap:10px;flex-wrap:wrap}
+.news-panel input{flex:1;min-width:200px;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 12px;font-weight:700}
+.tpls{display:flex;flex-wrap:wrap;gap:8px}
+.tpl{border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font-weight:700;font-size:14px;text-align:left}
+.tpl:hover{border-color:var(--gold);background:var(--gold-soft)}
+#tplNinja{border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:6px 10px;font-weight:700}
+.news-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.news-list li{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--sunk);border-radius:10px;padding:8px 12px;font-weight:700}
+@media (max-width:600px){ .tk-label{display:none} .tk-post{padding:6px 8px} }
+@media (max-width:600px){ .vault .hero-ninja{display:none} }
+@media (prefers-reduced-motion: reduce){ .tk-viewport{overflow-x:auto}  .tk-track{transform:none!important} }
+@media (max-width:900px){ .dash-grid > .board,.dash-grid > .side{grid-column:1 / -1} section .vault{grid-template-columns:1fr;padding-right:26px} .vault .hero-ninja{height:96px;top:14px;bottom:auto;right:10px} .vb img{width:100%;height:auto;max-width:40px} .vb{font-size:15px} }
+
+/* podium */
+.podium{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end;gap:10px;margin:18px 0 10px}
+.pod{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.pod .name{font-weight:900;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .block{width:100%;border-radius:14px 14px 6px 6px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px;font-family:var(--f-display);color:#2B1D00}
+.pod .block .place{font-size:30px;line-height:1}
+.pod .block .amt{font-size:16px;display:flex;align-items:center;gap:4px}
+.pod.p1 .block{height:120px;background:linear-gradient(#FFD54A,#F2A900)}
+.pod.p2 .block{height:92px;background:linear-gradient(#E9EEF5,#B9C3D2)}
+.pod.p3 .block{height:72px;background:linear-gradient(#F3C08F,#C9814A)}
+.pod.p1 .av{width:72px;height:72px}
+.lb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lbt-wrap{overflow-x:auto}
+.lbt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.lbt th{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 10px}
+.lbt td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:middle}
+.lbt tbody tr{cursor:pointer}
+.lbt tbody tr:hover td{background:var(--sunk)}
+.lbt .rk{font-family:var(--f-display);color:var(--muted);font-size:20px;width:36px}
+.lbt .who{display:flex;align-items:center;gap:10px;min-width:0}
+.lbt .nm{display:flex;flex-direction:column;min-width:0}
+.lbt .nm b{font-weight:900;font-size:17px}
+.lbt .nm small{color:var(--muted);font-size:13px}
+.lbt .bc{width:50px}
+.lbt .n{text-align:right;font-family:var(--f-display);font-size:19px;color:var(--muted);white-space:nowrap}
+.lbt th.n{font-family:var(--f-body);font-size:12px}
+.lbt .bal span{display:inline-flex;align-items:center;gap:6px}
+.lbt td.n.on{color:var(--ink);font-size:22px}
+.lbt th.n.on{color:var(--ink)}
+@media (max-width:600px){ .lbt .hide-sm{display:none} .lbt .nm small{display:none} }
+.lb li{display:grid;grid-template-columns:32px 40px 1fr 34px auto;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid var(--line)}
+.lb li button{all:unset;cursor:pointer;display:contents}
+.lb .rk{font-family:var(--f-display);color:var(--muted);text-align:center;font-size:18px}
+.lb .nm{min-width:0;display:flex;flex-direction:column}
+.lb .nm b{font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .nm small{color:var(--muted);font-size:13px}
+.lb .amt{font-family:var(--f-display);font-size:20px;display:flex;align-items:center;gap:6px}
+
+/* chart */
+.chart svg{width:100%;height:auto;display:block}
+.chart .legend{display:flex;gap:14px;font-size:13px;color:var(--muted);font-weight:800}
+.chart .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* feed */
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:420px;overflow:auto}
+.feed li{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}
+.feed li:first-child{border-top:0}
+.feed .ic{font-size:20px;text-align:center}
+.feed .tx{min-width:0;font-size:14px}
+.feed .tx b{font-weight:900}
+.feed .tx small{display:block;color:var(--muted);font-size:12px}
+.feed .d{font-family:var(--f-display);font-size:17px}
+.d.earn{color:var(--good)} .d.penalty{color:var(--bad)} .d.redeem{color:var(--gold-deep)}
+
+/* award */
+.award-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
+@media (max-width:900px){ .award-grid{grid-template-columns:1fr} }
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-top:14px}
+.chip{position:relative;border:3px solid transparent;background:var(--sunk);border-radius:18px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;transition:transform .12s}
+.chip:hover{transform:translateY(-2px)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--surface);box-shadow:var(--shadow)}
+.chip[aria-pressed="true"]::after{content:"✓";position:absolute;top:6px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:900;font-size:13px;display:grid;place-items:center}
+.chip .nm{font-weight:900;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.chip .bal{font-family:var(--f-display);font-size:15px;display:flex;align-items:center;gap:4px;color:var(--gold-deep)}
+.pop{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-family:var(--f-display);font-size:28px;pointer-events:none;animation:pop 1.1s ease-out forwards;text-shadow:0 2px 0 var(--surface)}
+.pop.earn{color:var(--good)} .pop.penalty{color:var(--bad)}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,10px) scale(.6)}20%{opacity:1;transform:translate(-50%,-8px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-50px) scale(1)}}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px}
+.act{border:0;border-radius:18px;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-height:118px;position:relative;transition:transform .1s}
+.act:active{transform:scale(.97)}
+.act .em{font-size:32px;line-height:1}
+.act .lbl{font-weight:900;font-size:15px;line-height:1.2}
+.act .amt{font-family:var(--f-display);font-size:24px;margin-top:auto}
+.act.earn{background:var(--good-soft);color:var(--ink);box-shadow:inset 0 -4px 0 color-mix(in srgb,var(--good) 45%,transparent)}
+.act.earn .amt{color:var(--good)}
+.act.penalty{background:var(--bad-soft);color:var(--ink);box-shadow:inset 0 -4px 0 color-mix(in srgb,var(--bad) 45%,transparent)}
+.act.penalty .amt{color:var(--bad)}
+.act:disabled{opacity:.5;cursor:not-allowed}
+.act input,.item input{width:80px;border:2px solid var(--line);border-radius:10px;padding:4px 8px;background:var(--surface);font-weight:900}
+.hint{color:var(--muted);font-size:14px;font-weight:700;margin:4px 0 0}
+
+/* shop */
+.wallet{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.wallet .bal{font-family:var(--f-display);font-size:40px;display:flex;align-items:center;gap:10px;line-height:1}
+.shop-pick{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-top:12px}
+.shop-pick .chip{flex:none;width:100px}
+.tier{display:flex;flex-direction:column;gap:12px}
+.tier-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tier-head h2{font-size:26px}
+.tier-head p{margin:0;color:var(--muted);font-weight:700}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0;position:relative}
+.item .em{font-size:38px;line-height:1}
+.item h3{font-size:19px;line-height:1.15}
+.item .cost{font-family:var(--f-display);font-size:24px;display:flex;align-items:center;gap:6px;color:var(--gold-deep)}
+.meter{height:10px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:999px;background:var(--gold)}
+.item .need{font-size:13px;color:var(--muted);font-weight:800}
+.item .go{margin-top:auto}
+.item.ready{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 40%,transparent)}
+.tier.legendary .item{background:linear-gradient(160deg,color-mix(in srgb,var(--legend) 16%,var(--surface)),var(--surface) 60%);border-color:color-mix(in srgb,var(--legend) 40%,var(--line))}
+.tier.legendary .tier-head h2{color:var(--legend)}
+.confirm{display:flex;flex-direction:column;gap:8px;background:var(--gold-soft);border-radius:14px;padding:10px}
+.confirm p{margin:0;font-weight:800;font-size:14px}
+
+/* roster */
+.addform{display:grid;grid-template-columns:2fr 1.2fr 1.1fr .9fr .9fr auto;gap:12px;align-items:end}
+@media (max-width:900px){ .addform{grid-template-columns:1fr 1fr} .addform .f:first-child{grid-column:1 / -1} }
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14px;color:var(--muted)}
+.f input,.f select{border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;font-weight:800;color:var(--ink);width:100%}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.swatches button{width:52px;height:52px;border-radius:50%;border:3px solid transparent;padding:0;background:transparent}
+.swatches button[aria-pressed="true"]{border-color:var(--gold)}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.rcard{all:unset;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;box-shadow:var(--shadow);min-width:0}
+.rcard:focus-visible{outline:3px solid var(--gold)}
+.rcard .nm{font-family:var(--f-display);font-size:21px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rcard .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);font-weight:800}
+.rcard .nums{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--sunk);border-radius:12px;padding:8px}
+.rcard .nums div{display:flex;flex-direction:column;align-items:center}
+.rcard .nums b{font-family:var(--f-display);font-weight:400;font-size:19px}
+.rcard .nums small{font-size:11px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.beltbar{display:inline-block;width:26px;height:8px;border-radius:3px;border:1px solid rgba(0,0,0,.2)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,8,25,.55);z-index:50;display:flex;justify-content:flex-end}
+.drawer > *{flex-shrink:0}
+.drawer .feed{overflow:visible}
+.drawer{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--bg);width:min(460px,100%);height:100%;overflow-y:auto;padding:20px max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) 20px;padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:16px}
+.drawer .head{display:flex;align-items:center;gap:14px}
+.drawer .head h2{font-size:30px;line-height:1.05;overflow-wrap:anywhere}
+.progress{display:flex;flex-direction:column;gap:6px}
+.progress .meter{height:14px}
+.lvls{display:grid;grid-template-columns:repeat(var(--n,5),1fr);gap:6px}
+.lvls i{height:14px;border-radius:999px;background:var(--sunk)}
+.lvls i.on{background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.beltrow{display:flex;gap:4px;margin-top:4px}
+.beltrow span{flex:1;height:8px;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.beltrow span.cur{height:12px;margin-top:-2px}
+
+/* empty */
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:36px 16px}
+.empty p{margin:0;color:var(--muted);max-width:44ch}
+
+/* toast + celebrate */
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--surface);border-radius:16px;padding:12px 14px 12px 18px;display:flex;gap:14px;align-items:center;font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.35);max-width:calc(100% - 32px)}
+.toast button{border:0;background:var(--gold);color:#2B1D00;border-radius:10px;padding:6px 12px;font-weight:900}
+.celebrate{position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:rgba(10,8,25,.7);padding:16px}
+.celebrate .box{background:var(--hero);color:var(--hero-ink);border-radius:28px;padding:30px 26px;text-align:center;max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;animation:zoom .45s cubic-bezier(.2,1.4,.4,1)}
+.celebrate .box .em{font-size:72px;line-height:1}
+.celebrate .box h2{font-size:32px}
+.celebrate .box p{margin:0;color:var(--hero-muted);font-weight:700}
+.spark{position:fixed;width:14px;height:14px;border-radius:50%;background:var(--gold);z-index:71;pointer-events:none;animation:fly 1.2s ease-out forwards}
+@keyframes zoom{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(360deg);opacity:0}}
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} .spark{display:none} }
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="wrap hdr">
+    <div class="brand">
+      <span id="brandCoin"></span>
+      <div><h1>Dojo Bucks</h1><small>Ninja rewards</small></div>
+      <span class="role-chip" id="roleChip"></span>
+      <button class="btn ghost lock-btn" data-act="lock" id="lockBtn" hidden>Lock</button>
+    </div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#board" data-tab="board">Leaderboard</a>
+      <a href="#dash" data-tab="dash">Dashboard</a>
+      <a href="#award" data-tab="award">Give Bucks</a>
+      <a href="#shop" data-tab="shop">Reward Shop</a>
+      <a href="#roster" data-tab="roster">Ninjas</a>
+      <a href="#admin" data-tab="admin" id="adminTab" hidden>Admin <span class="nb" id="adminCount" hidden></span></a>
+    </nav>
+    <img class="cn-logo" src="mascots/cn-logo.png" width="196" height="41" alt="Code Ninjas">
+  </div>
+  <div class="ticker" role="region" aria-label="Dojo news">
+    <div class="wrap tk-row">
+      <span class="tk-label">Dojo News</span>
+      <div class="tk-viewport"><div class="tk-track" id="tkTrack"></div></div>
+      <button class="tk-post" data-act="toggleNews" id="newsBtn">Post news</button>
+    </div>
+  </div>
+</header>
+<div id="newsPanel"></div>
+<div class="banner" id="banner" hidden><div class="wrap" id="bannerText"></div></div>
+
+<main class="wrap">
+  <!-- LEADERBOARD -->
+  <section class="view lbview" id="v-board">
+      <div class="card board">
+        <div class="spread">
+          <h2 class="lb-title">Dojo Leaderboard</h2>
+          <div class="row">
+            <div class="seg" id="metricSeg" role="group" aria-label="Rank by">
+              <button data-metric="balance">Balance</button>
+              <button data-metric="earned">Most earned</button>
+              <button data-metric="spent">Most spent</button>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="seg filterSeg" role="group" aria-label="Group">
+            <button data-filter="all">Everyone</button>
+            <button data-filter="junior">JR (5–7)</button>
+            <button data-filter="ninja">Create (8+)</button>
+          </div>
+        </div>
+        <div id="board"></div>
+      </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="view" id="v-dash" hidden>
+    <div class="vault">
+      <div>
+        <div class="eyebrow">Dojo balance · all Ninja Bucks ready to spend</div>
+        <div class="big num" id="vaultTotal">…</div>
+        <p id="vaultSub">Opening the dojo vault…</p>
+      </div>
+      <div class="belts" id="vaultBelts" aria-hidden="true"></div>
+      <img class="hero-ninja" src="mascots/hiyah.webp" alt="">
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="dash-grid">
+        <div class="card chart">
+          <div class="spread"><h2>Bucks by week</h2>
+            <div class="legend"><span><i style="background:var(--good)"></i>Earned</span><span><i style="background:var(--gold)"></i>Spent</span></div>
+          </div>
+          <div id="chart"></div>
+        </div>
+        <div class="card">
+          <h2>Latest in the dojo</h2>
+          <ul class="feed" id="feed"></ul>
+        </div>
+    </div>
+  </section>
+
+  <!-- AWARD -->
+  <section class="view" id="v-award" hidden>
+    <div class="tip"><img src="mascots/sensei_ada.webp" alt=""><p>Sensei tip: tap several ninjas, then one button, to give everyone bucks at once. Made a mistake? Tap Undo.</p></div>
+    <div class="award-grid">
+      <div class="card">
+        <div class="spread">
+          <h2>1. Pick ninjas</h2>
+          <div class="row">
+            <button class="btn" data-act="selAll">Select all</button>
+            <button class="btn ghost" data-act="selNone">Clear</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="seg filterSeg" role="group" aria-label="Group">
+            <button data-filter="all">Everyone</button>
+            <button data-filter="junior">JR (5–7)</button>
+            <button data-filter="ninja">Create (8+)</button>
+          </div>
+        </div>
+        <div class="picker" id="picker"></div>
+      </div>
+      <div class="card">
+        <div class="spread">
+          <h2>2. Tap what they did</h2>
+          <button class="btn ghost" data-act="toggleEdit" id="editAward">Change amounts</button>
+        </div>
+        <p class="hint" id="selHint">Pick one or more ninjas first.</p>
+        <h3 class="eyebrow" style="margin-top:16px;color:var(--good)">Earn bucks</h3>
+        <div class="acts" id="earnGrid"></div>
+        <h3 class="eyebrow" style="margin-top:22px;color:var(--bad)">Lose bucks</h3>
+        <div class="acts" id="penGrid"></div>
+        <p class="hint">Level Up moves a ninja one level forward and Belt Up moves them to the next belt at Level 1. Juniors stay on JR Pink; Belt Up from JR Pink moves a ninja to White belt and into Create (8+). Bucks never drop below zero, and spending or penalties never change belts or levels.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="view" id="v-shop" hidden>
+    <div class="card">
+      <div class="spread">
+        <h2>Who is shopping?</h2>
+        <button class="btn ghost" data-act="toggleEdit" id="editShop">Change prices</button>
+      </div>
+      <div class="shop-pick" id="shopPick"></div>
+      <div class="wallet" id="wallet" style="margin-top:12px"></div>
+    </div>
+    <div id="tiers" style="display:flex;flex-direction:column;gap:28px"></div>
+  </section>
+
+  <!-- ROSTER -->
+  <section class="view" id="v-roster" hidden>
+    <div class="card">
+      <h2>Add a ninja</h2>
+      <form id="addForm" class="addform" style="margin-top:14px">
+        <label class="f">Name<input id="newName" maxlength="24" placeholder="e.g. Ava" required autocomplete="off"></label>
+        <label class="f">Group<select id="newGroup"><option value="ninja">Create (8+)</option><option value="junior">JR (5–7)</option></select></label>
+        <label class="f">Belt<select id="newBelt"></select></label>
+        <label class="f">Level<select id="newLevel"></select></label>
+        <label class="f">Starting bucks<input id="newBucks" type="number" min="0" step="1" value="0" inputmode="numeric"></label>
+        <button class="btn primary" type="submit" id="addBtn">Add ninja</button>
+      </form>
+      <div class="swatches" id="swatches"><span class="eyebrow">Pick a ninja</span></div>
+    </div>
+    <div id="myReqs"></div>
+    <div class="roster" id="roster"></div>
+  </section>
+
+  <!-- ADMIN (Center Director only) -->
+  <section class="view" id="v-admin" hidden>
+    <div class="card">
+      <div class="spread"><div><h2>Waiting for your approval</h2><p class="hint" style="margin:4px 0 0">Senseis send these when they add a ninja, change a belt or level, give Level Up or Belt Up, or redeem a reward.</p></div>
+        <button class="btn primary" data-act="approveAll" id="approveAllBtn">Approve all</button></div>
+      <div id="reqList" style="margin-top:12px"></div>
+    </div>
+    <div class="card"><h2>Team</h2><p class="hint" style="margin:4px 0 0">Add each sensei with a first name and a PIN. On a dojo device they tap their name and enter the PIN. No emails or accounts needed. Use a View only person for the classroom TV.</p>
+      <form id="teamForm" class="addform" style="margin-top:12px;grid-template-columns:1.4fr 1.2fr 1fr auto">
+        <label class="f">First name<input id="tmName" maxlength="20" placeholder="e.g. Charly" autocomplete="off" required></label>
+        <label class="f">Role<select id="tmRole"><option value="sensei">Sensei</option><option value="director">Center Director</option><option value="viewer">View only (TV)</option></select></label>
+        <label class="f">PIN (4 to 6 digits)<input id="tmPin" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" autocomplete="off" placeholder="e.g. 4821" required></label>
+        <button class="btn primary" type="submit" id="tmAdd">Add to team</button>
+      </form>
+      <div id="teamList" style="margin-top:14px"></div></div>
+    <div class="card"><div class="spread"><div><h2>Backup</h2><p class="hint" style="margin:4px 0 0">Download a copy of all ninjas, bucks, history, news and requests. Keep it somewhere safe, for example once a month.</p></div><button class="btn" data-act="backup">Download backup</button></div></div>
+    <div class="card"><h2>Who can do what</h2><div id="rolesInfo" style="margin-top:10px"></div></div>
+    <div class="card">
+      <div class="spread"><div><h2>Quick setup</h2><p class="hint" style="margin:4px 0 0">Moving from another reward system? Set each ninja's bucks, belt and level in one go. This is logged as "Starting bucks" and does not count as bucks earned or spent this week.</p></div>
+        <button class="btn" data-act="toggleSetup" id="setupBtn">Open quick setup</button></div>
+      <div id="setupHost"></div>
+    </div>
+    <div id="sampleBar"></div>
+    <div class="card"><h2>Recent decisions</h2><div id="decided" style="margin-top:10px"></div></div>
+  </section>
+</main>
+
+<div class="signin" id="signin" hidden>
+  <div class="si-card">
+    <div class="si-top"><span id="siCoin"></span><div><h1>Dojo Bucks</h1><small>Ninja rewards</small></div><img src="mascots/cn-logo.png" alt="Code Ninjas" class="si-logo"></div>
+    <div id="siBody"></div>
+  </div>
+</div>
+<div id="drawerHost"></div>
+<div id="toastHost"></div>
+<div id="celebrateHost"></div>
+
+<script src="vendor/firebase-app-compat.js"></script>
+<script src="vendor/firebase-auth-compat.js"></script>
+<script src="vendor/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+/* ---------- catalog ---------- */
+const EARN = [
+  {say:"being on time to the dojo", id:'ontime',  icon:'⏰', label:'On time to the dojo', amt:5},
+  {say:"staying on track with lessons", id:'ontrack', icon:'📈', label:'On track with lessons', amt:5},
+  {say:"keeping the dojo quiet", id:'quiet',   icon:'🤫', label:'Quiet in the dojo', amt:3},
+  {say:"great listening", id:'listen',  icon:'👂', label:'Great listening', amt:3},
+  {say:"helping another ninja", id:'helper',  icon:'🤝', label:'Helped another ninja', amt:5},
+  {say:"finishing a project", id:'project', icon:'🏆', label:'Finished a project', amt:20},
+  {id:'levelup', icon:'⭐', img:'b4_l1', label:'Level Up', amt:25, step:'level'},
+  {id:'beltup',  icon:'🥋', img:'b2_done', label:'Belt Up', amt:100, step:'belt'},
+  {id:'blackbelt', icon:'🏅', img:'b8_a', label:'Earned Black Belt!', amt:1000, step:'black'},
+];
+const PEN = [
+  {id:'noise',    icon:'📢', label:'Making noise', amt:3},
+  {id:'talking',  icon:'💬', label:'Talking during work time', amt:2},
+  {id:'offtrack', icon:'🙈', label:'Off track', amt:5},
+  {id:'chairtouch', icon:'✋', label:"Touched the sensei's chair", amt:10},
+  {id:'chairsit', icon:'🪑', label:"Sat on the sensei's chair", amt:15},
+  {id:'damage',   icon:'🔧', label:'Damaged equipment', amt:25},
+];
+const TIERS = [
+  {id:'quick', name:'Quick Perks', blurb:'Small rewards you can grab today.', items:[
+    {say:"a 5-minute free break", id:'break5', icon:'⏸️', label:'5-minute free break', note:'Any off-track activity', cost:25},
+    {say:"the Sensei Seat for 5 mins", id:'seat5',  icon:'🪑', pic:'sensei_alan', label:'Sensei seat · 5 min', cost:40},
+    {say:"the Sensei Seat for 10 mins", id:'seat10', icon:'🪑', pic:'sensei_ada', label:'Sensei seat · 10 min', cost:70},
+    {say:"the Sensei Seat for 15 mins", id:'seat15', icon:'🪑', pic:'sensei_alan', label:'Sensei seat · 15 min', cost:100},
+    {say:"the Sensei Seat for the WHOLE session", id:'seatall',icon:'👑', pic:'sensei_ada', label:'Sensei seat · whole session', cost:200},
+  ]},
+  {id:'treasure', name:'Treasure Chest', blurb:'Prizes to take home.', items:[
+    {say:"a mystery novelty prize", id:'novelty', icon:'🎁', label:'Novelty prize', cost:100},
+    {say:"a custom 3D printed prize", id:'print_s', icon:'🖨️', label:'3D printed item · small', note:'You pick the design', cost:120},
+    {say:"a Pokémon card pack", id:'pokemon', icon:'🃏', label:'Pokémon card pack', cost:150},
+    {say:"a BIG custom 3D printed prize", id:'print_l', icon:'🐉', label:'3D printed item · big', note:'You pick the design', cost:250},
+    {say:"a $10 gift card", id:'card10',  icon:'💳', label:'$10 gift card', note:'Roblox, Amazon or another store', cost:400},
+    {say:"a $25 gift card", id:'card25',  icon:'💳', label:'$25 gift card', note:'Roblox, Amazon or another store', cost:900},
+  ]},
+  {id:'legendary', name:'Legendary', blurb:'The biggest prizes. Save up for these!', items:[
+    {say:"a Gaming Night Pass", id:'gaming',  icon:'🎮', pic:'gamer', label:'Gaming Night Pass', cost:1500},
+    {say:"a Day Camp pass", id:'daycamp', icon:'⛺', pic:'blockcoder', label:'Day Camp', cost:2500},
+    {say:"a Birthday Party Pass", id:'bday',    icon:'🎂', pic:'bdaygamer', label:'Birthday Party Pass', cost:3000},
+    {say:"a Waived Monthly Fee", id:'fee',     icon:'🎟️', pic:'grateful', label:'Waived Monthly Fee', cost:5000},
+    {say:"a Weeklong Summer Camp pass", id:'summer',  icon:'☀️', pic:'hiyah', label:'Weeklong Summer Camp', cost:8000},
+  ]},
+];
+const BELTS = [
+  {name:'White', color:'#F4F4F2', levels:4}, {name:'Yellow', color:'#FFD43B', levels:4}, {name:'Orange', color:'#FF922B', levels:5},
+  {name:'Green', color:'#40C057', levels:5}, {name:'Blue', color:'#339AF0', levels:6}, {name:'Purple', color:'#9C36B5', levels:6},
+  {name:'Brown', color:'#8B5A2B', levels:10}, {name:'Red', color:'#E03131', levels:3, projects:true, steps:['Hole in One','Tower Power!','Black Belt Capstone']},
+  {name:'Black', color:'#1B1B1B', levels:1, steps:['Black Belt']},
+];
+// Juniors (JR, ages 5-7) all stay on one belt, JR Pink, which comes before White. White to Black are the main belt path.
+const JR = -1;
+const JR_BELT = {name:'JR Pink', color:'#EC4899', levels:5};
+const beltInfo = i => i===JR ? JR_BELT : BELTS[i];
+const levelsOf = i => beltInfo(i)?.levels || 5;
+const BLACK = BELTS.length-1;
+// Badge art from the dojo's Canva folder: a medal per level, a "belt complete" torii badge per belt
+const BADGE = (i, lv) => i===JR ? `jr_l${lv}` : i===7 ? (['b7_p1','b7_p2','b7_bb3'][lv-1] || 'b7_bb3') : i===8 ? 'b8_b' : (i===6 && lv===10) ? 'b6_l10b' : `b${i}_l${lv}`;
+const DONE = i => i===JR ? 'jr_done' : ({6:'b6_l10a', 7:'b7_bb3', 8:'b8_a'})[i] || `b${i}_done`;
+const badge = (name, size, cls='', title='') => `<img class="badge ${cls}" src="badges/${name}.webp" width="${size}" height="${size}" alt="${esc(title)}"${title?` title="${esc(title)}"`:''}>`;
+const beltBadge = (n, size) => { const b=beltFor(n); return badge(DONE(b.i), size, '', `${b.name} belt`); };
+const medal = (n, size) => { const b=beltFor(n); return badge(BADGE(b.i,b.level), size, '', `${b.name} belt · ${stepName(b.i,b.level)}`); };
+const stepName = (i, lv) => beltInfo(i)?.steps?.[lv-1] || `Level ${lv}`;
+const beltOpts = (sel, list) => list.map(k=>`<option value="${k}" ${k===sel?'selected':''}>${beltInfo(k).name}</option>`).join('');
+const MAIN_BELTS = BELTS.map((_,k)=>k), ALL_BELTS = [JR, ...MAIN_BELTS];
+const levelOpts = (i, sel) => Array.from({length:levelsOf(i)},(_,k)=>`<option value="${k+1}" ${k+1===sel?'selected':''}>${stepName(i,k+1)}</option>`).join('');
+const HEADS = 8; // Code Ninjas mascot heads in mascots/head0..7 (light, medium and dark skin tones)
+const headOf = n => Number.isInteger(n?.head) ? n.head % HEADS : [...String(n?.id||n?.name||'')].reduce((a,c)=>a+c.charCodeAt(0),0) % HEADS;
+const GROUP = {junior:'JR', ninja:'Create'};
+
+/* ---------- state ---------- */
+const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
+  view:'board', news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
+let api = null;
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Math.round(n||0).toLocaleString();
+const DAY = 864e5;
+function weekStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d.getTime(); }
+const amountOf = (kind,item) => { const o = S.settings[kind==='earn'?'earn':kind==='penalty'?'pen':'shop'] || {}; const v = o[item.id]; return Number.isFinite(v) ? v : (item.amt ?? item.cost); };
+const beltFor = n => { if(n?.group==='junior') return {...JR_BELT, i:JR, level:Math.min(JR_BELT.levels, Math.max(1, n?.level|0 || 1)), next:BELTS[0]};
+  const i=Math.min(BELTS.length-1, Math.max(0, n?.belt|0)); return {...BELTS[i], i, level:Math.min(levelsOf(i), Math.max(1, n?.level|0 || 1)), next:BELTS[i+1]||null}; };
+const rankText = n => { const b=beltFor(n); return b.i===BLACK ? 'Black Belt ninja' : `${b.name} belt · ${stepName(b.i,b.level)}`; };
+const ninjaList = () => Object.values(S.ninjas).sort((a,b)=>a.name.localeCompare(b.name));
+const filtered = () => ninjaList().filter(n => S.filter==='all' || n.group===S.filter);
+function ago(ts){ const s=(Date.now()-ts)/1000; if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+' min ago'; if(s<86400) return Math.floor(s/3600)+' h ago';
+  const d=Math.floor(s/86400); return d===1?'yesterday': d<7? d+' days ago' : new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+
+/* ---------- art ---------- */
+// Ninja Buck coin: gold coin with a ninja head; the N currency sign sits in the mask opening
+function coin(size=24){
+  return `<svg class="coin" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true">
+    <circle cx="32" cy="32" r="30" fill="#F6B60A"/><path d="M8 26 A25 25 0 0 1 56 26 A30 22 0 0 0 8 26 Z" fill="#FFD84A" opacity=".9"/>
+    <circle cx="32" cy="32" r="30" fill="none" stroke="#A86F00" stroke-width="3"/><circle cx="32" cy="32" r="24.5" fill="none" stroke="#FFE69A" stroke-width="1.5"/>
+    <circle cx="31" cy="33" r="19" fill="#1E1A3C"/><path d="M47 25 l9 -5 l-2 7 z M47 29 l9 2 l-8 3 z" fill="#1E1A3C"/>
+    <rect x="14.5" y="25.5" width="33" height="15" rx="7.5" fill="#F8C21E"/>
+    <g transform="translate(31,33) scale(.55)" fill="#1E1A3C"><path d="M-9 11 V-11 h5.2 l7.6 12.2 V-11 h5.2 v22 h-5.2 l-7.6 -12.2 V11 z"/><rect x="-13" y="-4.2" width="26" height="2.6" rx="1.3"/><rect x="-13" y="1.6" width="26" height="2.6" rx="1.3"/></g></svg>`;
+}
+function avatar(n, size=44){
+  const belt = beltFor(n).color;
+  return `<span class="av" style="width:${size}px;height:${size}px;--b:${belt==='#F4F4F2'?'#C9C9D6':belt}" aria-hidden="true"><img src="mascots/head${headOf(n)}.webp" alt=""></span>`;
+}
+const groupTag = g => g==='junior' ? '<span class="tag jr">JR</span>' : '<span class="tag sr">Create</span>';
+
+/* ---------- storage ---------- */
+function makeDbApi(db){
+  const wrap = p => p.catch(e => { if(e && e.code==='permission-denied'){ toast('You do not have permission to do that.'); } else toast('Could not save. Check your connection and try again.'); throw e; });
+  const stamp = (c,d) => ['log','news','requests'].includes(c) && !d.by ? {...d, by:S.me} : d;
+  return {
+    set:(c,id,d)=>wrap(db.collection(c).doc(id).set(stamp(c,d))),
+    update:(c,id,d)=>wrap(db.collection(c).doc(id).update(d)),
+    del:(c,id)=>wrap(db.collection(c).doc(id).delete()),
+  };
+}
+function startDb(db){
+  S.mode='db'; api = makeDbApi(db);
+  const since = weekStart(Date.now()) - 7*7*DAY;
+  let gotN=false, gotL=false;
+  const ready = () => { if(gotN && gotL){ S.loaded=true; } render(); };
+  db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
+  db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => ({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
+  db.collection('staff').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.staff=m; if(!S.isOwner && !m[S.me]) return lockNow('You are no longer on the team.'); if(!S.isOwner){ S.role=m[S.me].role; } render(); }, () => {});
+  db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
+  db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
+  db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
+  db.doc('settings/owner').onSnapshot(d => { S.ownerUid = d.exists ? d.data().uid : null; }, () => {});
+  if(S.isOwner) db.doc('settings/owner').set({uid:S.me}).catch(()=>{});
+}
+function dbErr(e){ console.warn(e); S.loaded=true; render(); }
+
+const LKEY='dojo-bucks-preview-v2';
+function startLocal(){
+  S.mode='local'; S.role='director'; S.me='preview-director';
+  let saved=null; try{ saved = JSON.parse(localStorage.getItem(LKEY)||'null'); }catch{}
+  if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; }
+  else { const s = makeSamples(); s.ninjas.forEach(n=>S.ninjas[n.id]=n); S.log = s.log.sort((a,b)=>b.at-a.at); S.news = s.news; }
+  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff})); }catch{} };
+  const col = c => c==='ninjas' ? 'ninjas' : c;
+  api = {
+    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings') S.settings=d; else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
+    update:async(c,id,d)=>{ if(c==='staff' && S.staff[id]) S.staff={...S.staff,[id]:{...S.staff[id],...d}}; if(c==='ninjas' && S.ninjas[id]) S.ninjas[id]={...S.ninjas[id],...d}; else if(c==='requests') S.requests=S.requests.map(r=>r.id===id?{...r,...d}:r); persist(); render(); },
+    del:async(c,id)=>{ if(c==='staff'){ const m={...S.staff}; delete m[id]; S.staff=m; } if(c==='ninjas') delete S.ninjas[id]; else if(c==='log') S.log=S.log.filter(x=>x.id!==id); else if(c==='news') S.news=S.news.filter(x=>x.id!==id); else if(c==='requests') S.requests=S.requests.filter(x=>x.id!==id); persist(); render(); },
+  };
+  S.loaded=true;
+  showBanner('Demo mode: made-up sample ninjas, saved only in this browser. Use the Director / Sensei switch at the top to try each role. Open the site without ?demo to use the real dojo.');
+  render();
+}
+
+/* sample ninjas, clearly marked */
+function makeSamples(){
+  let seed=11; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; }; const pick=a=>a[Math.floor(rnd()*a.length)];
+  const jrNames=['Leo','Ivy','Kai','Mila','Noah','Aria','Ezra','Luna','Theo','Nora','Arjun','Zoe','Sami','Isla','Mateo'];
+  const crNames=['Maya','Aiden','Zara','Omar','Sofia','Ethan','Priya','Lucas','Amara','Jayden','Hana','Diego','Chloe','Ravi','Grace','Malik','Elena','Owen','Fatima','Caleb',
+    'Nina','Yusuf','Ella','Mason','Leila','Ryan','Ava','Hiro','Sara','Jonah','Lina','Adam','Ruby','Kofi','Mia'];
+  // how many ninjas on each belt, White to Black: most ninjas are on the early belts
+  const beltPlan=[6,6,5,5,4,3,3,2,1];
+  const people=[...jrNames.map(n=>[n,'junior',JR])]; let c=0;
+  beltPlan.forEach((cnt,b)=>{ for(let k=0;k<cnt;k++) people.push([crNames[c++],'ninja',b]); });
+  const now=Date.now(); const ninjas=[], log=[];
+  const plain=EARN.filter(e=>!e.step), shopPool=[...TIERS[0].items,...TIERS[1].items];
+  const L=(n,o)=>log.push({id:uid()+log.length, ninjaId:n.id, name:n.name, sample:true, ...o});
+  people.forEach(([name,group,belt],i)=>{
+    const lv=1+Math.floor(rnd()*(belt===JR?JR_BELT.levels:levelsOf(belt)));
+    const n={id:'sample'+i, name, group, belt:belt===JR?0:belt, level:lv, head:Math.floor(rnd()*HEADS), balance:0, earned:0, spent:0, lost:0, createdAt:now-120*DAY, sample:true};
+    // history before the last 6 weeks is folded into the totals; higher belts have been around longer
+    const past=Math.floor((belt===JR?80:250+belt*420)*(0.6+rnd()*0.8));
+    n.earned=past; n.spent=Math.floor(past*(0.2+rnd()*0.5)); n.balance=past-n.spent;
+    const events=6+Math.floor(rnd()*10);
+    for(let k=0;k<events;k++){
+      const at=now-Math.floor(rnd()*42*DAY)-1800e3, r=rnd();
+      if(r<0.7){ const it=pick(plain); n.balance+=it.amt; n.earned+=it.amt; L(n,{kind:'earn',item:it.id,icon:it.icon,label:it.label,amt:it.amt,at}); }
+      else if(r<0.85){ const it=PEN[Math.floor(rnd()*3)], d=Math.min(it.amt,n.balance); n.balance-=d; n.lost+=d; L(n,{kind:'penalty',item:it.id,icon:it.icon,label:it.label,amt:d,at}); }
+      else { const it=pick(shopPool); if(n.balance>=it.cost){ n.balance-=it.cost; n.spent+=it.cost; L(n,{kind:'redeem',item:it.id,icon:it.icon,label:it.label,amt:it.cost,at}); } }
+    }
+    // a recent level up for about a third of the dojo
+    if(lv>1 && rnd()<0.35){ const it=EARN.find(e=>e.id==='levelup'), bi=belt; n.balance+=it.amt; n.earned+=it.amt;
+      L(n,{kind:'earn',item:'levelup',icon:it.icon,label:`Level Up to ${beltInfo(bi).name} ${stepName(bi,lv)}`,amt:it.amt,at:now-Math.floor(rnd()*4*DAY)-600e3,toBelt:bi,toLevel:lv}); }
+    ninjas.push(n);
+  });
+  // a few belt ups this week
+  ninjas.filter(n=>n.group==='ninja' && n.level===1 && n.belt>0).slice(0,4).forEach(n=>{ const it=EARN.find(e=>e.id==='beltup'); n.balance+=it.amt; n.earned+=it.amt;
+    L(n,{kind:'earn',item:'beltup',icon:it.icon,label:`Belt Up to ${BELTS[n.belt].name}`,amt:it.amt,at:now-Math.floor(rnd()*3*DAY)-900e3,toBelt:n.belt,toLevel:1}); });
+  // a big Legendary purchase for the richest ninja
+  const rich=[...ninjas].sort((a,b)=>b.balance-a.balance)[0], g=TIERS[2].items[0];
+  if(rich.balance>=g.cost){ rich.balance-=g.cost; rich.spent+=g.cost; L(rich,{kind:'redeem',item:g.id,icon:g.icon,label:g.label,amt:g.cost,at:now-2*DAY}); }
+  const news=[{id:'samplenews1', text:'🍕 Pizza party Friday for every ninja who stays on track!', at:now-3600e3, sample:true},
+              {id:'samplenews2', text:'🎮 Gaming Night is coming up! Save your Ninja Bucks for a pass.', at:now-7200e3, sample:true}];
+  return {ninjas, log, news};
+}
+async function loadSamples(){
+  const s=makeSamples();
+  const writes=[...s.ninjas.map(n=>['ninjas',n]), ...s.log.map(l=>['log',l]), ...s.news.map(x=>['news',x])];
+  toast(`Adding ${s.ninjas.length} sample ninjas…`);
+  for(let i=0;i<writes.length;i+=40) await Promise.all(writes.slice(i,i+40).map(([c,o])=>{ const {id,...d}=o; return api.set(c,id,d); }));
+  toast(`Added ${s.ninjas.length} sample ninjas. Remove them any time from the Ninjas page.`);
+}
+async function clearSamples(){
+  const ns=Object.values(S.ninjas).filter(n=>n.sample), ls=S.log.filter(l=>l.sample), nw=S.news.filter(x=>x.sample);
+  const dels=[...ns.map(n=>['ninjas',n.id]), ...ls.map(l=>['log',l.id]), ...nw.map(x=>['news',x.id])];
+  for(let i=0;i<dels.length;i+=40) await Promise.all(dels.slice(i,i+40).map(([c,id])=>api.del(c,id)));
+  toast('Sample ninjas removed. Your real ninjas are untouched.');
+}
+
+/* ---------- roles & approvals ---------- */
+// Roles: the owner (Center Director email login) is always Center Director; everyone else is a staff member
+// added in Admin > Team with a first name, a role and a PIN. Firestore security rules enforce what each role can change.
+const isDir = () => S.role==='director';
+const canWrite = () => S.role!=='viewer';
+const pendingReqs = () => S.requests.filter(r=>r.status==='pending');
+const heldFor = id => pendingReqs().filter(r=>r.type==='redeem' && r.ninjaId===id).reduce((a,r)=>a+(r.cost||0),0);
+async function sendRequest(type, data, msg){
+  try{ await api.set('requests', uid(), {type, ...data, by:S.me, at:Date.now(), status:'pending'}); toast(msg || 'Sent to the Center Director for approval.'); }catch{}
+}
+function rankOf(o){ return o.group==='junior' ? `JR Pink belt · Level ${o.level}` : `${BELTS[o.belt|0].name} belt · ${stepName(o.belt|0, o.level)}`; }
+function describeReq(r){
+  const nm = id => `<b>${esc(S.ninjas[id]?.name || 'a removed ninja')}</b>`;
+  if(r.type==='add') return {ic:'🥷', html:`Add new ninja <b>${esc(r.name)}</b> · ${esc(rankOf(r))}${r.start?` · ${fmt(r.start)} starting bucks`:''}`};
+  if(r.type==='rank') return {ic:'🥋', html:`Change ${nm(r.ninjaId)} to ${esc(rankOf(r))}`};
+  if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); return {ic:it?.img?badge(it.img,36):'⭐', html:`${esc(it?.label||'Level Up')} for ${(r.ninjaIds||[]).map(nm).join(', ')}`}; }
+  if(r.type==='redeem'){ const it=findItem('redeem', r.item); return {ic:it?.pic?`<img class="mascot" src="mascots/${it.pic}.webp" alt="" style="height:40px">`:(it?.icon||'🛍️'), html:`${nm(r.ninjaId)} wants <b>${esc(it?.label||r.item)}</b> for ${fmt(r.cost)} bucks`}; }
+  return {ic:'•', html:esc(r.type)};
+}
+const ROLE_NAMES = {director:'Center Director', sensei:'Sensei', viewer:'View only'};
+const personName = id => { const p=S.staff[id]; if(p) return p.role==='viewer' ? p.name : `Sensei ${p.name}`; if(id && id===S.ownerUid) return 'Center Director'; if(id==='preview-director') return 'Center Director (demo)'; if(id==='preview-sensei') return 'Sensei (demo)'; return ''; };
+function renderTeam(){
+  const host=document.getElementById('teamList'); if(!host) return;
+  const rows=[];
+  if(S.mode==='db') rows.push(`<tr><td><b>${S.isOwner?'You':'Center Director'}</b> <span class="hint">(owner, signs in with email)</span></td><td><b>Center Director</b></td><td></td><td></td></tr>`);
+  Object.values(S.staff).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+    const editing = S.pinFor===p.id, removing = S.removeFor===p.id, self = p.id===S.me;
+    rows.push(`<tr><td><b>${esc(personName(p.id))}</b>${self?' <span class="hint">(you)</span>':''}</td>
+      <td><select data-staffrole="${esc(p.id)}" id="sr-${esc(p.id)}" aria-label="Role" ${self?'disabled':''}>${Object.entries(ROLE_NAMES).map(([k,v])=>`<option value="${k}" ${k===p.role?'selected':''}>${v}</option>`).join('')}</select></td>
+      <td>${editing ? `<span class="row" style="gap:6px"><input id="newPin-${esc(p.id)}" inputmode="numeric" maxlength="6" placeholder="New PIN" style="width:110px;border:2px solid var(--line);border-radius:10px;padding:6px 8px;font-weight:800;background:var(--surface);color:var(--ink)"><button class="btn primary" data-act="savePin" data-id="${esc(p.id)}" style="padding:6px 10px">Save</button><button class="btn ghost" data-act="cancelPin" style="padding:6px 10px">Cancel</button></span>` : `<button class="btn ghost" data-act="pinFor" data-id="${esc(p.id)}" style="padding:6px 10px">Change PIN</button>`}</td>
+      <td>${self ? '' : removing ? `<span class="row" style="gap:6px"><button class="btn primary" data-act="removeStaff" data-id="${esc(p.id)}" style="padding:6px 10px">Yes, remove</button><button class="btn ghost" data-act="cancelRemoveStaff" style="padding:6px 10px">Keep</button></span>` : `<button class="btn ghost" data-act="askRemoveStaff" data-id="${esc(p.id)}" style="padding:6px 10px">Remove</button>`}</td></tr>`);
+  });
+  host.innerHTML = rows.length>1 || S.mode!=='db' && rows.length ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`
+    : (rows.join('') ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div><p class="hint" style="margin:8px 0 0">No senseis yet. Add your first one above.</p>` : '<p class="hint" style="margin:0">No senseis yet. Add your first one above.</p>');
+}
+const PIN_OK = pin => /^[0-9]{4,6}$/.test(pin);
+const pinPass = pin => `dojo-bucks-${pin}`;
+let secondary=null;
+async function createStaffLogin(pin){
+  // Staff sign in with a hidden email and a password made from their PIN. The account is created on a second
+  // Firebase app instance so the Center Director stays signed in.
+  if(!secondary) secondary = firebase.initializeApp(window.FIREBASE_CONFIG, 'staff-admin');
+  const email = `staff-${uid()}@staff.${window.FIREBASE_CONFIG.authDomain}`;
+  const cred = await secondary.auth().createUserWithEmailAndPassword(email, pinPass(pin));
+  await secondary.auth().signOut();
+  return {uid:cred.user.uid, email};
+}
+async function publishStaffList(map){
+  const list = Object.values(map).map(p=>({uid:p.id, name:p.name, role:p.role, email:p.email||'', pinLen:p.pinLen||4}));
+  if(S.mode==='db') await firebase.firestore().doc('public/staff').set({list, updatedAt:Date.now()});
+}
+async function addStaff(name, role, pin){
+  if(!isDir()) return;
+  if(S.mode!=='db'){ const id='demo-'+uid(); await api.set('staff', id, {name, role, pinLen:pin.length, createdAt:Date.now()}); toast(`${name} added (demo).`); return; }
+  try{
+    const {uid:sid, email} = await createStaffLogin(pin);
+    const doc = {name, role, email, pinLen:pin.length, createdAt:Date.now()};
+    await api.set('staff', sid, doc);
+    await publishStaffList({...S.staff, [sid]:{id:sid, ...doc}});
+    toast(`${role==='viewer'?name:'Sensei '+name} added. They tap their name and enter the PIN.`);
+  }catch(e){ console.warn(e); toast('Could not add that person. Check the connection and try again.'); }
+}
+async function setStaffRole(id, role){
+  if(!isDir() || !S.staff[id]) return;
+  await api.update('staff', id, {role});
+  await publishStaffList({...S.staff, [id]:{...S.staff[id], role}});
+  toast('Role updated.');
+}
+async function changePin(id, pin){
+  if(!isDir() || !S.staff[id]) return;
+  if(S.mode!=='db'){ await api.update('staff', id, {pinLen:pin.length}); S.pinFor=null; toast('PIN changed (demo).'); return; }
+  try{
+    // A PIN change makes a fresh login and moves the person over to it; the old PIN stops working.
+    const {uid:nid, email} = await createStaffLogin(pin);
+    const old = S.staff[id], doc = {name:old.name, role:old.role, email, pinLen:pin.length, createdAt:old.createdAt||Date.now()};
+    await api.set('staff', nid, doc); await api.del('staff', id);
+    const next={...S.staff, [nid]:{id:nid, ...doc}}; delete next[id];
+    await publishStaffList(next); S.pinFor=null; toast(`New PIN saved for ${old.name}.`);
+  }catch(e){ console.warn(e); toast('Could not change the PIN. Try again.'); }
+}
+async function removeStaff(id){
+  if(!isDir() || !S.staff[id]) return;
+  const name=S.staff[id].name; await api.del('staff', id);
+  const next={...S.staff}; delete next[id]; await publishStaffList(next); S.removeFor=null; toast(`${name} was removed from the team.`);
+}
+async function fillNames(root){
+  root.querySelectorAll('[data-uid]').forEach(e=>{ e.textContent = e.dataset.uid===S.me && S.mode==='db' ? 'You' : (personName(e.dataset.uid) || 'Someone'); });
+}
+async function downloadBackup(){
+  if(!isDir()) return;
+  const out={exportedAt:new Date().toISOString(), ninjas:S.ninjas, news:S.news, requests:S.requests, settings:S.settings};
+  try{
+    if(S.mode==='db'){ const snap=await firebase.firestore().collection('log').get(); out.log=snap.docs.map(d=>({id:d.id,...d.data()})); } else out.log=S.log;
+  }catch(e){ out.log=S.log; }
+  const blob=new Blob([JSON.stringify(out,null,1)],{type:'application/json'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=`dojo-bucks-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast('Backup downloaded.');
+}
+async function approveReq(r){
+  if(!isDir() || r.status!=='pending') return;
+  let note='';
+  if(r.type==='add') await addNinja(r.name, r.group, r.belt|0, r.level||1, r.start||0, r.head|0);
+  else if(r.type==='rank'){ if(!S.ninjas[r.ninjaId]) note='Ninja was removed';
+    else await api.update('ninjas', r.ninjaId, r.group==='junior' ? {group:'junior', level:r.level} : {group:'ninja', belt:r.belt|0, level:r.level}); }
+  else if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]); if(it && ids.length) await give('earn', it, ids); else note='Nothing to apply'; }
+  else if(r.type==='redeem'){ const n=S.ninjas[r.ninjaId], it=findItem('redeem', r.item);
+    if(!n || !it){ note='Ninja or reward not found'; }
+    else if((n.balance||0) < r.cost){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Not enough bucks'}); toast(`${n.name} no longer has enough bucks, so this was declined.`); return; }
+    else await redeem(it, r.ninjaId, true); }
+  await api.update('requests', r.id, {status:'approved', decidedBy:S.me, decidedAt:Date.now(), ...(note?{note}:{})});
+}
+async function rejectReq(r){ if(!isDir()) return; await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now()}); toast('Request declined.'); }
+
+/* ---------- actions ---------- */
+async function give(kind, item, ids=[...S.selected]){
+  if(!ids.length){ toast('Pick at least one ninja first.'); return; }
+  if(item.step && !isDir()){ await sendRequest('step', {item:item.id, ninjaIds:ids}, `${item.label} sent to the Center Director for approval.`); return; }
+  const amt = amountOf(kind,item); const at=Date.now(); const undo=[]; const jobs=[]; const newBlack=[]; let skipped=0;
+  const blackItem = EARN.find(x=>x.step==='black');
+  for(const id of ids){
+    const n=S.ninjas[id]; if(!n) continue;
+    let d, patch;
+    const bf=beltFor(n), wi=bf.i;
+    const was={belt:n.belt|0, level:bf.level, group:n.group||'ninja'};
+    if(item.step && item.step!=='level' && (wi===BLACK || (item.step==='black' && wi===JR))){ skipped++; continue; }
+    const toBlack = item.step==='black' || (item.step==='belt' && wi+1===BLACK);
+    if(kind==='earn'){ d = toBlack ? amountOf('earn', blackItem) : amt; patch={balance:(n.balance||0)+d, earned:(n.earned||0)+d};
+      if(item.step==='level') patch.level=Math.min(levelsOf(wi), bf.level+1);
+      if(item.step==='belt'){ patch.belt=Math.min(BLACK, wi+1); patch.level=1; if(wi===JR) patch.group='ninja'; }
+      if(toBlack){ patch.belt=BLACK; patch.level=1; newBlack.push(n.name); } }
+    else { d=Math.min(amt, n.balance||0); patch={balance:(n.balance||0)-d, lost:(n.lost||0)+d}; }
+    const logId=uid()+id.slice(-3);
+    const label = toBlack ? 'Earned Black Belt!' : item.step==='belt' ? `Belt Up to ${BELTS[patch.belt].name}` : item.step==='level' ? (beltInfo(wi).projects ? `Finished ${stepName(wi, bf.level)}` : `Level Up to ${beltInfo(wi).name} ${stepName(wi, patch.level)}`) : item.label;
+    const ni = item.step ? beltFor({group:patch.group ?? n.group, belt:patch.belt ?? n.belt, level:patch.level ?? bf.level}) : null;
+    jobs.push(api.update('ninjas',id,patch), api.set('log',logId,{ninjaId:id,name:n.name,kind,item:toBlack?'blackbelt':item.id,icon:toBlack?blackItem.icon:item.icon,label,amt:d,at, ...(ni?{toBelt:ni.i, toLevel:ni.level}:{})}));
+    undo.push({id,kind,d,logId, was:item.step?was:null, wi, now:{belt:patch.belt ?? was.belt, level:patch.level ?? was.level, group:patch.group ?? was.group}}); popOn(id, kind, d);
+  }
+  if(!undo.length){ toast(skipped ? 'Already a Black Belt. There is no higher belt to give.' : 'Pick at least one ninja first.'); return; }
+  try{ await Promise.all(jobs); }catch{ return; }
+  if(newBlack.length) celebrateBlack(newBlack, amountOf('earn', blackItem));
+  else if(item.step && undo.length){
+    const b=beltFor(undo[0].now), names=undo.map(u=>S.ninjas[u.id]?.name).filter(Boolean), who=names.join(' & ');
+    if(item.step==='belt' && b.i!==undo[0].wi) celebrateRank(names, DONE(undo[0].wi), `${beltInfo(undo[0].wi).name} belt complete`, `${who} earned ${b.name} Belt!`, `+${fmt(amt)} Ninja Bucks${names.length>1?' each':''}. Next up: ${stepName(b.i,1)}.`);
+    else if(item.step==='level') celebrateRank(names, BADGE(b.i,b.level), 'Level up', `${who} reached ${b.name} ${stepName(b.i,b.level)}`, `+${fmt(amt)} Ninja Bucks${names.length>1?' each':''}.`);
+  }
+  const who = undo.length===1 ? S.ninjas[undo[0].id]?.name : undo.length+' ninjas';
+  const shown = undo.length===1 ? undo[0].d : amt;
+  toast(newBlack.length && undo.length===1 ? `+${fmt(shown)} for ${who}: Earned Black Belt!` : kind==='earn' ? `+${fmt(shown)} for ${who}: ${item.label}` : `−${fmt(shown)} for ${who}: ${item.label}`, undo);
+}
+async function redeem(item, ninjaId=S.shopper, approved=false){
+  const n=S.ninjas[ninjaId]; if(!n) return; const cost=amountOf('redeem',item);
+  if(!isDir() && !approved){ S.confirm=null; if((n.balance||0)-heldFor(n.id) < cost){ toast(`${n.name} needs more bucks for this.`); render(); return; }
+    await sendRequest('redeem', {ninjaId:n.id, item:item.id, cost}, `${n.name}'s ${item.label} is waiting for the Center Director.`); render(); return; }
+  if((n.balance||0) < cost){ toast(`${n.name} needs ${fmt(cost-n.balance)} more bucks.`); return; }
+  const logId=uid(); S.confirm=null;
+  try{ await Promise.all([api.update('ninjas',n.id,{balance:n.balance-cost, spent:(n.spent||0)+cost}), api.set('log',logId,{ninjaId:n.id,name:n.name,kind:'redeem',item:item.id,icon:item.icon,label:item.label,amt:cost,at:Date.now()})]); }catch{ return; }
+  celebrate(n, item, cost);
+  toast(`${n.name} spent ${fmt(cost)} bucks on ${item.label}`, [{id:n.id,kind:'redeem',d:cost,logId}]);
+}
+async function undoAll(list){
+  const jobs=[];
+  for(const u of list){ const n=S.ninjas[u.id]; if(n){
+    const p = u.kind==='earn' ? {balance:Math.max(0,n.balance-u.d), earned:Math.max(0,n.earned-u.d), ...(u.was||{})}
+            : u.kind==='penalty' ? {balance:n.balance+u.d, lost:Math.max(0,(n.lost||0)-u.d)}
+            : {balance:n.balance+u.d, spent:Math.max(0,(n.spent||0)-u.d)};
+    jobs.push(api.update('ninjas',u.id,p)); }
+    jobs.push(api.del('log',u.logId)); }
+  try{ await Promise.all(jobs); toast('Undone.'); }catch{}
+}
+async function addNinja(name, group, belt, level, start=0, head=S.head){
+  const id=uid(); start=Math.max(0, Math.round(start||0));
+  await api.set('ninjas', id, {name, group, belt, level, head, balance:start, earned:start, spent:0, lost:0, createdAt:Date.now()});
+  if(start) await api.set('log', uid(), {ninjaId:id, name, kind:'setup', item:'setup', icon:'🛠️', label:'Starting bucks', amt:start, delta:start, at:Date.now()});
+  toast(`Welcome to the dojo, ${name}!`);
+}
+async function saveAmount(kind, id, val){
+  const key = kind==='earn'?'earn':kind==='penalty'?'pen':'shop';
+  const next = {earn:{...S.settings.earn}, pen:{...S.settings.pen}, shop:{...S.settings.shop}};
+  next[key][id] = Math.max(0, Math.round(val));
+  S.settings = next; render();
+  try{ await api.set('settings','values',next); }catch{}
+}
+
+/* ---------- UI bits ---------- */
+let toastTimer;
+function toast(msg, undo){
+  const host=document.getElementById('toastHost'); clearTimeout(toastTimer);
+  host.innerHTML = `<div class="toast" role="status"><span>${esc(msg)}</span>${undo?'<button data-act="undo">Undo</button>':''}</div>`;
+  host._undo = undo || null;
+  toastTimer = setTimeout(()=>{ host.innerHTML=''; host._undo=null; }, undo?8000:4000);
+}
+function showBanner(t){ document.getElementById('bannerText').textContent=t; document.getElementById('banner').hidden=false; }
+function popOn(id, kind, d){
+  const el=document.querySelector(`#picker .chip[data-id="${id}"]`); if(!el) return;
+  const s=document.createElement('span'); s.className='pop '+kind; s.textContent=(kind==='earn'?'+':'−')+d; el.appendChild(s); setTimeout(()=>s.remove(),1200);
+}
+function celebrateRank(names, img, eyebrow, title, text){
+  const host=document.getElementById('celebrateHost');
+  host.innerHTML = `<div class="celebrate" data-act="closeCelebrate"><div class="box">
+    ${badge(img,120)}<div class="eyebrow" style="color:var(--hero-muted)">${esc(eyebrow)}</div>
+    <h2>${esc(title)}</h2><p>${text}</p>
+    <button class="btn gold" data-act="closeCelebrate" style="margin-top:8px">Hai, Sensei!</button></div></div>`;
+  sparks(host); setTimeout(()=>{ if(host.firstChild) host.innerHTML=''; }, 6000);
+}
+function celebrateBlack(names, amt){
+  const host=document.getElementById('celebrateHost');
+  host.innerHTML = `<div class="celebrate" data-act="closeCelebrate"><div class="box">
+    ${badge('b8_a',120)}<div class="eyebrow" style="color:var(--hero-muted)">Capstone complete</div>
+    <h2>${esc(names.join(' & '))} earned Black Belt!</h2><p>The highest rank in the dojo, worth <b>+${fmt(amt)}</b> Ninja Bucks${names.length>1?' each':''}.</p>
+    <button class="btn gold" data-act="closeCelebrate" style="margin-top:8px">Hai, Sensei!</button></div></div>`;
+  sparks(host); setTimeout(()=>{ if(host.firstChild) host.innerHTML=''; }, 8000);
+}
+function sparks(host){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cx=innerWidth/2, cy=innerHeight/2;
+  for(let i=0;i<28;i++){ const p=document.createElement('i'); p.className='spark'; const a=Math.random()*Math.PI*2, r=140+Math.random()*220;
+    p.style.left=cx+'px'; p.style.top=cy+'px'; p.style.setProperty('--dx',Math.cos(a)*r+'px'); p.style.setProperty('--dy',Math.sin(a)*r+'px');
+    if(i%3===0) p.style.background='var(--accent)'; host.appendChild(p); }
+}
+function celebrate(n, item, cost){
+  const host=document.getElementById('celebrateHost');
+  host.innerHTML = `<div class="celebrate" data-act="closeCelebrate"><div class="box">
+    ${item.pic?`<img class="mascot" src="mascots/${item.pic}.webp" alt="" style="height:150px">`:`<div class="em">${item.icon}</div>`}<div class="eyebrow" style="color:var(--hero-muted)">Reward unlocked</div>
+    <h2>${esc(item.label)}</h2><p>${esc(n.name)} spent <b>${fmt(cost)}</b> Ninja Bucks. Show this to your sensei!</p>
+    <button class="btn gold" data-act="closeCelebrate" style="margin-top:8px">Awesome!</button></div></div>`;
+  sparks(host);
+  setTimeout(()=>{ if(host.firstChild) host.innerHTML=''; }, 6000);
+}
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
+  document.querySelectorAll('.filterSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.filter===S.filter));
+  document.querySelectorAll('#metricSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.metric===S.metric));
+  if(S.view==='admin' && !isDir()) S.view='board';
+  if((S.view==='award' || S.view==='roster') && !canWrite()) S.view='board';
+  if(!isDir()) S.editing=false;
+  document.getElementById('adminTab').hidden = !isDir();
+  document.querySelector('a[data-tab="award"]').hidden = !canWrite();
+  document.querySelector('a[data-tab="roster"]').hidden = !canWrite();
+  document.getElementById('newsBtn').hidden = !canWrite();
+  document.getElementById('editAward').hidden = !isDir();
+  document.getElementById('editShop').hidden = !isDir();
+  const pc=pendingReqs().length, cnt=document.getElementById('adminCount'); cnt.hidden=!pc; cnt.textContent=pc;
+  document.getElementById('addBtn').textContent = isDir() ? 'Add ninja' : 'Send for approval';
+  const chip=document.getElementById('roleChip');
+  chip.className='role-chip'+(isDir()?' dir':'');
+  chip.innerHTML = S.mode==='local' ? `Preview as <button data-act="asRole" data-role="director" aria-pressed="${isDir()}">Director</button><button data-act="asRole" data-role="sensei" aria-pressed="${S.role==='sensei'}">Sensei</button>`
+    : (S.isOwner ? 'Center Director' : (personName(S.me) ? esc(personName(S.me))+' · ' : '') + ROLE_NAMES[S.role]);
+  document.getElementById('lockBtn').hidden = S.mode!=='db';
+  document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
+  document.getElementById('editAward').textContent = S.editing ? 'Done changing' : 'Change amounts';
+  document.getElementById('editShop').textContent = S.editing ? 'Done changing' : 'Change prices';
+  if(!S.loaded) return;
+  renderTicker();
+  if(S.view==='board') renderBoard();
+  if(S.view==='dash') renderDash();
+  if(S.view==='award') renderAward();
+  if(S.view==='shop') renderShop();
+  if(S.view==='roster') renderRoster();
+  if(S.view==='admin') renderAdmin();
+  renderDrawer();
+}
+
+function emptyDojo(){
+  return `<div class="empty"><img class="mascot" src="mascots/buddies.webp" alt="" style="height:150px"><h2>Your dojo is empty</h2>
+    <p>Add your ninjas to start giving out Ninja Bucks. Their bucks keep adding up until they spend them in the Reward Shop.</p>
+    <div class="row" style="justify-content:center"><a class="btn primary" href="#roster" style="text-decoration:none">Add ninjas</a>
+</div></div>`;
+}
+
+function renderDash(){
+  const all=ninjaList();
+  const total=all.reduce((s,n)=>s+(n.balance||0),0), earnedAll=all.reduce((s,n)=>s+(n.earned||0),0), spentAll=all.reduce((s,n)=>s+(n.spent||0),0);
+  document.getElementById('vaultTotal').innerHTML = coin(64)+`<span>${fmt(total)}</span>`;
+  document.getElementById('vaultSub').textContent = all.length ? `${all.length} ninjas · ${fmt(earnedAll)} earned all time · ${fmt(spentAll)} spent in the shop` : 'Add ninjas to start filling the vault.';
+  document.getElementById('vaultBelts').innerHTML = ALL_BELTS.map(i=>{ const c=all.filter(n=>beltFor(n).i===i).length, b=beltInfo(i); return `<div class="vb ${c?'':'none'}" title="${b.name} belt: ${c} ninja${c===1?'':'s'}">${badge(DONE(i),44)}<span class="num">${c}</span></div>`; }).join('');
+
+  const ws=weekStart(Date.now()); const wk=S.log.filter(l=>l.at>=ws);
+  const sum=k=>wk.filter(l=>l.kind===k).reduce((s,l)=>s+l.amt,0);
+  const topBy=(k)=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); const e=Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; return e && S.ninjas[e[0]] ? {n:S.ninjas[e[0]], v:e[1]} : null; };
+  const ts=topBy('redeem'), te=topBy('earn');
+  const allSp=[...all].sort((a,b)=>(b.spent||0)-(a.spent||0))[0];
+  const redemptions=wk.filter(l=>l.kind==='redeem').length;
+  const who=(x,label,empty)=> x ? `<div class="who">${avatar(x.n,44)}<div style="min-width:0"><b>${esc(x.n.name)}</b><small class="num">${fmt(x.v)} ${label}</small></div></div>` : `<small>${empty}</small>`;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat earn"><span class="eyebrow">Earned this week</span><div class="v num">+${fmt(sum('earn'))}</div><small>${wk.filter(l=>l.kind==='earn').length} good-ninja moments</small></div>
+    <div class="stat spend"><span class="eyebrow">Spent this week</span><div class="v num">${coin(28)}${fmt(sum('redeem'))}</div><small>${redemptions} reward${redemptions===1?'':'s'} redeemed</small></div>
+    <div class="stat"><span class="eyebrow">Top spender this week</span>${who(ts,'bucks spent','No rewards bought yet this week.')}</div>
+    <div class="stat"><span class="eyebrow">Top earner this week</span>${who(te,'bucks earned','No bucks given yet this week.')}</div>
+    <div class="stat"><span class="eyebrow">Biggest spender ever</span>${allSp && allSp.spent ? who({n:allSp,v:allSp.spent},'bucks spent all time','') : '<small>Nobody has shopped yet.</small>'}</div>
+    <div class="stat lost"><span class="eyebrow">Lost to penalties this week</span><div class="v num">−${fmt(sum('penalty'))}</div><small>${wk.filter(l=>l.kind==='penalty').length} penalties</small></div>`;
+
+  renderChart();
+  renderFeed();
+}
+function renderBoard(){
+  const all=ninjaList();
+  const board=document.getElementById('board');
+  const list=filtered().sort((a,b)=>(b[S.metric]||0)-(a[S.metric]||0));
+  if(!all.length){ board.innerHTML=emptyDojo(); }
+  else if(!list.length){ board.innerHTML='<div class="empty"><p>No ninjas in this group yet.</p></div>'; }
+  else {
+    const top=list.slice(0,3); const order=[top[1],top[0],top[2]]; const cls=['p2','p1','p3']; const place=[2,1,3];
+    const pod = order.map((n,i)=> n ? `<button class="pod ${cls[i]}" data-act="open" data-id="${n.id}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0">
+        ${avatar(n, cls[i]==='p1'?72:56)}<span class="name">${esc(n.name)}</span>${beltBadge(n, 34)}
+        <div class="block"><span class="place">${place[i]}</span><span class="amt num">${coin(16)}${fmt(n[S.metric])}</span></div></button>` : '<div></div>').join('');
+    const on = k => S.metric===k ? ' on' : '';
+    const rest = list.slice(3).map((n,i)=>`<tr data-act="open" data-id="${n.id}" tabindex="0">
+        <td class="rk">${i+4}</td>
+        <td><span class="who">${avatar(n,40)}<span class="nm"><b>${esc(n.name)}</b><small>${rankText(n)}</small></span></span></td>
+        <td class="bc">${beltBadge(n,34)}</td>
+        <td class="n hide-sm${on('earned')}">${fmt(n.earned)}</td>
+        <td class="n hide-sm${on('spent')}">${fmt(n.spent)}</td>
+        <td class="n bal${on('balance')}"><span>${coin(18)}${fmt(n.balance)}</span></td></tr>`).join('');
+    board.innerHTML = `<div class="podium">${pod}</div>${rest?`<h3 class="eyebrow" style="margin:18px 0 6px">All other ninjas</h3>
+      <div class="lbt-wrap"><table class="lbt"><thead><tr><th>#</th><th>Ninja</th><th>Belt</th><th class="n hide-sm${on('earned')}">Earned</th><th class="n hide-sm${on('spent')}">Spent</th><th class="n${on('balance')}">Balance</th></tr></thead><tbody>${rest}</tbody></table></div>`:''}`;
+  }
+}
+function renderFeed(){
+  const feed=document.getElementById('feed');
+  const itemImg = id => EARN.find(x=>x.id===id)?.img;
+  feed.innerHTML = S.log.slice(0,40).map(l=>`<li><span class="ic">${itemImg(l.item) ? badge(itemImg(l.item),30) : (l.icon||'•')}</span><span class="tx"><b>${esc(l.name)}</b> ${l.kind==='redeem'?'redeemed':l.kind==='earn'?'earned for':l.kind==='setup'?'—':'lost for'} ${esc(l.label)}<small>${ago(l.at)}</small></span>
+    <span class="d ${l.kind} num">${(l.kind==='setup' ? ((l.delta??0)>=0?'+':'−') : l.kind==='earn'?'+':'−')}${fmt(l.amt)}</span></li>`).join('') || '<li><span></span><span class="tx" style="color:var(--muted)">Nothing yet. Give out some bucks on the Give Bucks page.</span><span></span></li>';
+}
+
+
+/* ---------- news ticker ---------- */
+function tickerItems(){
+  const out=[], now=Date.now(), all=ninjaList();
+  S.news.slice(0,8).forEach(n=>out.push(`<span class="tk-tag">BREAKING</span> ${esc(n.text)}`));
+  const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
+  const imgOf = id => EARN.find(x=>x.id===id)?.img;
+  const itemOf = id => [...EARN, ...TIERS.flatMap(t=>t.items)].find(x=>x.id===id);
+  let regular=0;
+  recent.slice(0,18).forEach(l=>{
+    const who=`<b>${esc(l.name)}</b>`, fresh = now-l.at < 15*60e3 ? '<span class="tk-tag">JUST IN</span> ' : '';
+    let line=null;
+    if(l.item==='blackbelt') line=`${badge('b8_a',24)}${who} earned BLACK BELT! The highest rank in the dojo! 🥷`;
+    else if(l.item==='beltup'){ const nm = Number.isInteger(l.toBelt) ? beltInfo(l.toBelt).name : (l.label.startsWith('Belt Up to ') ? l.label.slice(11) : null);
+      line=`${badge(Number.isInteger(l.toBelt)?DONE(l.toBelt-1<JR?JR:l.toBelt-1):'b2_done',24)}${who} belted up${nm?` to ${esc(nm)} Belt`:''}! 🥋`; }
+    else if(l.item==='levelup'){ const t = Number.isInteger(l.toBelt) ? (beltInfo(l.toBelt).projects ? `finished a project and moved on to ${stepName(l.toBelt,l.toLevel)}` : `leveled up to ${beltInfo(l.toBelt).name} Belt - ${stepName(l.toBelt,l.toLevel)}`) : (l.label.startsWith('Level Up to ') ? `leveled up to ${l.label.slice(12)}` : l.label.startsWith('Finished') ? l.label.replace('Finished','finished') : 'leveled up');
+      line=`${Number.isInteger(l.toBelt)?badge(BADGE(l.toBelt,l.toLevel),24):badge('b4_l1',24)}${who} ${esc(t)}! ⭐`; }
+    else if(l.kind==='redeem'){ const it=itemOf(l.item); line=`🛍️ ${who} bought ${esc(it?.say || l.label)}!`; }
+    else if(l.kind==='earn' && regular<6){ regular++; const it=itemOf(l.item); line=`${l.icon} ${who} earned ${fmt(l.amt)} Ninja Bucks for ${esc(it?.say || l.label.toLowerCase())}!`; }
+    if(line) out.push(fresh+line);
+  });
+  const ws=weekStart(now), wk=S.log.filter(l=>l.at>=ws);
+  const sumBy=k=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; };
+  const te=sumBy('earn'); if(te && S.ninjas[te[0]]) out.push(`🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
+  const ts=sumBy('redeem'); if(ts && S.ninjas[ts[0]]) out.push(`💸 <b>${esc(S.ninjas[ts[0]].name)}</b> is the top spender this week: ${fmt(ts[1])} bucks!`);
+  const rich=[...all].sort((a,b)=>(b.balance||0)-(a.balance||0))[0]; if(rich && rich.balance) out.push(`💰 <b>${esc(rich.name)}</b> has the biggest balance in the dojo: ${fmt(rich.balance)} bucks!`);
+  const items=TIERS.flatMap(t=>t.items);
+  all.forEach(n=>{ const next=items.map(it=>({it,c:amountOf('redeem',it)})).filter(x=>x.c>(n.balance||0)).sort((a,b)=>a.c-b.c)[0];
+    if(next){ const gap=next.c-(n.balance||0); if(gap<=Math.max(20, next.c*0.1)) out.push(`🔥 <b>${esc(n.name)}</b> is only ${fmt(gap)} bucks away from ${esc(next.it.label)}!`); } });
+  const earnedWk=wk.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0); if(earnedWk) out.push(`🪙 The dojo has earned ${fmt(earnedWk)} Ninja Bucks this week. Keep it up, ninjas!`);
+  if(!out.length) out.push('🥷 Welcome to the dojo! Be on time, stay on track and help each other to earn Ninja Bucks.');
+  return out;
+}
+// The ticker is a conveyor belt: copies of the news strip keep rolling left. New content joins at the
+// right edge, so the strip never jumps back to the start while it is moving.
+const TK_SPEED = 70; // pixels per second
+const tk = {html:'', off:0, paused:false, last:0, still:matchMedia('(prefers-reduced-motion: reduce)').matches};
+function tkGroup(hidden){ const g=document.createElement('span'); g.className='tk-group'; g.innerHTML=tk.html; if(hidden) g.setAttribute('aria-hidden','true'); return g; }
+function tkFill(){
+  const track=document.getElementById('tkTrack'), vw=track.parentElement.clientWidth || 800;
+  if(tk.still){ if(!track.firstElementChild) track.appendChild(tkGroup(false)); return; }
+  let total=0; for(const g of track.children) total+=g.offsetWidth;
+  while(track.children.length<2 || total < tk.off + vw*2){ const g=tkGroup(track.children.length>0); track.appendChild(g); total+=g.offsetWidth || vw; if(track.children.length>12) break; }
+}
+function renderTicker(){
+  const items=tickerItems(), html=items.map(h=>`<span class="tk-item">${h}</span>`).join('');
+  if(html===tk.html) return;
+  tk.html=html;
+  const track=document.getElementById('tkTrack');
+  if(tk.still){ track.innerHTML=''; tkFill(); return; }
+  // drop copies that have not scrolled into view yet, so the new news shows up next
+  const vw=track.parentElement.clientWidth; let x=0;
+  [...track.children].forEach(g=>{ if(x > tk.off + vw) g.remove(); x+=g.offsetWidth; });
+  tkFill();
+}
+function tkStep(ts){
+  const track=document.getElementById('tkTrack');
+  const dt=Math.min(0.1, tk.last ? (ts-tk.last)/1000 : 0); tk.last=ts;
+  if(!tk.paused && track.firstElementChild){
+    tk.off += TK_SPEED*dt;
+    const first=track.firstElementChild;
+    if(first.offsetWidth && tk.off >= first.offsetWidth){ tk.off -= first.offsetWidth; first.remove(); if(track.firstElementChild) track.firstElementChild.removeAttribute('aria-hidden'); tkFill(); }
+    track.style.transform=`translate3d(${-tk.off}px,0,0)`;
+  }
+  requestAnimationFrame(tkStep);
+}
+if(!tk.still) requestAnimationFrame(tkStep);
+const NEWS_TEMPLATES = [
+  "🍕 Pizza party Friday for every ninja who stays on track!",
+  "🎮 Gaming Night is coming up! Save your Ninja Bucks for a pass.",
+  "🏆 Shout-out to {ninja} for amazing focus today!",
+  "🎉 Happy birthday, {ninja}! Have an awesome day!",
+  "👋 Welcome to the dojo, {ninja}! Say hi to our newest ninja!",
+  "🥋 {ninja} is so close to the next belt. Keep going!",
+  "⏰ Double bucks today for everyone who arrives on time!",
+  "🤫 Quiet Dojo Challenge: stay focused and earn bonus bucks!",
+  "🛒 New prizes just landed in the Reward Shop!",
+  "☀️ Summer camp sign-ups are open. Ask your sensei!",
+  "🔧 Ninjas take care of the dojo. Treat our equipment with care!",
+  "📅 Heads up: the dojo is closed on ___. See you soon!",
+];
+function renderNewsPanel(){
+  const host=document.getElementById('newsPanel'); document.getElementById('newsBtn').textContent = S.newsOpen ? 'Close' : 'Post news';
+  if(!S.newsOpen){ host.innerHTML=''; return; }
+  host.innerHTML = `<div class="news-panel"><div class="wrap">
+    <div class="row" style="gap:8px"><span class="eyebrow">Quick templates</span>
+      <select id="tplNinja" aria-label="Ninja for the template"><option value="">Pick a ninja (optional)</option>${ninjaList().map(n=>`<option>${esc(n.name)}</option>`).join('')}</select></div>
+    <div class="tpls">${NEWS_TEMPLATES.map((t,k)=>`<button type="button" class="tpl" data-act="tpl" data-k="${k}">${esc(t.replace('{ninja}','[Ninja]'))}</button>`).join('')}</div>
+    <form id="newsForm"><input id="newsText" maxlength="120" placeholder="Breaking news, e.g. Pizza party Friday for everyone on track!" autocomplete="off" aria-label="News to show on the ticker"><button class="btn primary" type="submit">Post to ticker</button></form>
+    ${S.news.length ? `<ul class="news-list">${S.news.map(n=>`<li><span><span class="tk-tag">BREAKING</span> ${esc(n.text)} <small class="hint">· ${ago(n.at)}</small></span><button class="btn ghost" data-act="delNews" data-id="${n.id}">Remove</button></li>`).join('')}</ul>` : '<p class="hint" style="margin:0">Posts show first on the ticker until you remove them. Achievements, rewards and bucks show up on their own.</p>'}
+  </div></div>`;
+  document.getElementById('newsText').focus();
+}
+function renderChart(){
+  const ws=weekStart(Date.now()); const weeks=[];
+  for(let i=7;i>=0;i--){ const s=ws-i*7*DAY, e=s+7*DAY; const L=S.log.filter(l=>l.at>=s && l.at<e);
+    weeks.push({s, earn:L.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0), spend:L.filter(l=>l.kind==='redeem').reduce((a,l)=>a+l.amt,0)}); }
+  const raw=Math.max(10,...weeks.map(w=>Math.max(w.earn,w.spend)));
+  const mag=Math.pow(10,Math.floor(Math.log10(raw))); const step=[1,2,2.5,5,10].map(x=>x*mag).find(x=>raw/x<=4) || mag*10; const max=Math.ceil(raw/step)*step;
+  const W=480,H=220,L=40,R=8,T=12,B=30, iw=W-L-R, ih=H-T-B, gw=iw/8, bw=Math.min(18,gw*0.32);
+  const y=v=>T+ih-(v/max)*ih;
+  let g='';
+  for(let v=0; v<=max+1e-9; v+=step){ g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--f-body)" font-weight="700">${fmt(v)}</text>`; }
+  weeks.forEach((w,i)=>{ const cx=L+gw*i+gw/2; const cur=i===7;
+    g+=`<rect x="${cx-bw-1}" y="${y(w.earn)}" width="${bw}" height="${Math.max(0,T+ih-y(w.earn))}" rx="4" fill="var(--good)" opacity="${cur?1:.75}"><title>Week of ${new Date(w.s).toLocaleDateString(undefined,{month:'short',day:'numeric'})}: ${w.earn} earned</title></rect>`;
+    g+=`<rect x="${cx+1}" y="${y(w.spend)}" width="${bw}" height="${Math.max(0,T+ih-y(w.spend))}" rx="4" fill="var(--gold)" opacity="${cur?1:.75}"><title>${w.spend} spent</title></rect>`;
+    g+=`<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="11" fill="${cur?'var(--ink)':'var(--muted)'}" font-family="var(--f-body)" font-weight="${cur?900:700}">${cur?'This wk':new Date(w.s).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</text>`; });
+  document.getElementById('chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Ninja Bucks earned and spent in each of the last 8 weeks">${g}</svg>`;
+}
+
+function chipHTML(n, pressed, act){
+  return `<button class="chip" data-act="${act}" data-id="${n.id}" aria-pressed="${pressed}">${avatar(n,52)}<span class="nm">${esc(n.name)}</span><span class="bal num">${coin(14)}${fmt(n.balance)}</span></button>`;
+}
+function renderAward(){
+  const list=filtered(); const picker=document.getElementById('picker');
+  [...S.selected].forEach(id=>{ if(!S.ninjas[id]) S.selected.delete(id); });
+  picker.innerHTML = !ninjaList().length ? emptyDojo() : list.map(n=>chipHTML(n, S.selected.has(n.id), 'toggle')).join('') || '<p class="hint">No ninjas in this group.</p>';
+  picker.style.display = ninjaList().length ? '' : 'block';
+  const k=S.selected.size; const none=!k || S.readOnly;
+  document.getElementById('selHint').textContent = k ? `${k} ninja${k>1?'s':''} selected: ${[...S.selected].map(id=>S.ninjas[id]?.name).join(', ')}` : 'Pick one or more ninjas first.';
+  const tile=(kind,it)=>{ const a=amountOf(kind,it);
+    return S.editing ? `<div class="act ${kind}"><span class="em">${it.img?badge(it.img,40):it.icon}</span><span class="lbl">${esc(it.label)}</span><input type="number" min="0" id="amt-${kind}-${it.id}" data-kind="${kind}" data-item="${it.id}" value="${a}" aria-label="Bucks for ${esc(it.label)}"></div>`
+      : `<button class="act ${kind}" data-act="give" data-kind="${kind}" data-item="${it.id}" ${none?'disabled':''}><span class="em">${it.img?badge(it.img,40):it.icon}</span><span class="lbl">${esc(it.label)}${it.step && !isDir()?'<span class="needs">Needs director approval</span>':''}</span><span class="amt num">${kind==='earn'?'+':'−'}${a}</span></button>`; };
+  document.getElementById('earnGrid').innerHTML = EARN.map(it=>tile('earn',it)).join('');
+  document.getElementById('penGrid').innerHTML = PEN.map(it=>tile('penalty',it)).join('');
+}
+
+function renderShop(){
+  const list=ninjaList();
+  if(S.shopper && !S.ninjas[S.shopper]) S.shopper=null;
+  if(!S.shopper && list.length) S.shopper = [...list].sort((a,b)=>b.balance-a.balance)[0].id;
+  const n=S.ninjas[S.shopper];
+  document.getElementById('shopPick').innerHTML = list.length ? list.map(x=>chipHTML(x, x.id===S.shopper, 'shopper')).join('') : emptyDojo();
+  document.getElementById('wallet').innerHTML = n ? `${avatar(n,64)}<div><div class="eyebrow">${esc(n.name)} has</div><div class="bal num">${coin(40)}${fmt(n.balance)}</div></div>
+    <div class="hint" style="margin-left:auto">Spent so far: <b class="num">${fmt(n.spent)}</b> bucks</div>` : '';
+  const bal=(n?.balance||0) - (n && !isDir() ? heldFor(n.id) : 0);
+  const waiting = id => n && pendingReqs().some(r=>r.type==='redeem' && r.ninjaId===n.id && r.item===id);
+  document.getElementById('tiers').innerHTML = TIERS.map(t=>`<div class="tier ${t.id}"><div class="tier-head"><h2>${t.name}</h2><p>${t.blurb}</p></div><div class="items">${
+    t.items.map(it=>{ const c=amountOf('redeem',it); const ok=n && bal>=c; const pct=Math.min(100, c? bal/c*100 : 100);
+      const conf = S.confirm===it.id && ok;
+      return `<div class="item ${ok?'ready':''}">${it.pic?`<img class="mascot pic" src="mascots/${it.pic}.webp" alt="">`:`<span class="em">${it.icon}</span>`}<h3>${esc(it.label)}</h3>${it.note?`<span class="hint" style="margin:0">${esc(it.note)}</span>`:''}
+        ${S.editing ? `<label class="cost">${coin(22)}<input type="number" min="0" id="cost-${it.id}" data-kind="redeem" data-item="${it.id}" value="${c}" aria-label="Price of ${esc(it.label)}"></label>` : `<span class="cost num">${coin(22)}${fmt(c)}</span>`}
+        ${n && !S.editing ? `<div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div><span class="need num">${ok ? 'You can get this!' : `${fmt(c-bal)} more to go`}</span>` : ''}
+        ${S.editing || !n ? '' : waiting(it.id) ? `<span class="status pending go" style="align-self:flex-start">Waiting for director approval</span>` : conf ? `<div class="confirm go"><p>${isDir()?`Spend ${fmt(c)} of ${esc(n.name)}'s bucks?`:`Ask the Center Director to approve ${fmt(c)} bucks for ${esc(n.name)}?`}</p><div class="row"><button class="btn gold" data-act="redeem" data-item="${it.id}">${isDir()?'Yes, redeem':'Send request'}</button><button class="btn ghost" data-act="cancelRedeem">No</button></div></div>`
+          : `<button class="btn ${ok?'gold':''} go" data-act="askRedeem" data-item="${it.id}" ${ok && !S.readOnly && canWrite()?'':'disabled'}>${ok?(isDir()?'Redeem':'Request reward'):'Keep saving'}</button>`}
+      </div>`; }).join('')}</div></div>`).join('');
+}
+
+function renderSetup(){
+  const host=document.getElementById('setupHost'), btn=document.getElementById('setupBtn');
+  btn.textContent = S.setupOpen ? 'Close quick setup' : 'Open quick setup';
+  if(!S.setupOpen){ host.innerHTML=''; host.dataset.ready=''; return; }
+  if(host.dataset.ready) return; // keep what the sensei is typing; refreshed after Save
+  const list=ninjaList();
+  if(!list.length){ host.innerHTML='<p class="hint">Add your ninjas first, then come back here to set their bucks.</p>'; return; }
+  host.dataset.ready='1';
+  host.innerHTML = `<div class="setup"><table><thead><tr><th>Ninja</th><th>Bucks</th><th>Belt</th><th>Level</th></tr></thead><tbody>${list.map(n=>{ const b=beltFor(n);
+    return `<tr data-id="${n.id}"><td><span class="who">${avatar(n,34)}${esc(n.name)}</span></td>
+      <td><input type="number" min="0" step="1" inputmode="numeric" id="su-b-${n.id}" data-su="${n.id}" value="${n.balance||0}" aria-label="Bucks for ${esc(n.name)}"></td>
+      <td><select id="su-belt-${n.id}" data-su="${n.id}" aria-label="Belt for ${esc(n.name)}">${beltOpts(b.i, ALL_BELTS)}</select></td>
+      <td><select id="su-lv-${n.id}" data-su="${n.id}" aria-label="Level for ${esc(n.name)}">${levelOpts(b.i,b.level)}</select></td></tr>`; }).join('')}</tbody></table></div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><span class="hint" id="suCount" style="margin:0 auto 0 0">No changes yet.</span><button class="btn ghost" data-act="setupReset">Reset</button><button class="btn primary" data-act="setupSave">Save changes</button></div>`;
+}
+function setupChanges(){
+  const out=[];
+  ninjaList().forEach(n=>{ const bi=document.getElementById('su-b-'+n.id); if(!bi) return; const b=beltFor(n);
+    const bal=Math.max(0, Math.round(+bi.value||0)), belt=+document.getElementById('su-belt-'+n.id).value, lv=Math.min(levelsOf(belt), +document.getElementById('su-lv-'+n.id).value||1);
+    if(bal!==(n.balance||0) || belt!==b.i || lv!==b.level) out.push({n, bal, belt, lv}); });
+  return out;
+}
+function markSetup(){
+  const ch=setupChanges(), ids=new Set(ch.map(c=>c.n.id));
+  document.querySelectorAll('#setupHost tr[data-id]').forEach(tr=>tr.classList.toggle('changed', ids.has(tr.dataset.id)));
+  const c=document.getElementById('suCount'); if(c) c.textContent = ch.length ? `${ch.length} ninja${ch.length>1?'s':''} changed` : 'No changes yet.';
+}
+async function saveSetup(){
+  const ch=setupChanges(); if(!ch.length){ toast('Nothing to save yet.'); return; }
+  const jobs=[], at=Date.now();
+  for(const {n,bal,belt,lv} of ch){
+    const delta=bal-(n.balance||0), patch= belt===JR ? {group:'junior', level:lv} : {group:'ninja', belt, level:lv};
+    if(delta){ patch.balance=bal; if(delta>0) patch.earned=(n.earned||0)+delta;
+      jobs.push(api.set('log', uid(), {ninjaId:n.id, name:n.name, kind:'setup', item:'setup', icon:'🛠️', label:'Starting bucks', amt:Math.abs(delta), delta, at})); }
+    jobs.push(api.update('ninjas', n.id, patch));
+  }
+  try{ await Promise.all(jobs); }catch{ return; }
+  document.getElementById('setupHost').dataset.ready=''; render();
+  toast(`Saved starting bucks for ${ch.length} ninja${ch.length>1?'s':''}.`);
+}
+function reqRow(r, mine){
+  const d=describeReq(r);
+  return `<div class="req"><div class="ic2">${d.ic}</div><div><div class="what">${d.html}</div><div class="meta">${r.status==='pending'?'Asked by':'Decided'} <span data-uid="${esc(r.status==='pending'?r.by:(r.decidedBy||r.by))}">…</span> · ${ago(r.status==='pending'?r.at:(r.decidedAt||r.at))} <span class="status ${r.status}">${r.status==='pending'?'Waiting':r.status}</span>${r.note?` · ${esc(r.note)}`:''}</div></div>
+    <div class="acts2">${r.status==='pending' ? (isDir() ? `<button class="btn primary" data-act="approve" data-id="${r.id}">Approve</button><button class="btn ghost" data-act="reject" data-id="${r.id}">Decline</button>` : (r.by===S.me ? `<button class="btn ghost" data-act="cancelReq" data-id="${r.id}">Cancel</button>` : '')) : ''}</div></div>`;
+}
+function renderAdmin(){
+  const pend=pendingReqs();
+  document.getElementById('approveAllBtn').hidden = pend.length<2;
+  const rl=document.getElementById('reqList');
+  rl.innerHTML = pend.length ? pend.map(r=>reqRow(r)).join('') : '<p class="hint" style="margin:0">All caught up. Nothing is waiting for approval.</p>';
+  const dec=document.getElementById('decided'); const done=S.requests.filter(r=>r.status!=='pending').slice(0,25);
+  dec.innerHTML = done.length ? done.map(r=>reqRow(r)).join('') : '<p class="hint" style="margin:0">Approved and declined requests will show here.</p>';
+  document.getElementById('rolesInfo').innerHTML = `<div class="roles">
+    <div><b>Center Director</b>You (signing in with your email), plus anyone you add to the Team list as Center Director.<ul><li>Everything senseis can do</li><li>Approves requests</li><li>Adds and removes ninjas, sets belts and levels</li><li>Quick setup, bucks amounts and shop prices</li></ul></div>
+    <div><b>Sensei</b>The people you add to the Team list as Sensei. They sign in on dojo devices with their name and PIN.<ul><li>Gives Ninja Bucks and penalties</li><li>Posts news to the ticker</li><li>Requests rewards, new ninjas and belt or level changes for approval</li></ul></div>
+    <div><b>View only</b>For the classroom TV. Add a person such as "Classroom TV" with the View only role and a PIN.<ul><li>Sees the Leaderboard, Dashboard, Reward Shop and news</li><li>Cannot change anything</li></ul></div></div>
+    <p class="hint" style="margin:12px 0 0"><b>Locking:</b> tap Lock at the top when you step away. Dojo devices lock themselves after 10 minutes without use, except View only screens.</p>`;
+  renderTeam();
+  renderSetup();
+  const hasSample = Object.values(S.ninjas).some(n=>n.sample);
+  document.getElementById('sampleBar').innerHTML = S.mode!=='db' ? '' : hasSample ? `<div class="card spread"><span>Sample ninjas are in your dojo (marked Sample). Remove them when you're ready. Your real ninjas stay.</span><button class="btn" data-act="clearSamples">Remove sample ninjas</button></div>` : '';
+  fillNames(document.getElementById('v-admin'));
+}
+function renderRoster(){
+  const mine = S.requests.filter(r => isDir() ? r.status==='pending' : (r.by===S.me && (r.status==='pending' || Date.now()-(r.decidedAt||0) < 3*DAY))).slice(0,20);
+  const mr=document.getElementById('myReqs');
+  mr.innerHTML = !mine.length ? '' : isDir() ? `<div class="card spread"><span><b>${mine.length}</b> request${mine.length>1?'s are':' is'} waiting for your approval.</span><a class="btn primary" href="#admin" style="text-decoration:none">Review in Admin</a></div>`
+    : `<div class="card"><h2>My requests</h2><div style="margin-top:8px">${mine.map(r=>reqRow(r,true)).join('')}</div></div>`;
+  fillNames(mr);
+  const sw=document.getElementById('swatches');
+  sw.innerHTML = '<span class="eyebrow">Pick a ninja</span>' + Array.from({length:HEADS},(_,k)=>`<button type="button" data-act="head" data-head="${k}" aria-pressed="${k===S.head}" aria-label="Ninja look ${k+1}">${avatar({head:k},46)}</button>`).join('');
+  const hasSample = Object.values(S.ninjas).some(n=>n.sample);
+  const list=ninjaList();
+  document.getElementById('roster').innerHTML = list.map(n=>{ const b=beltFor(n);
+    return `<button class="rcard" data-act="open" data-id="${n.id}">${avatar(n,56)}<div style="min-width:0"><div class="nm">${esc(n.name)}</div>
+      <div class="meta">${medal(n,26)}${b.i===BLACK?'Black Belt':`${b.name} · ${stepName(b.i,b.level).replace('Level ','Lv ')}`} ${groupTag(n.group)} ${n.sample?'<span class="tag sample">Sample</span>':''}</div></div>
+      <div class="nums num"><div><b>${fmt(n.balance)}</b><small>Balance</small></div><div><b>${fmt(n.earned)}</b><small>Earned</small></div><div><b>${fmt(n.spent)}</b><small>Spent</small></div></div></button>`; }).join('')
+    || `<div class="card empty" style="grid-column:1/-1"><p>No ninjas yet. Add your first one above.</p></div>`;
+}
+
+function renderDrawer(){
+  const host=document.getElementById('drawerHost'); const n=S.ninjas[S.drawer];
+  if(!n){ host.innerHTML=''; return; }
+  const b=beltFor(n);
+  const hist=S.log.filter(l=>l.ninjaId===n.id).slice(0,30);
+  const keep = document.activeElement && host.contains(document.activeElement) ? document.activeElement.id : null;
+  const prevScroll = S.drawerShown===S.drawer ? (host.querySelector('.drawer')?.scrollTop || 0) : 0;
+  host.innerHTML = `<div class="scrim" data-act="closeDrawer"><aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(n.name)}">
+    <div class="spread"><span class="eyebrow">Ninja profile</span><button class="btn ghost" data-act="closeDrawer" id="drawerClose">Close</button></div>
+    <div class="head">${avatar(n,84)}<div style="min-width:0"><h2>${esc(n.name)}</h2><div class="row" style="margin-top:6px">${groupTag(n.group)}<span class="hint" style="margin:0">${rankText(n)}</span></div></div><div style="margin-left:auto">${medal(n,76)}</div></div>
+    <div class="card" style="padding:16px"><div class="wallet"><div><div class="eyebrow">Balance</div><div class="bal num">${coin(36)}${fmt(n.balance)}</div></div></div>
+      <div class="nums num" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;text-align:center">
+        <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--good)">${fmt(n.earned)}</b><div class="eyebrow">Earned</div></div>
+        <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--gold-deep)">${fmt(n.spent)}</b><div class="eyebrow">Spent</div></div>
+        <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--bad)">${fmt(n.lost)}</b><div class="eyebrow">Lost</div></div></div></div>
+    <div class="progress"><div class="spread"><b>${rankText(n)}${b.i===BLACK?'':` <span class="hint" style="margin:0">(${b.projects?'project':'step'} ${b.level} of ${levelsOf(b.i)})</span>`}</b><span class="hint" style="margin:0">${b.level>=levelsOf(b.i) ? (b.next?`Ready for ${b.next.name} belt!`:'Capstone done. Top of the dojo!') : (b.next?`Next belt: ${b.next.name}`:'Black belt')}</span></div>
+      <div class="medals">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),44,k+1===b.level?'cur':k+1>b.level?'dim':'',`${b.name} · ${stepName(b.i,k+1)}`)).join('')}</div>
+      <span class="eyebrow" style="margin-top:8px">Belt collection</span>
+      <div class="collection">${(b.i===JR?ALL_BELTS:MAIN_BELTS).map(k=>badge(DONE(k),44,(k<b.i || b.i===BLACK)?'':'dim',`${beltInfo(k).name} belt ${k<b.i||b.i===BLACK?'complete':''}`)).join('')}</div></div>
+    <div class="card" style="padding:16px"><h3 style="font-size:18px">Edit</h3>
+      <div style="display:grid;gap:10px;margin-top:10px">
+        <label class="f">Name<input id="editName" value="${esc(n.name)}" maxlength="24" ${isDir()?'':'disabled'}></label>
+        <label class="f">Group<select id="editGroup"><option value="ninja" ${n.group==='ninja'?'selected':''}>Create (8+)</option><option value="junior" ${n.group==='junior'?'selected':''}>JR (5–7)</option></select></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Belt<select id="editBelt">${beltOpts(b.i, ALL_BELTS)}</select></label>
+        <label class="f">Level<select id="editLevel">${levelOpts(b.i, b.level)}</select></label></div>
+        <div class="swatches" style="margin:0">${Array.from({length:HEADS},(_,k)=>`<button type="button" data-act="editHead" data-head="${k}" aria-pressed="${k===headOf(n)}" aria-label="Ninja look ${k+1}">${avatar({...n, head:k},46)}</button>`).join('')}</div>
+        ${!isDir() ? (canWrite() ? `<div class="row">${pendingReqs().some(r=>r.type==='rank'&&r.ninjaId===n.id)?'<span class="status pending">Belt change waiting for approval</span>':''}<button class="btn" data-act="reqRank">Request belt or level change</button></div><p class="hint" style="margin:0">Belt, level and group changes are sent to the Center Director for approval.</p>` : '') : S.confirmRemove ? `<div class="confirm"><p>Remove ${esc(n.name)} from the dojo? Their balance of ${fmt(n.balance)} bucks goes with them.</p><div class="row"><button class="btn primary" data-act="remove">Yes, remove</button><button class="btn ghost" data-act="cancelRemove">Keep</button></div></div>`
+          : `<button class="btn ghost" data-act="askRemove" style="justify-self:start">Remove ninja</button>`}
+      </div></div>
+    <div><h3 style="font-size:18px">Recent history</h3><ul class="feed" style="max-height:none">${hist.map(l=>`<li><span class="ic">${l.icon}</span><span class="tx">${esc(l.label)}<small>${ago(l.at)}</small></span><span class="d ${l.kind} num">${(l.kind==='setup' ? ((l.delta??0)>=0?'+':'−') : l.kind==='earn'?'+':'−')}${fmt(l.amt)}</span></li>`).join('') || '<li><span></span><span class="tx hint">No activity in the last 8 weeks.</span><span></span></li>'}</ul></div>
+  </aside></div>`;
+  host.querySelector('.drawer').scrollTop = prevScroll; S.drawerShown = S.drawer;
+  if(keep){ const el=document.getElementById(keep); el && el.focus({preventScroll:true}); }
+}
+
+/* ---------- events ---------- */
+const findItem = (kind,id) => (kind==='earn'?EARN:kind==='penalty'?PEN:TIERS.flatMap(t=>t.items)).find(x=>x.id===id);
+document.addEventListener('click', e=>{
+  const fb=e.target.closest('[data-filter]'); if(fb){ S.filter=fb.dataset.filter; render(); return; }
+  const mb=e.target.closest('[data-metric]'); if(mb){ S.metric=mb.dataset.metric; render(); return; }
+  const t=e.target.closest('[data-act]'); if(!t) return;
+  const a=t.dataset.act, id=t.dataset.id;
+  if((a==='closeDrawer' || a==='closeCelebrate') && t!==e.target && e.target.closest('.drawer,.box') && !e.target.closest('button[data-act]')) return;
+  switch(a){
+    case 'toggle': S.selected.has(id)?S.selected.delete(id):S.selected.add(id); render(); break;
+    case 'selAll': filtered().forEach(n=>S.selected.add(n.id)); render(); break;
+    case 'selNone': S.selected.clear(); render(); break;
+    case 'give': give(t.dataset.kind, findItem(t.dataset.kind, t.dataset.item)); break;
+    case 'toggleEdit': S.editing=!S.editing; render(); break;
+    case 'shopper': S.shopper=id; S.confirm=null; render(); break;
+    case 'askRedeem': S.confirm=t.dataset.item; render(); break;
+    case 'cancelRedeem': S.confirm=null; render(); break;
+    case 'redeem': redeem(findItem('redeem', t.dataset.item)); break;
+    case 'undo': { const u=document.getElementById('toastHost')._undo; document.getElementById('toastHost').innerHTML=''; if(u) undoAll(u); break; }
+    case 'open': S.drawer=id; S.confirmRemove=false; render(); setTimeout(()=>document.getElementById('drawerClose')?.focus(),0); break;
+    case 'closeDrawer': S.drawer=null; render(); break;
+    case 'closeCelebrate': document.getElementById('celebrateHost').innerHTML=''; break;
+    case 'head': S.head=+t.dataset.head; render(); break;
+    case 'editHead': api.update('ninjas', S.drawer, {head:+t.dataset.head}).catch(()=>{}); break;
+    case 'askRemove': S.confirmRemove=true; render(); break;
+    case 'cancelRemove': S.confirmRemove=false; render(); break;
+    case 'remove': { const nid=S.drawer, nm=S.ninjas[nid]?.name; S.drawer=null; S.confirmRemove=false; S.selected.delete(nid); api.del('ninjas',nid).then(()=>toast(`${nm} was removed.`)).catch(()=>{}); break; }
+    case 'toggleSetup': S.setupOpen=!S.setupOpen; render(); break;
+    case 'setupSave': saveSetup(); break;
+    case 'setupReset': document.getElementById('setupHost').dataset.ready=''; render(); break;
+    case 'tpl': { const nm=document.getElementById('tplNinja').value; const txt=NEWS_TEMPLATES[+t.dataset.k].replace('{ninja}', nm || '___'); const inp=document.getElementById('newsText'); inp.value=txt; inp.focus(); if(txt.includes('___')){ const i=txt.indexOf('___'); inp.setSelectionRange(i,i+3); } break; }
+    case 'asRole': S.role=t.dataset.role; S.me = S.role==='director' ? 'preview-director' : 'preview-sensei'; S.drawer=null; render(); break;
+    case 'approve': { const r=S.requests.find(x=>x.id===id); if(r) approveReq(r).then(()=>toast('Approved.')).catch(()=>{}); break; }
+    case 'reject': { const r=S.requests.find(x=>x.id===id); if(r) rejectReq(r).catch(()=>{}); break; }
+    case 'approveAll': (async()=>{ const list=pendingReqs().slice().reverse(); for(const r of list){ try{ await approveReq(r); }catch{} } toast(`Approved ${list.length} request${list.length===1?'':'s'}.`); })(); break;
+    case 'cancelReq': api.del('requests', id).then(()=>toast('Request cancelled.')).catch(()=>{}); break;
+    case 'reqRank': { const n=S.ninjas[S.drawer]; const g=document.getElementById('editGroup').value, b=Math.max(0,+document.getElementById('editBelt').value), l=+document.getElementById('editLevel').value;
+      const grp = (+document.getElementById('editBelt').value)===JR || g==='junior' ? 'junior' : 'ninja';
+      sendRequest('rank', {ninjaId:n.id, group:grp, belt:b, level:l}, `Belt change for ${n.name} sent to the Center Director.`); break; }
+    case 'pinFor': S.pinFor=id; S.removeFor=null; renderTeam(); document.getElementById('newPin-'+id)?.focus(); break;
+    case 'cancelPin': S.pinFor=null; renderTeam(); break;
+    case 'savePin': { const v=(document.getElementById('newPin-'+id)?.value||'').trim(); if(!PIN_OK(v)){ toast('A PIN is 4 to 6 digits.'); break; } changePin(id, v).then(renderTeam); break; }
+    case 'askRemoveStaff': S.removeFor=id; S.pinFor=null; renderTeam(); break;
+    case 'cancelRemoveStaff': S.removeFor=null; renderTeam(); break;
+    case 'removeStaff': removeStaff(id).then(renderTeam); break;
+    case 'backup': downloadBackup(); break;
+    case 'lock': lockNow(); break;
+    case 'toggleNews': S.newsOpen=!S.newsOpen; renderNewsPanel(); break;
+    case 'delNews': api.del('news', id).then(renderNewsPanel).catch(()=>{}); break;
+    case 'clearSamples': clearSamples().catch(()=>{}); break;
+  }
+});
+document.addEventListener('change', e=>{
+  const el=e.target;
+  if(el.dataset && el.dataset.item && el.type==='number'){ const v=Number(el.value); if(Number.isFinite(v)) saveAmount(el.dataset.kind, el.dataset.item, v); }
+  if(el.dataset && el.dataset.staffrole){ setStaffRole(el.dataset.staffrole, el.value); return; }
+  if(el.dataset && el.dataset.su){
+    if(el.id.startsWith('su-belt-')){ const lvSel=document.getElementById('su-lv-'+el.dataset.su); lvSel.innerHTML=levelOpts(+el.value, 1); }
+    markSetup();
+  }
+  if(el.id==='editName'){ const v=el.value.trim(); if(v) api.update('ninjas',S.drawer,{name:v}).catch(()=>{}); }
+  if(['editBelt','editLevel','editGroup','editName'].includes(el.id) && !isDir()){ if(el.id==='editBelt'){ document.getElementById('editLevel').innerHTML=levelOpts(+el.value,1); } return; }
+  if(el.id==='editBelt'){ const v=+el.value, lv=Math.min(beltFor(S.ninjas[S.drawer]).level, levelsOf(v)); api.update('ninjas',S.drawer, v===JR ? {group:'junior', level:lv} : {group:'ninja', belt:v, level:lv}).catch(()=>{}); }
+  if(el.id==='editLevel'){ api.update('ninjas',S.drawer,{level:+el.value}).catch(()=>{}); }
+  if(el.id==='editGroup'){ const n=S.ninjas[S.drawer]; api.update('ninjas',S.drawer, el.value==='junior' ? {group:'junior', level:Math.min(beltFor(n).level, JR_BELT.levels)} : {group:'ninja', belt:n.belt|0, level:1}).catch(()=>{}); }
+});
+document.addEventListener('input', e=>{ if(e.target.dataset && e.target.dataset.su) markSetup(); });
+{ const vp=document.querySelector('.tk-viewport'); vp.addEventListener('mouseenter',()=>tk.paused=true); vp.addEventListener('mouseleave',()=>tk.paused=false); }
+window.addEventListener('resize', ()=>tkFill());
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.drawer){ S.drawer=null; render(); } if(e.key==='Enter' && e.target.matches && e.target.matches('tr[data-act="open"]')) e.target.click(); });
+document.addEventListener('submit', e=>{
+  if(e.target.id!=='teamForm') return; e.preventDefault();
+  const name=document.getElementById('tmName').value.trim(), role=document.getElementById('tmRole').value, pin=document.getElementById('tmPin').value.trim();
+  if(!name) return; if(!PIN_OK(pin)){ toast('A PIN is 4 to 6 digits.'); return; }
+  const btn=document.getElementById('tmAdd'); btn.disabled=true;
+  addStaff(name, role, pin).finally(()=>{ btn.disabled=false; document.getElementById('tmName').value=''; document.getElementById('tmPin').value=''; renderTeam(); });
+});
+document.addEventListener('submit', e=>{
+  if(e.target.id!=='newsForm') return; e.preventDefault();
+  const t=document.getElementById('newsText').value.trim(); if(!t) return;
+  api.set('news', uid(), {text:t, at:Date.now()}).then(()=>{ toast('Posted to the dojo news ticker.'); renderNewsPanel(); }).catch(()=>{});
+});
+document.getElementById('addForm').addEventListener('submit', e=>{
+  e.preventDefault(); const name=document.getElementById('newName').value.trim(); if(!name) return;
+  const grp=document.getElementById('newGroup').value, bl=Math.max(0, +document.getElementById('newBelt').value), lv=+document.getElementById('newLevel').value, st=Math.max(0, Math.round(+document.getElementById('newBucks').value||0));
+  if(isDir()) addNinja(name, grp, bl, lv, st).catch(()=>{});
+  else sendRequest('add', {name, group:grp, belt:bl, level:lv, start:st, head:S.head}, `${name} is waiting for the Center Director to approve.`); document.getElementById('newName').value=''; document.getElementById('newBucks').value='0'; document.getElementById('newName').focus();
+});
+function route(){ const h=(location.hash||'').slice(1); S.view=['board','dash','award','shop','roster','admin'].includes(h)?h:'board'; S.confirm=null; render(); }
+addEventListener('hashchange', route);
+setInterval(()=>{ if(S.loaded){ if(S.view==='dash') renderDash(); renderTicker(); } }, 60000);
+
+/* ---------- boot ---------- */
+document.getElementById('brandCoin').innerHTML = coin(40);
+const syncNewBelt = () => { const jr=document.getElementById('newGroup').value==='junior', sel=document.getElementById('newBelt'); sel.innerHTML = beltOpts(jr?JR:0, jr?[JR]:MAIN_BELTS); sel.disabled=jr; syncNewLevel(); };
+const syncNewLevel = () => { document.getElementById('newLevel').innerHTML = levelOpts(+document.getElementById('newBelt').value, 1); };
+syncNewBelt(); document.getElementById('newBelt').addEventListener('change', syncNewLevel); document.getElementById('newGroup').addEventListener('change', syncNewBelt);
+route();
+/* ---------- sign-in ---------- */
+const OWNER_EMAIL = 'adeelabid.tx@gmail.com';
+const SI = {step:'pick', who:null, pin:'', err:'', people:[]};
+function renderSignin(){
+  const host=document.getElementById('siBody');
+  if(SI.step==='pick'){
+    host.innerHTML = `<h2 class="si-h">Who is using Dojo Bucks?</h2>
+      ${SI.people.length ? `<div class="si-people">${SI.people.map((p,k)=>`<button class="si-person" data-si="who" data-k="${k}"><b>${esc(p.role==='viewer'?p.name:'Sensei '+p.name)}</b><small>${ROLE_NAMES[p.role]||''}</small></button>`).join('')}</div>` : '<p class="hint" style="margin:0">No senseis added yet. The Center Director signs in below and adds them in Admin.</p>'}
+      <p class="si-err">${esc(SI.err)}</p>
+      <button class="si-link" data-si="email">Center Director sign-in</button>`;
+  } else if(SI.step==='pin'){
+    const p=SI.people[SI.who], len=p.pinLen||4;
+    host.innerHTML = `<h2 class="si-h" style="text-align:center">Hi ${esc(p.role==='viewer'?p.name:'Sensei '+p.name)}! Enter your PIN</h2>
+      <div class="pin-dots">${Array.from({length:len},(_,k)=>`<i class="${k<SI.pin.length?'on':''}"></i>`).join('')}</div>
+      <p class="si-err">${esc(SI.err)}</p>
+      <div class="pin-pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-si="digit" data-d="${n}">${n}</button>`).join('')}<button data-si="back" aria-label="Back">⌫</button><button data-si="digit" data-d="0">0</button><button data-si="cancel" aria-label="Cancel" style="font-size:16px;font-family:var(--f-body);font-weight:900">Cancel</button></div>`;
+  } else {
+    host.innerHTML = `<h2 class="si-h">Center Director sign-in</h2>
+      <form class="si-form" id="siForm"><label class="f">Email<input id="siEmail" type="email" autocomplete="username" value="${esc(OWNER_EMAIL)}" required></label>
+      <label class="f">Password<input id="siPass" type="password" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Sign in</button></form>
+      <p class="si-err">${esc(SI.err)}</p>
+      <button class="si-link" data-si="cancel">Back</button>`;
+    document.getElementById('siPass').focus();
+  }
+}
+async function showSignin(msg){
+  document.getElementById('signin').hidden=false; SI.step='pick'; SI.pin=''; SI.err=msg||'';
+  document.getElementById('siCoin').innerHTML=coin(44);
+  try{ const d=await firebase.firestore().doc('public/staff').get(); SI.people=(d.exists?d.data().list:[]||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)); }catch(e){ SI.people=[]; }
+  renderSignin();
+}
+async function trySignin(email, password){
+  try{ await firebase.auth().signInWithEmailAndPassword(email, password); }
+  catch(e){ SI.pin=''; SI.err = e.code==='auth/too-many-requests' ? 'Too many tries. Wait a minute and try again.' : SI.step==='pin' ? 'That PIN is not right. Try again.' : 'Email or password is not right.'; renderSignin(); }
+}
+document.getElementById('signin').addEventListener('click', e=>{
+  const b=e.target.closest('[data-si]'); if(!b) return; const a=b.dataset.si;
+  if(a==='who'){ SI.who=+b.dataset.k; SI.step='pin'; SI.pin=''; SI.err=''; }
+  else if(a==='email'){ SI.step='email'; SI.err=''; }
+  else if(a==='cancel'){ SI.step='pick'; SI.err=''; }
+  else if(a==='back'){ SI.pin=SI.pin.slice(0,-1); }
+  else if(a==='digit'){ const p=SI.people[SI.who], len=p.pinLen||4; if(SI.pin.length<len){ SI.pin+=b.dataset.d; } if(SI.pin.length===len){ renderSignin(); S.viaPin=true; trySignin(p.email, pinPass(SI.pin)); return; } }
+  renderSignin();
+});
+document.addEventListener('keydown', e=>{ if(document.getElementById('signin').hidden || SI.step!=='pin') return; if(/^[0-9]$/.test(e.key)) document.querySelector(`[data-si="digit"][data-d="${e.key}"]`)?.click(); if(e.key==='Backspace') document.querySelector('[data-si="back"]')?.click(); });
+document.addEventListener('submit', e=>{ if(e.target.id!=='siForm') return; e.preventDefault(); S.viaPin=false; trySignin(document.getElementById('siEmail').value.trim(), document.getElementById('siPass').value); });
+function lockNow(msg){
+  if(S.mode!=='db') return;
+  try{ sessionStorage.setItem('db-lock-msg', msg||''); }catch{}
+  firebase.auth().signOut().then(()=>location.reload());
+}
+// Shared dojo devices lock themselves after 10 minutes without use (not View only screens, not the email sign-in).
+let idleT=null; const IDLE_MS=10*60*1000;
+function bumpIdle(){ clearTimeout(idleT); if(S.mode==='db' && S.viaPin && S.role!=='viewer') idleT=setTimeout(()=>lockNow('Locked after 10 minutes without use.'), IDLE_MS); }
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev, bumpIdle, {passive:true}));
+
+(async()=>{
+  if(/[?&]demo\b/.test(location.search) || !window.firebase || !window.FIREBASE_CONFIG){ startLocal(); route(); return; }
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  let started=false;
+  firebase.auth().onAuthStateChanged(async user=>{
+    if(!user){ let m=''; try{ m=sessionStorage.getItem('db-lock-msg')||''; sessionStorage.removeItem('db-lock-msg'); }catch{} showSignin(m); return; }
+    if(started) return;
+    S.me=user.uid; S.isOwner = (user.email||'').toLowerCase()===OWNER_EMAIL;
+    if(!S.isOwner){
+      let d=null; try{ d=await firebase.firestore().doc('staff/'+user.uid).get(); }catch(e){}
+      if(!d || !d.exists){ await firebase.auth().signOut(); showSignin('That login is no longer on the team. Ask your Center Director.'); return; }
+      S.role=d.data().role; S.viaPin = !!(user.email||'').includes('@staff.');
+    } else S.role='director';
+    started=true; document.getElementById('signin').hidden=true;
+    startDb(firebase.firestore()); bumpIdle(); route();
+  });
+})();
+</script>
+</body>
+</html>
