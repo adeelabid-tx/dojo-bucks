@@ -2123,8 +2123,9 @@ function lbAchieve(){
     ${col('linear-gradient(135deg,#339AF0,#6C45D9)','📅 This week',`${f(wd)} – ${f(we)}`,achievements(ws))}
     ${col('linear-gradient(135deg,#9C36B5,#E5402B)','🏅 This month',MONTHS[md.getMonth()],achievements(ms))}</div>`;
 }
-// Ninjas who joined in the last 2 weeks (the same window as the ticker welcome), newest first.
-const lbNewNinjas = () => ninjaList().filter(n=>n.createdAt && Date.now()-n.createdAt < 14*DAY).sort((a,b)=>b.createdAt-a.createdAt);
+// Ninjas who joined in the last 10 days, newest first.
+const LB_NEW_DAYS = 10;
+const lbNewNinjas = () => ninjaList().filter(n=>n.createdAt && Date.now()-n.createdAt < LB_NEW_DAYS*DAY).sort((a,b)=>b.createdAt-a.createdAt);
 function lbWelcome(){
   const L=lbNewNinjas(), shown=L.slice(0,5), more=L.length-shown.length, size=shown.length>3?150:190;
   const cards=shown.map((n,i)=>{ const b=beltFor(n), fresh=Date.now()-n.createdAt < 2*DAY, joined=new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'});
