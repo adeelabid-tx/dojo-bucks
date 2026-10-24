@@ -1202,14 +1202,6 @@ function tickerItems(){
   const te=sumBy('earn'); if(te && S.ninjas[te[0]]) out.push(`🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
   const ts=sumBy('redeem'); if(ts && S.ninjas[ts[0]]) out.push(`💸 <b>${esc(S.ninjas[ts[0]].name)}</b> is the top spender this week: ${fmt(ts[1])} bucks!`);
   const rich=[...all].sort((a,b)=>(b.balance||0)-(a.balance||0))[0]; if(rich && rich.balance) out.push(`💰 <b>${esc(rich.name)}</b> has the biggest balance in the dojo: ${fmt(rich.balance)} bucks!`);
-  const items=TIERS.flatMap(t=>t.items);
-  const close=new Map();
-  all.forEach(n=>{ const next=items.map(it=>({it,c:amountOf('redeem',it)})).filter(x=>x.c>(n.balance||0)).sort((a,b)=>a.c-b.c)[0];
-    if(next){ const gap=next.c-(n.balance||0); if(gap<=Math.max(20, next.c*0.1)){ if(!close.has(next.it.id)) close.set(next.it.id, {label:next.it.label, list:[]}); close.get(next.it.id).list.push({name:n.name, gap}); } } });
-  close.forEach(c=>{
-    if(c.list.length===1){ const g=c.list[0].gap; out.push(`🔥 <b>${esc(c.list[0].name)}</b> is only ${fmt(g)} ${g===1?'buck':'bucks'} away from ${esc(c.label)}!`); }
-    else out.push(`🔥 ${andList(c.list.map(x=>x.name))} are getting close to ${esc(c.label)}!`);
-  });
   const earnedWk=wk.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0); if(earnedWk) out.push(`🪙 The dojo has earned ${fmt(earnedWk)} Ninja Bucks this week. Keep it up, ninjas!`);
   if(!out.length) out.push('🥷 Welcome to the dojo! Be on time, stay on track and help each other to earn Ninja Bucks.');
   return out;
