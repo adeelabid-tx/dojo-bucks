@@ -1315,7 +1315,7 @@ async function saveTickerCfg(hidden, edits){
 // The ticker is a conveyor belt: copies of the news strip keep rolling left. New content joins at the
 // right edge, so the strip never jumps back to the start while it is moving.
 const TK_SPEED = 70; // pixels per second
-const tk = {html:'', off:0, paused:false, last:0, still:matchMedia('(prefers-reduced-motion: reduce)').matches};
+const tk = {html:'', sig:null, off:0, paused:false, last:0, still:matchMedia('(prefers-reduced-motion: reduce)').matches};
 function tkGroup(hidden){ const g=document.createElement('span'); g.className='tk-group'; g.innerHTML=tk.html; if(hidden) g.setAttribute('aria-hidden','true'); return g; }
 function tkFill(){
   const track=document.getElementById('tkTrack'), vw=track.parentElement.clientWidth || 800;
@@ -1325,10 +1325,13 @@ function tkFill(){
 }
 function renderTicker(){
   const items=tickerItems(), html=items.map(h=>`<span class="tk-item">${h}</span>`).join('');
-  if(html===tk.html) return;
+  // Posting, editing or removing news restarts the strip so the change shows straight away.
+  const sig=JSON.stringify([S.tickerCfg.hidden||[], S.tickerCfg.edits||[], S.news.map(n=>[n.id, n.text])]);
+  const restart = tk.sig!=null && sig!==tk.sig; tk.sig=sig;
+  if(html===tk.html && !restart) return;
   tk.html=html;
   const track=document.getElementById('tkTrack');
-  if(tk.still){ track.innerHTML=''; tkFill(); return; }
+  if(tk.still || restart){ track.innerHTML=''; tk.off=0; track.style.transform='translate3d(0,0,0)'; tkFill(); return; }
   // drop copies that have not scrolled into view yet, so the new news shows up next
   const vw=track.parentElement.clientWidth; let x=0;
   [...track.children].forEach(g=>{ if(x > tk.off + vw) g.remove(); x+=g.offsetWidth; });
