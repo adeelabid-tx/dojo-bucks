@@ -404,6 +404,13 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .se-add:hover{border-color:var(--gold);color:var(--ink)}
 .btn.danger{color:#C92A2A}
 .act-eds{display:grid;gap:8px;grid-column:1 / -1}
+.act-note{display:block;font-weight:700;font-size:12px;color:var(--muted);margin-top:2px}
+.bonus-tabs{margin-top:10px;flex-wrap:wrap}
+.acts.bonus .act.earn{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 22%,var(--surface)),var(--surface));box-shadow:inset 0 -4px 0 color-mix(in srgb,var(--gold) 55%,transparent)}
+.acts.bonus .act.earn .amt{color:var(--gold-deep)}
+.bonus-ed{display:grid;gap:8px;border:2px dashed var(--line);border-radius:18px;padding:10px}
+.bonus-head{border-left:6px solid var(--gold)!important}
+.bonus-head .se-name{font-family:var(--f-display);font-size:20px}
 .act-ed{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:2px solid var(--line);border-radius:16px;padding:8px 10px;background:var(--surface)}
 .act-ed.earn{border-left:6px solid var(--good)} .act-ed.penalty{border-left:6px solid var(--bad)}
 .act-ed .se-ic{min-width:48px;min-height:48px}
@@ -411,7 +418,7 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .act-ed input{border:2px solid var(--line);border-radius:10px;padding:7px 10px;background:var(--surface);color:var(--ink);font-weight:800}
 .act-ed > input{flex:1;min-width:160px}
 .act-ed .cost{display:flex;align-items:center;gap:4px;font-family:var(--f-display);font-size:20px}
-.act-ed .cost input,.act-step input{width:80px}
+.act-ed .cost input,.act-step input{width:96px}
 .act-steps{display:grid;gap:6px;margin-top:8px;padding-top:10px;border-top:1px dashed var(--line)}
 .act-step{display:flex;align-items:center;gap:10px;font-weight:800}
 .act-step > span:nth-child(2){flex:1}
@@ -591,6 +598,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
         <div class="acts" id="earnGrid"></div>
         <h3 class="eyebrow" style="margin-top:22px;color:var(--bad)">Lose bucks</h3>
         <div class="acts" id="penGrid"></div>
+        <h3 class="eyebrow" style="margin-top:22px;color:var(--gold-deep)">⭐ Bonus · Code Ninjas achievements</h3>
+        <div id="bonusGrid"></div>
         <p class="hint">Level Up moves a ninja one level forward and Belt Up moves them to the next belt at Level 1. Juniors stay on JR Pink; Belt Up from JR Pink moves a ninja to White belt and into Create (8+). Bucks never drop below zero, and spending or penalties never change belts or levels.</p>
       </div>
     </div>
@@ -703,6 +712,36 @@ const PEN = [
 const STEPS = EARN.filter(e=>e.step);
 const earnList = () => [...(S.actions?.earn || EARN.filter(e=>!e.step)), ...STEPS];
 const penList = () => S.actions?.pen || PEN;
+// Bonus bucks for Code Ninjas curriculum achievements, in sections the director can rename and extend.
+const BONUS = [
+  {id:'impact', name:'Impact', icon:'🌍', items:[
+    {id:'imp_build', icon:'🧱', label:'Build', note:'Impact Build achievement', say:'an Impact Build achievement', amt:100},
+    {id:'imp_explore', icon:'🧭', label:'Explore', note:'Impact Explore achievement', say:'an Impact Explore achievement', amt:200},
+    {id:'imp_solve', icon:'🧩', label:'Solve', note:'Impact Solve achievement', say:'an Impact Solve achievement', amt:350},
+    {id:'imp_quest', icon:'🗺️', label:'Quest', note:'Impact Quest achievement', say:'an Impact Quest achievement', amt:500},
+    {id:'imp_adventure', icon:'🏔️', label:'Adventure', note:'Impact Adventure achievement', say:'an Impact Adventure achievement', amt:1000},
+  ]},
+  {id:'roblox', name:'Roblox', icon:'🎮', items:[
+    {id:'rbx_1', icon:'🏃', label:'Obby Builder', note:'Built and tested a first obby', say:'building a Roblox obby', amt:100},
+    {id:'rbx_2', icon:'⚙️', label:'Game Scripter', note:'Scripted a working mechanic: coins, doors, a leaderboard', say:'scripting a Roblox game mechanic', amt:250},
+    {id:'rbx_3', icon:'🕹️', label:'Game Designer', note:'Finished a playable game with levels and a goal', say:'designing a complete Roblox game', amt:500},
+    {id:'rbx_4', icon:'🚀', label:'Roblox Master', note:'Published a polished game and showcased it', say:'publishing a Roblox masterpiece', amt:1000},
+  ]},
+  {id:'minecraft', name:'Minecraft', icon:'⛏️', items:[
+    {id:'mc_1', icon:'🧱', label:'Code Builder', note:'Used code to build a first structure', say:'a Minecraft code build', amt:100},
+    {id:'mc_2', icon:'🔴', label:'Redstone Engineer', note:'Built an automated machine or custom command', say:'a Minecraft redstone machine', amt:250},
+    {id:'mc_3', icon:'🐉', label:'Mod Maker', note:'Created a custom mod: a new item, block or mob', say:'making a Minecraft mod', amt:500},
+    {id:'mc_4', icon:'🏰', label:'Minecraft Master', note:'Completed a full world or mod project and showcased it', say:'a Minecraft master project', amt:1000},
+  ]},
+  {id:'academies', name:'Academies', icon:'🎓', items:[
+    {id:'acd_1', icon:'🥉', label:'Academy Level 1', note:'', amt:100},
+    {id:'acd_2', icon:'🥈', label:'Academy Level 2', note:'', amt:250},
+    {id:'acd_3', icon:'🥇', label:'Academy Level 3', note:'', amt:500},
+    {id:'acd_4', icon:'🏆', label:'Academy Level 4', note:'', amt:1000},
+  ]},
+];
+const bonusList = () => S.actions?.bonus || BONUS;
+const bonusItems = () => bonusList().flatMap(g=>g.items);
 const TIERS = [
   {id:'quick', name:'Quick Perks', blurb:'Small rewards you can grab today.', quick:true, items:[
     {say:"a 5-minute free break", id:'break5', icon:'⏸️', label:'5-minute free break', note:'Any off-track activity', cost:25},
@@ -770,7 +809,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', bonusTab:0, actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -1283,7 +1322,7 @@ function tickerRaw(){
   }
   const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
-  const itemOf = id => [...earnList(), ...shopTiers().flatMap(t=>t.items)].find(x=>x.id===id);
+  const itemOf = id => [...earnList(), ...bonusItems(), ...shopTiers().flatMap(t=>t.items)].find(x=>x.id===id);
   let regular=0;
   // The same news for several ninjas becomes one line naming all of them.
   const WHO='\u0001', groups=new Map();
@@ -1465,24 +1504,30 @@ function renderAward(){
   document.getElementById('selHint').textContent = k ? `${k} ninja${k>1?'s':''} selected: ${[...S.selected].map(id=>S.ninjas[id]?.name).join(', ')}` : 'Pick one or more ninjas first.';
   if(S.actEdit) return renderActEditor();
   const tile=(kind,it)=>{ const a=amountOf(kind,it);
-    return `<button class="act ${kind}" data-act="give" data-kind="${kind}" data-item="${esc(it.id)}" ${none?'disabled':''}><span class="em">${it.img?badge(it.img,40):esc(it.icon||'⭐')}</span><span class="lbl">${esc(it.label)}${it.step && !isDir()?'<span class="needs">Needs director approval</span>':''}</span><span class="amt num">${kind==='earn'?'+':'−'}${a}</span></button>`; };
+    return `<button class="act ${kind}" data-act="give" data-kind="${kind}" data-item="${esc(it.id)}" ${none?'disabled':''}><span class="em">${it.img?badge(it.img,40):esc(it.icon||'⭐')}</span><span class="lbl">${esc(it.label)}${it.note?`<small class="act-note">${esc(it.note)}</small>`:''}${it.step && !isDir()?'<span class="needs">Needs director approval</span>':''}</span><span class="amt num">${kind==='earn'?'+':'−'}${a}</span></button>`; };
   document.getElementById('actBar').innerHTML='';
   document.getElementById('earnGrid').innerHTML = earnList().map(it=>tile('earn',it)).join('');
   document.getElementById('penGrid').innerHTML = penList().map(it=>tile('penalty',it)).join('') || '<p class="hint">No ways to lose bucks yet.</p>';
+  const B=bonusList(); if(S.bonusTab>=B.length) S.bonusTab=0; const g=B[S.bonusTab||0];
+  document.getElementById('bonusGrid').innerHTML = !B.length ? '<p class="hint">No bonus sections yet.</p>'
+    : `<div class="seg bonus-tabs" role="group" aria-label="Bonus section">${B.map((x,i)=>`<button data-bonustab="${i}" aria-pressed="${i===(S.bonusTab||0)}">${esc(x.icon||'')} ${esc(x.name)}</button>`).join('')}</div>
+      <div class="acts bonus">${g.items.map(it=>tile('earn',it)).join('') || '<p class="hint">No levels in this section yet.</p>'}</div>`;
 }
 
 /* ---------- Give Bucks editor (Center Director) ---------- */
 function openActEditor(){
-  const copy=(kind,list)=>list.map(it=>({id:it.id, label:it.label, icon:it.icon, amt:amountOf(kind,it), ...(it.say?{say:it.say}:{})}));
-  S.actEdit={earn:copy('earn', earnList().filter(e=>!e.step)), pen:copy('penalty', penList()), steps:Object.fromEntries(STEPS.map(it=>[it.id, amountOf('earn', it)]))};
+  const copy=(kind,list)=>list.map(it=>({id:it.id, label:it.label, icon:it.icon, amt:amountOf(kind,it), ...(it.say?{say:it.say}:{}), ...(it.note!=null?{note:it.note}:{})}));
+  S.actEdit={earn:copy('earn', earnList().filter(e=>!e.step)), pen:copy('penalty', penList()), steps:Object.fromEntries(STEPS.map(it=>[it.id, amountOf('earn', it)])),
+    bonus:bonusList().map(g=>({id:g.id, name:g.name, icon:g.icon, items:copy('earn', g.items).map(it=>({note:'', ...it}))}))};
   S.actIcon=null; render();
 }
 function renderActEditor(){
   const E=S.actEdit;
-  const row=(k,it,i,len)=>`<div class="act-ed ${k==='earn'?'earn':'penalty'}">
+  const row=(k,it,i,len)=>`<div class="act-ed ${k==='pen'?'penalty':'earn'}">
       <button class="se-ic" data-ae="icon" data-k="${k}" data-i="${i}" aria-label="Change icon" title="Change icon"><span class="em">${esc(it.icon||'⭐')}</span></button>
       <input data-ae-f="label" data-k="${k}" data-i="${i}" value="${esc(it.label)}" maxlength="40" placeholder="What did they do?" aria-label="Name">
-      <label class="cost">${k==='earn'?'+':'−'}<input type="number" min="0" step="1" data-ae-f="amt" data-k="${k}" data-i="${i}" value="${it.amt||0}" aria-label="Bucks"></label>
+      ${k[0]==='b'?`<input data-ae-f="note" data-k="${k}" data-i="${i}" value="${esc(it.note||'')}" maxlength="70" placeholder="Short description (optional)" aria-label="Description">`:''}
+      <label class="cost">${k==='pen'?'−':'+'}<input type="number" min="0" step="1" data-ae-f="amt" data-k="${k}" data-i="${i}" value="${it.amt||0}" aria-label="Bucks"></label>
       <span class="row" style="gap:4px;flex:none"><button class="btn ghost sm" data-ae="move" data-k="${k}" data-i="${i}" data-d="-1" ${i?'':'disabled'} aria-label="Move up">↑</button><button class="btn ghost sm" data-ae="move" data-k="${k}" data-i="${i}" data-d="1" ${i<len-1?'':'disabled'} aria-label="Move down">↓</button><button class="btn ghost sm danger" data-ae="del" data-k="${k}" data-i="${i}">Delete</button></span>
     </div>`;
   document.getElementById('actBar').innerHTML = `<div class="se-bar" style="position:static;margin-top:12px"><div><b>Editing ways to earn and lose bucks</b><small>Changes are saved when you press Save changes. Cancel throws them away.</small></div>
@@ -1491,40 +1536,51 @@ function renderActEditor(){
       <button class="btn ghost" data-ae="add" data-k="earn" style="justify-self:start">+ Add a way to earn</button>
       <div class="act-steps"><span class="eyebrow">Belt progress (always shown)</span>${STEPS.map(it=>`<label class="act-step">${badge(it.img,32)}<span>${esc(it.label)}</span><span class="cost">+<input type="number" min="0" step="1" data-ae-step="${it.id}" value="${E.steps[it.id]}" aria-label="Bucks for ${esc(it.label)}"></span></label>`).join('')}</div></div>`;
   document.getElementById('penGrid').innerHTML = `<div class="act-eds">${E.pen.map((it,i)=>row('pen',it,i,E.pen.length)).join('')}
-      <button class="btn ghost" data-ae="add" data-k="pen" style="justify-self:start">+ Add a way to lose</button></div>`
+      <button class="btn ghost" data-ae="add" data-k="pen" style="justify-self:start">+ Add a way to lose</button></div>`;
+  document.getElementById('bonusGrid').innerHTML = `<div class="act-eds">${E.bonus.map((g,gi)=>`<div class="bonus-ed">
+      <div class="act-ed bonus-head"><button class="se-ic" data-ae="icon" data-k="g" data-i="${gi}" aria-label="Change section icon"><span class="em">${esc(g.icon||'⭐')}</span></button>
+        <input data-ae-f="name" data-k="g" data-i="${gi}" value="${esc(g.name)}" maxlength="30" placeholder="Section name" aria-label="Section name" class="se-name">
+        <span class="row" style="gap:4px;flex:none"><button class="btn ghost sm" data-ae="move" data-k="g" data-i="${gi}" data-d="-1" ${gi?'':'disabled'} aria-label="Move up">↑</button><button class="btn ghost sm" data-ae="move" data-k="g" data-i="${gi}" data-d="1" ${gi<E.bonus.length-1?'':'disabled'} aria-label="Move down">↓</button><button class="btn ghost sm danger" data-ae="del" data-k="g" data-i="${gi}">Delete section</button></span></div>
+      ${g.items.map((it,i)=>row('b'+gi,it,i,g.items.length)).join('')}
+      <button class="btn ghost" data-ae="add" data-k="b${gi}" style="justify-self:start">+ Add a level to ${esc(g.name||'this section')}</button></div>`).join('')}
+    <button class="btn ghost" data-ae="addGroup" style="justify-self:start">+ Add a bonus section</button></div>`
     + (S.actIcon ? iconPickerHTML(true) : '');
 }
 async function saveActions(){
   const E=S.actEdit;
-  for(const it of [...E.earn, ...E.pen]) if(!(it.label||'').trim()){ toast('Every option needs a name.'); return; }
-  const clean=list=>JSON.parse(JSON.stringify(list.map(it=>({...it, label:it.label.trim(), amt:Math.max(0, Math.round(Number(it.amt)||0))}))));
-  const doc={earn:clean(E.earn), pen:clean(E.pen), updatedAt:Date.now()};
+  for(const it of [...E.earn, ...E.pen, ...E.bonus.flatMap(g=>g.items)]) if(!(it.label||'').trim()){ toast('Every option needs a name.'); return; }
+  if(E.bonus.some(g=>!(g.name||'').trim())){ toast('Every bonus section needs a name.'); return; }
+  const clean=list=>JSON.parse(JSON.stringify(list.map(it=>({...it, label:it.label.trim(), ...(it.note!=null?{note:it.note.trim()}:{}), amt:Math.max(0, Math.round(Number(it.amt)||0))}))));
+  const doc={earn:clean(E.earn), pen:clean(E.pen), bonus:E.bonus.map(g=>({id:g.id, name:g.name.trim(), icon:g.icon||'⭐', items:clean(g.items)})), updatedAt:Date.now()};
   const vals={earn:{...S.settings.earn}, pen:{...S.settings.pen}, shop:{...S.settings.shop}};
   STEPS.forEach(it=>vals.earn[it.id]=Math.max(0, Math.round(Number(E.steps[it.id])||0)));
   try{ await Promise.all([api.set('settings', 'actions', doc), api.set('settings', 'values', vals)]); }catch{ return; }
   S.actions=doc; S.settings=vals; S.actEdit=null; S.actIcon=null; render(); toast('Give Bucks options saved.');
 }
+// Editor list for a key: 'earn', 'pen', 'g' (bonus sections) or 'b<n>' (levels in bonus section n).
+const aeList = k => k==='g' ? S.actEdit.bonus : k[0]==='b' ? S.actEdit.bonus[+k.slice(1)].items : S.actEdit[k];
 document.getElementById('v-award').addEventListener('input', e=>{
   const el=e.target, d=el.dataset; if(!S.actEdit) return;
   if(d.aeStep){ S.actEdit.steps[d.aeStep]=el.value; return; }
   if(!d.aeF) return;
-  const it=S.actEdit[d.k][+d.i];
-  if(d.aeF==='amt') it.amt=el.value; else { it.label=el.value; delete it.say; }
+  const it=aeList(d.k)[+d.i];
+  if(d.aeF==='amt') it.amt=el.value; else if(d.aeF==='label'){ it.label=el.value; delete it.say; } else it[d.aeF]=el.value;
 });
 document.getElementById('v-award').addEventListener('click', e=>{
   if(!S.actEdit) return;
   const b=e.target.closest('[data-ae],[data-se-act]'); if(!b) return;
-  const a=b.dataset.ae || b.dataset.seAct, E=S.actEdit, k=b.dataset.k, i=+b.dataset.i;
+  const a=b.dataset.ae || b.dataset.seAct, k=b.dataset.k, i=+b.dataset.i, L=k ? aeList(k) : null;
   if(a==='closeIcons' && b!==e.target && e.target.closest('.se-picker') && !e.target.closest('button')) return;
   switch(a){
     case 'save': saveActions(); return;
     case 'cancel': S.actEdit=null; S.actIcon=null; render(); return;
-    case 'add': E[k].push({id:(k==='earn'?'e_':'p_')+uid(), label:'', icon:k==='earn'?'⭐':'⚠️', amt:k==='earn'?5:3}); renderActEditor(); document.querySelector(`[data-ae-f="label"][data-k="${k}"][data-i="${E[k].length-1}"]`)?.focus(); return;
-    case 'del': E[k].splice(i,1); break;
-    case 'move': { const j=i+Number(b.dataset.d); if(j>=0 && j<E[k].length) [E[k][i],E[k][j]]=[E[k][j],E[k][i]]; break; }
+    case 'add': L.push({id:(k==='pen'?'p_':k==='earn'?'e_':'bn_')+uid(), label:'', icon:k==='pen'?'⚠️':'⭐', amt:k==='pen'?3:k==='earn'?5:100, ...(k[0]==='b'?{note:''}:{})}); renderActEditor(); document.querySelector(`[data-ae-f="label"][data-k="${k}"][data-i="${L.length-1}"]`)?.focus(); return;
+    case 'addGroup': S.actEdit.bonus.push({id:'bg_'+uid(), name:'', icon:'⭐', items:[]}); renderActEditor(); document.querySelector(`[data-ae-f="name"][data-k="g"][data-i="${S.actEdit.bonus.length-1}"]`)?.focus(); return;
+    case 'del': L.splice(i,1); break;
+    case 'move': { const j=i+Number(b.dataset.d); if(j>=0 && j<L.length) [L[i],L[j]]=[L[j],L[i]]; break; }
     case 'icon': S.actIcon={k,i}; break;
     case 'closeIcons': S.actIcon=null; break;
-    case 'setEmoji': E[S.actIcon.k][S.actIcon.i].icon=b.dataset.v; S.actIcon=null; break;
+    case 'setEmoji': aeList(S.actIcon.k)[S.actIcon.i].icon=b.dataset.v; S.actIcon=null; break;
   }
   renderActEditor();
 });
@@ -1810,10 +1866,11 @@ function renderDrawer(){
 }
 
 /* ---------- events ---------- */
-const findItem = (kind,id) => (kind==='earn'?earnList():kind==='penalty'?penList():shopTiers().flatMap(t=>t.items)).find(x=>x.id===id);
+const findItem = (kind,id) => (kind==='earn'?[...earnList(), ...bonusItems()]:kind==='penalty'?penList():shopTiers().flatMap(t=>t.items)).find(x=>x.id===id);
 document.addEventListener('click', e=>{
   const fb=e.target.closest('[data-filter]'); if(fb){ S.filter=fb.dataset.filter; render(); return; }
   const gb=e.target.closest('[data-lbgroup]'); if(gb){ S.lbGroup=gb.dataset.lbgroup; render(); return; }
+  const bt=e.target.closest('[data-bonustab]'); if(bt){ S.bonusTab=+bt.dataset.bonustab; renderAward(); return; }
   const mb=e.target.closest('[data-metric]'); if(mb){ S.metric=mb.dataset.metric; render(); return; }
   const t=e.target.closest('[data-act]'); if(!t) return;
   const a=t.dataset.act, id=t.dataset.id;
