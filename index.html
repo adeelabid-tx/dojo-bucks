@@ -1161,6 +1161,8 @@ function renderFeed(){
 
 
 /* ---------- news ticker ---------- */
+// "Ava", "Ava and Leo", "Ava, Leo and Mia"
+const andList = names => { const n=names.map(x=>`<b>${esc(x)}</b>`); return n.length<2 ? n[0] : n.slice(0,-1).join(', ')+' and '+n[n.length-1]; };
 function tickerItems(){
   const out=[], now=Date.now(), all=ninjaList();
   S.news.slice(0,8).forEach(n=>out.push(`<span class="tk-tag">BREAKING</span> ${esc(n.text)}`));
@@ -1168,15 +1170,16 @@ function tickerItems(){
   const fresh=all.filter(n=>n.createdAt && now-n.createdAt < 14*DAY).sort((a,b)=>b.createdAt-a.createdAt);
   fresh.filter(n=>now-n.createdAt < 2*DAY).forEach(n=>out.push(`<span class="tk-tag">WELCOME</span> 👋 Welcome to the dojo, <b>${esc(n.name)}</b>! We're so happy you're here. Say hi to our newest ninja! 🥷`));
   if(fresh.some(n=>now-n.createdAt >= 2*DAY)){
-    const names=fresh.map(n=>`<b>${esc(n.name)}</b>`), list = names.length<2 ? names[0] : names.slice(0,-1).join(', ')+' and '+names[names.length-1];
-    out.push(`🎉 A big ninja welcome to ${names.length>1?'our new ninjas':'our new ninja'} ${list}!`);
+    out.push(`🎉 A big ninja welcome to ${fresh.length>1?'our new ninjas':'our new ninja'} ${andList(fresh.map(n=>n.name))}!`);
   }
   const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
   const itemOf = id => [...EARN, ...TIERS.flatMap(t=>t.items)].find(x=>x.id===id);
   let regular=0;
-  recent.slice(0,18).forEach(l=>{
-    const who=`<b>${esc(l.name)}</b>`, fresh = now-l.at < 15*60e3 ? '<span class="tk-tag">JUST IN</span> ' : '';
+  // The same news for several ninjas becomes one line naming all of them.
+  const WHO='\u0001', groups=new Map();
+  recent.slice(0,40).forEach(l=>{
+    const who=WHO, fresh = now-l.at < 15*60e3;
     let line=null;
     if(l.item==='blackbelt') line=`${badge('b8_a',24)}${who} earned BLACK BELT! The highest rank in the dojo! 🥷`;
     else if(l.item==='beltup'){ const nm = Number.isInteger(l.toBelt) ? beltInfo(l.toBelt).name : (l.label.startsWith('Belt Up to ') ? l.label.slice(11) : null);
@@ -1184,8 +1187,15 @@ function tickerItems(){
     else if(l.item==='levelup'){ const t = Number.isInteger(l.toBelt) ? (beltInfo(l.toBelt).projects ? `finished a project and moved on to ${stepName(l.toBelt,l.toLevel)}` : `leveled up to ${beltInfo(l.toBelt).name} Belt - ${stepName(l.toBelt,l.toLevel)}`) : (l.label.startsWith('Level Up to ') ? `leveled up to ${l.label.slice(12)}` : l.label.startsWith('Finished') ? l.label.replace('Finished','finished') : 'leveled up');
       line=`${Number.isInteger(l.toBelt)?badge(BADGE(l.toBelt,l.toLevel),24):badge('b4_l1',24)}${who} ${esc(t)}! ⭐`; }
     else if(l.kind==='redeem'){ const it=itemOf(l.item); line=`🛍️ ${who} bought ${esc(it?.say || l.label)}!`; }
-    else if(l.kind==='earn' && regular<6){ regular++; const it=itemOf(l.item); line=`${l.icon} ${who} earned ${fmt(l.amt)} Ninja Bucks for ${esc(it?.say || l.label.toLowerCase())}!`; }
-    if(line) out.push(fresh+line);
+    else if(l.kind==='earn'){ const it=itemOf(l.item); line=`${l.icon} ${who} earned ${fmt(l.amt)} Ninja Bucks for ${esc(it?.say || l.label.toLowerCase())}!`; }
+    if(!line) return;
+    let g=groups.get(line);
+    if(!g){ if(l.kind==='earn' && !['blackbelt','beltup','levelup'].includes(l.item)){ if(regular>=6) return; regular++; } g={names:[], fresh:false}; groups.set(line, g); }
+    if(!g.names.includes(l.name)) g.names.push(l.name);
+    g.fresh = g.fresh || fresh;
+  });
+  groups.forEach((g, line)=>{
+    out.push((g.fresh?'<span class="tk-tag">JUST IN</span> ':'')+line.split(WHO).join(andList(g.names)));
   });
   const ws=weekStart(now), wk=S.log.filter(l=>l.at>=ws);
   const sumBy=k=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; };
@@ -1193,8 +1203,13 @@ function tickerItems(){
   const ts=sumBy('redeem'); if(ts && S.ninjas[ts[0]]) out.push(`💸 <b>${esc(S.ninjas[ts[0]].name)}</b> is the top spender this week: ${fmt(ts[1])} bucks!`);
   const rich=[...all].sort((a,b)=>(b.balance||0)-(a.balance||0))[0]; if(rich && rich.balance) out.push(`💰 <b>${esc(rich.name)}</b> has the biggest balance in the dojo: ${fmt(rich.balance)} bucks!`);
   const items=TIERS.flatMap(t=>t.items);
+  const close=new Map();
   all.forEach(n=>{ const next=items.map(it=>({it,c:amountOf('redeem',it)})).filter(x=>x.c>(n.balance||0)).sort((a,b)=>a.c-b.c)[0];
-    if(next){ const gap=next.c-(n.balance||0); if(gap<=Math.max(20, next.c*0.1)) out.push(`🔥 <b>${esc(n.name)}</b> is only ${fmt(gap)} bucks away from ${esc(next.it.label)}!`); } });
+    if(next){ const gap=next.c-(n.balance||0); if(gap<=Math.max(20, next.c*0.1)){ if(!close.has(next.it.id)) close.set(next.it.id, {label:next.it.label, list:[]}); close.get(next.it.id).list.push({name:n.name, gap}); } } });
+  close.forEach(c=>{
+    if(c.list.length===1){ const g=c.list[0].gap; out.push(`🔥 <b>${esc(c.list[0].name)}</b> is only ${fmt(g)} ${g===1?'buck':'bucks'} away from ${esc(c.label)}!`); }
+    else out.push(`🔥 ${andList(c.list.map(x=>x.name))} are getting close to ${esc(c.label)}!`);
+  });
   const earnedWk=wk.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0); if(earnedWk) out.push(`🪙 The dojo has earned ${fmt(earnedWk)} Ninja Bucks this week. Keep it up, ninjas!`);
   if(!out.length) out.push('🥷 Welcome to the dojo! Be on time, stay on track and help each other to earn Ninja Bucks.');
   return out;
