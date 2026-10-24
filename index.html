@@ -250,6 +250,9 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .pod.p1 .av{width:72px;height:72px}
 .lb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .lbt-wrap{overflow-x:auto}
+.adj{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.adj-row{display:grid;grid-template-columns:110px 1fr;gap:8px}
+.adj input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);color:var(--ink);font-weight:800;min-width:0}
 .pr-card{margin-top:20px;display:flex;flex-direction:column;gap:16px}
 .pr-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px}
 @media (max-width:800px){ .pr-grid{grid-template-columns:1fr} }
@@ -739,7 +742,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -1550,6 +1553,18 @@ function markSetup(){
   document.querySelectorAll('#setupHost tr[data-id]').forEach(tr=>tr.classList.toggle('changed', ids.has(tr.dataset.id)));
   const c=document.getElementById('suCount'); if(c) c.textContent = ch.length ? `${ch.length} ninja${ch.length>1?'s':''} changed` : 'No changes yet.';
 }
+// Center Director: add or remove bucks by hand from a ninja's profile.
+async function adjustBucks(id, sign){
+  const n=S.ninjas[id], amt=Math.round(Number(S.adj.amt)); if(!n || !isDir()) return;
+  if(!(amt>0)){ toast('Type how many bucks first.'); return; }
+  const delta = sign>0 ? amt : -Math.min(amt, n.balance||0);
+  if(!delta){ toast(`${n.name} has no bucks to remove.`); return; }
+  const note=S.adj.note.trim(), label = note || (delta>0 ? 'Bucks added by the Center Director' : 'Bucks removed by the Center Director');
+  const patch={balance:(n.balance||0)+delta}; if(delta>0) patch.earned=(n.earned||0)+delta;
+  try{ await Promise.all([api.update('ninjas', id, patch), api.set('log', uid(), {ninjaId:id, name:n.name, kind:'setup', item:'adjust', icon:delta>0?'➕':'➖', label, amt:Math.abs(delta), delta, at:Date.now()})]); }catch{ return; }
+  S.adj={amt:'', note:''}; render();
+  toast(delta>0 ? `Added ${fmt(delta)} bucks for ${n.name}.` : `Removed ${fmt(-delta)} bucks from ${n.name}.`);
+}
 async function saveSetup(){
   const ch=setupChanges(); if(!ch.length){ toast('Nothing to save yet.'); return; }
   const jobs=[], at=Date.now();
@@ -1617,7 +1632,11 @@ function renderDrawer(){
       <div class="nums num" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;text-align:center">
         <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--good)">${fmt(n.earned)}</b><div class="eyebrow">Earned</div></div>
         <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--gold-deep)">${fmt(n.spent)}</b><div class="eyebrow">Spent</div></div>
-        <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--bad)">${fmt(n.lost)}</b><div class="eyebrow">Lost</div></div></div></div>
+        <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--bad)">${fmt(n.lost)}</b><div class="eyebrow">Lost</div></div></div>
+      ${isDir() ? `<div class="adj"><span class="eyebrow">Add or remove bucks (Center Director)</span>
+        <div class="adj-row"><input id="adjAmt" type="number" min="1" step="1" inputmode="numeric" placeholder="Amount" aria-label="Amount of bucks" value="${esc(S.adj.amt)}">
+          <input id="adjNote" maxlength="60" placeholder="Reason (optional)" aria-label="Reason" value="${esc(S.adj.note)}"></div>
+        <div class="row"><button class="btn primary" data-act="adjust" data-sign="1">Add bucks</button><button class="btn ghost" data-act="adjust" data-sign="-1">Remove bucks</button></div></div>` : ''}</div>
     <div class="progress"><div class="spread"><b>${rankText(n)}${b.i===BLACK?'':` <span class="hint" style="margin:0">(${b.projects?'project':'step'} ${b.level} of ${levelsOf(b.i)})</span>`}</b><span class="hint" style="margin:0">${b.level>=levelsOf(b.i) ? (b.next?`Ready for ${b.next.name} belt!`:'Capstone done. Top of the dojo!') : (b.next?`Next belt: ${b.next.name}`:'Black belt')}</span></div>
       <div class="medals">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),44,k+1===b.level?'cur':k+1>b.level?'dim':'',`${b.name} · ${stepName(b.i,k+1)}`)).join('')}</div>
       <span class="eyebrow" style="margin-top:8px">Belt collection</span>
@@ -1658,7 +1677,8 @@ document.addEventListener('click', e=>{
     case 'cancelRedeem': S.confirm=null; render(); break;
     case 'redeem': redeem(findItem('redeem', t.dataset.item)); break;
     case 'undo': { const u=document.getElementById('toastHost')._undo; document.getElementById('toastHost').innerHTML=''; if(u) undoAll(u); break; }
-    case 'open': if(isParent()) break; S.drawer=id; S.confirmRemove=false; render(); setTimeout(()=>document.getElementById('drawerClose')?.focus(),0); break;
+    case 'adjust': adjustBucks(S.drawer, Number(t.dataset.sign)); break;
+    case 'open': if(isParent()) break; S.adj={amt:'', note:''}; S.drawer=id; S.confirmRemove=false; render(); setTimeout(()=>document.getElementById('drawerClose')?.focus(),0); break;
     case 'closeDrawer': S.drawer=null; render(); break;
     case 'closeCelebrate': document.getElementById('celebrateHost').innerHTML=''; break;
     case 'head': S.head=+t.dataset.head; render(); break;
@@ -1705,7 +1725,7 @@ document.addEventListener('change', e=>{
   if(el.id==='editLevel'){ api.update('ninjas',S.drawer,{level:+el.value}).catch(()=>{}); }
   if(el.id==='editGroup'){ const n=S.ninjas[S.drawer]; api.update('ninjas',S.drawer, el.value==='junior' ? {group:'junior', level:Math.min(beltFor(n).level, JR_BELT.levels)} : {group:'ninja', belt:n.belt|0, level:1}).catch(()=>{}); }
 });
-document.addEventListener('input', e=>{ if(e.target.dataset && e.target.dataset.su) markSetup(); });
+document.addEventListener('input', e=>{ if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='adjNote') S.adj.note=e.target.value; });
 { const vp=document.querySelector('.tk-viewport'); vp.addEventListener('mouseenter',()=>tk.paused=true); vp.addEventListener('mouseleave',()=>tk.paused=false); }
 window.addEventListener('resize', ()=>tkFill());
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.drawer){ S.drawer=null; render(); } if(e.key==='Enter' && e.target.matches && e.target.matches('tr[data-act="open"]')) e.target.click(); });
