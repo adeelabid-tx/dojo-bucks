@@ -11,7 +11,15 @@ service cloud.firestore {
     function isSensei() { return isDirector() || (isStaff() && staffDoc().role == 'sensei'); }
     function canView() { return isSensei() || (isStaff() && staffDoc().role == 'viewer'); }
     // Parents (shared parent code) only see the leaderboard and Dojo News.
-    function canSee() { return canView() || (isStaff() && staffDoc().role == 'parent'); }
+    function canSee() { return canView() || (isStaff() && staffDoc().role == 'parent') || isFamily(); }
+    // A family signs in with its own code and can only request rewards for its own ninja.
+    function isFamily() { return signedIn() && exists(/databases/$(database)/documents/families/$(request.auth.uid)); }
+    function famNinja() { return get(/databases/$(database)/documents/families/$(request.auth.uid)).data.ninjaId; }
+    // Rewards parents can request: the categories marked for it in the Reward Shop, or Legendary until the shop is first saved.
+    function parentItems() {
+      let shop = /databases/$(database)/documents/settings/shop;
+      return exists(shop) && ('parentIds' in get(shop).data) ? get(shop).data.parentIds : ['gaming', 'daycamp', 'bday', 'fee', 'summer'];
+    }
     function num(m, k) { return m.get(k, 0); }
     // Rewards a sensei can give without director approval: the categories marked for it in the Reward Shop
     // (settings/shop.quickIds), or the built-in Quick Perks until the director first saves the shop.
@@ -65,10 +73,17 @@ service cloud.firestore {
       allow delete: if isSensei();
     }
     match /requests/{id} {
-      allow read: if canView();
-      allow create: if isSensei() && request.resource.data.by == request.auth.uid && request.resource.data.status == 'pending';
+      allow read: if canView() || (isFamily() && resource.data.by == request.auth.uid);
+      allow create: if request.resource.data.by == request.auth.uid && request.resource.data.status == 'pending'
+        && (isSensei()
+          || (isFamily() && request.resource.data.type == 'redeem' && request.resource.data.ninjaId == famNinja()
+              && request.resource.data.item in parentItems()));
       allow update: if isDirector();
-      allow delete: if isDirector() || (isSensei() && resource.data.by == request.auth.uid && resource.data.status == 'pending');
+      allow delete: if isDirector() || ((isSensei() || isFamily()) && resource.data.by == request.auth.uid && resource.data.status == 'pending');
+    }
+    match /families/{uid} {
+      allow read: if isDirector() || (signedIn() && request.auth.uid == uid);
+      allow write: if isDirector();
     }
   }
 }

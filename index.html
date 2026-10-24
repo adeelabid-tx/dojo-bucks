@@ -206,6 +206,55 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .lbview .pod .block .place{font-size:40px} .lbview .pod .block .amt{font-size:22px}
 @media (min-width:1000px){ .lbview .lb{display:grid;grid-template-columns:1fr 1fr;column-gap:28px} }
 .lbview .lb .amt{font-size:22px}
+
+/* ---------- lobby TV slideshow ---------- */
+.lobby{position:fixed;left:0;right:0;top:0;z-index:25;overflow:hidden;background:url(mascots/valley.webp) center/cover;color:#1E1A3C}
+.lobby::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(80,160,255,.10),rgba(241,239,250,0) 40%,rgba(241,239,250,.55))}
+.lb-stage{position:absolute;left:50%;top:50%;width:1920px;height:990px;transform-origin:center center;font-family:var(--f-body)}
+.lb-stage .d{font-family:var(--f-display);font-weight:400}
+.lb-top{position:absolute;top:26px;left:50px;right:50px;display:flex;align-items:center;gap:18px;z-index:5}
+.lb-brand{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.92);border-radius:999px;padding:8px 22px 8px 8px;box-shadow:0 8px 24px -10px rgba(30,26,60,.4)}
+.lb-chip{background:#221B4D;color:#fff;border-radius:999px;padding:10px 22px;font-weight:900;font-size:24px}
+.lb-dots{display:flex;gap:8px;margin-left:auto;margin-right:18px}.lb-dots i{width:14px;height:14px;border-radius:9px;background:rgba(255,255,255,.75);box-shadow:0 1px 4px rgba(0,0,0,.2);transition:width .3s}.lb-dots i.on{width:44px;background:#E5402B}
+.lb-cn{background:#fff;border-radius:16px;padding:10px 18px;box-shadow:0 8px 24px -10px rgba(30,26,60,.4)}
+.lb-exit{background:#fff;border:0;border-radius:999px;padding:10px 18px;font-weight:900;font-size:20px;cursor:pointer}
+.lb-panel{position:absolute;background:rgba(255,255,255,.93);border-radius:36px;box-shadow:0 30px 70px -25px rgba(30,26,60,.5)}
+.lb-slide{position:absolute;inset:0;animation:lbIn .6s ease}
+@keyframes lbIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.lb-pill{border-radius:999px;padding:6px 16px;font-weight:900;font-size:20px;display:inline-flex;align-items:center;gap:8px}
+.lb-av{border-radius:50%;background:#fff;display:inline-grid;place-items:center;overflow:hidden;flex:none;border:solid}
+.lb-av img{width:88%;height:88%;object-fit:contain}
+.lb-coin{display:inline-flex;vertical-align:-.12em}
+.lb-qr{position:absolute;right:30px;bottom:14px;z-index:9;background:#fff;border-radius:20px;padding:10px 20px 10px 10px;display:flex;gap:12px;align-items:center;border:4px solid #F6B60A;box-shadow:0 12px 30px -10px rgba(0,0,0,.35)}
+.lb-qr svg{width:104px;height:104px;display:block}
+.fam-code{font-family:var(--f-display);font-size:40px;letter-spacing:.12em;background:var(--gold-soft);border:2px dashed var(--gold);border-radius:14px;text-align:center;padding:8px;margin:6px 0 10px}
+.fam-link{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.fam-link-text{flex:1;min-width:240px}
+.fam-form{display:flex;gap:8px;flex-wrap:wrap}
+.fam-form select,.fam-form input{border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:800;background:var(--surface);color:var(--ink)}
+.fam-form input{width:140px;letter-spacing:.2em}
+.fam-card2{margin-bottom:18px;display:flex;flex-direction:column;gap:14px}
+.fam-head{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--senior),#221B4D);color:#fff;border-radius:18px;padding:14px 18px;flex-wrap:wrap}
+.fam-head > div:nth-child(2){min-width:140px}
+@media (max-width:600px){ .fam-head > div:last-child{width:100%;text-align:left!important} }
+.fam-head .bal{font-family:var(--f-display);font-size:34px;display:flex;align-items:center;gap:6px}
+.fam-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:18px}
+@media (max-width:800px){ .fam-grid{grid-template-columns:1fr} }
+.fam-wins{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.fam-wins li{display:flex;align-items:center;gap:8px;font-weight:800}
+.fam-rewards{display:grid;gap:8px;margin-top:6px}
+.fam-rw{display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:14px;padding:8px 10px}
+.fam-rw.ok{border-color:var(--gold)}
+.fam-reqs{display:grid;gap:6px;margin-top:6px}
+.fam-reqs > div{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--sunk);border-radius:10px;padding:8px 12px;font-weight:800;flex-wrap:wrap}
+.lb-admin{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:800px){ .lb-admin{grid-template-columns:1fr} }
+.lb-checks{display:grid;gap:8px;margin-top:8px}
+.lb-checks input{width:18px;height:18px}
+body.lobby-on .tk-row{padding-block:6px}
+body.lobby-on .tk-item{font-size:30px}
+body.lobby-on .tk-item .badge{width:40px;height:40px}
+body.lobby-on .tk-tag{font-size:17px}
 /* news ticker */
 .tk-dock{position:fixed;left:0;right:0;bottom:0;z-index:30;box-shadow:0 -6px 20px rgba(0,0,0,.18)}
 .ticker{background:var(--hero);color:var(--hero-ink);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -517,6 +566,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
 <main class="wrap">
   <!-- LEADERBOARD -->
   <section class="view lbview" id="v-board">
+      <div id="familyCard"></div>
       <div class="card board">
         <div class="spread">
           <h2 class="lb-title">Dojo Leaderboard</h2>
@@ -651,6 +701,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
         <button class="btn primary" type="submit" id="tmAdd">Add to team</button>
       </form>
       <div id="teamList" style="margin-top:14px"></div></div>
+    <div class="card"><div class="spread"><div><h2>Lobby TV</h2><p class="hint" style="margin:4px 0 0">The View only login (for example "Lobby") shows a slideshow for parents. Choose the slides and set this month's dojo goal.</p></div><a class="btn" href="#lobby" style="text-decoration:none">Preview lobby</a></div>
+      <div id="lobbyAdmin" style="margin-top:12px"></div></div>
     <div class="card"><div class="spread"><div><h2>Backup</h2><p class="hint" style="margin:4px 0 0">Download a copy of all ninjas, bucks, history, news and requests. Keep it somewhere safe, for example once a month.</p></div><button class="btn" data-act="backup">Download backup</button></div></div>
     <div class="card"><h2>Who can do what</h2><div id="rolesInfo" style="margin-top:10px"></div></div>
     <div class="card">
@@ -678,6 +730,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
     <div id="siBody"></div>
   </div>
 </div>
+<div class="lobby" id="lobby" hidden><div class="lb-stage" id="lbStage"></div></div>
 <div id="drawerHost"></div>
 <div id="toastHost"></div>
 <div id="celebrateHost"></div>
@@ -770,6 +823,9 @@ const TIERS = [
 const shopTiers = () => S.shop?.tiers || TIERS;
 // Each reward can be marked for senseis to give without approval; older shops set it per category.
 const isQuick = (t, it) => it.quick ?? !!t.quick;
+// Rewards parents can request from their phone: categories marked for it, or Legendary by default.
+const parentTiers = () => { const T=shopTiers(); return T.some(t=>t.parents!=null) ? T.filter(t=>t.parents) : T.filter(t=>t.id==='legendary'); };
+const parentIds = () => parentTiers().flatMap(t=>t.items.map(it=>it.id));
 const quickIds = () => shopTiers().flatMap(t=>t.items.filter(it=>isQuick(t, it)).map(it=>it.id));
 // Pictures and emoji the director can choose for rewards and categories.
 const PIC_LIB = ['sensei_ada','sensei_alan','gamer','bdaygamer','blockcoder','codergirl','grateful','hiyah','buddies','tablet','head0','head1','head2','head3','head4','head5','head6','head7'];
@@ -809,7 +865,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', bonusTab:0, actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', lobbyCfg:{goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}, bonusTab:0, actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -862,13 +918,17 @@ function startDb(db){
   const ready = () => { if(gotN && gotL){ S.loaded=true; } render(); };
   db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
   db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => ({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
-  if(isParent()){
+  if(isFamily()){
+    db.doc('families/'+S.me).onSnapshot(d => { if(!d.exists) lockNow('That family code has changed. Please contact the front desk for the new one.'); }, () => {});
+    db.collection('requests').where('by','==',S.me).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b)=>b.at-a.at); render(); }, () => {});
+  } else if(isParent()){
     db.doc('staff/'+S.me).onSnapshot(d => { if(!d.exists) lockNow('The parent access code has changed. Please contact the front desk for the new one.'); }, () => {});
   } else {
   db.collection('staff').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.staff=m; if(!S.isOwner && !m[S.me]) return lockNow('You are no longer on the team.'); if(!S.isOwner){ S.role=m[S.me].role; } render(); if(S.isOwner && !S.parentChecked){ S.parentChecked=true; ensureParentLogin(db); } }, () => {});
   db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
+  db.doc('settings/lobby').onSnapshot(d => { S.lobbyCfg = d.exists ? d.data() : {goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}; render(); }, () => {});
   db.doc('settings/actions').onSnapshot(d => { S.actions = d.exists ? d.data() : null; render(); }, () => {});
   db.doc('settings/ticker').onSnapshot(d => { S.tickerCfg = d.exists ? d.data() : {hidden:[], edits:[]}; render(); }, () => {});
   db.doc('settings/shop').onSnapshot(d => { S.shop = d.exists ? d.data() : null; render(); }, () => {});
@@ -890,17 +950,17 @@ const LKEY='dojo-bucks-preview-v2';
 function startLocal(){
   S.mode='local'; S.role='director'; S.me='preview-director';
   let saved=null; try{ saved = JSON.parse(localStorage.getItem(LKEY)||'null'); }catch{}
-  if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; S.tickerCfg=saved.tickerCfg||S.tickerCfg; S.actions=saved.actions||null; }
+  if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; S.tickerCfg=saved.tickerCfg||S.tickerCfg; S.actions=saved.actions||null; S.lobbyCfg=saved.lobbyCfg||S.lobbyCfg; S.demoFam=saved.demoFam||{}; }
   else { const s = makeSamples(); s.ninjas.forEach(n=>S.ninjas[n.id]=n); S.log = s.log.sort((a,b)=>b.at-a.at); S.news = s.news; }
-  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions})); }catch{} };
+  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions, lobbyCfg:S.lobbyCfg, demoFam:S.demoFam})); }catch{} };
   const col = c => c==='ninjas' ? 'ninjas' : c;
   api = {
-    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else if(id==='actions') S.actions=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
+    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else if(id==='actions') S.actions=d; else if(id==='lobby') S.lobbyCfg=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
     update:async(c,id,d)=>{ if(c==='staff' && S.staff[id]) S.staff={...S.staff,[id]:{...S.staff[id],...d}}; if(c==='ninjas' && S.ninjas[id]) S.ninjas[id]={...S.ninjas[id],...d}; else if(c==='requests') S.requests=S.requests.map(r=>r.id===id?{...r,...d}:r); else if(c==='news') S.news=S.news.map(x=>x.id===id?{...x,...d}:x); persist(); render(); },
     del:async(c,id)=>{ if(c==='staff'){ const m={...S.staff}; delete m[id]; S.staff=m; } if(c==='ninjas') delete S.ninjas[id]; else if(c==='log') S.log=S.log.filter(x=>x.id!==id); else if(c==='news') S.news=S.news.filter(x=>x.id!==id); else if(c==='requests') S.requests=S.requests.filter(x=>x.id!==id); persist(); render(); },
   };
   S.loaded=true;
-  showBanner('Demo mode: made-up sample ninjas, saved only in this browser. Use the Director / Sensei / Parent switch at the top to try each role. Open the site without ?demo to use the real dojo.');
+  showBanner('Demo mode: made-up sample ninjas, saved only in this browser. Use the Director / Sensei / Parent / Family switch at the top to try each role. Open #lobby to see the lobby TV slideshow. Open the site without ?demo to use the real dojo.');
   render();
 }
 
@@ -919,7 +979,7 @@ function makeSamples(){
   const L=(n,o)=>log.push({id:uid()+log.length, ninjaId:n.id, name:n.name, sample:true, ...o});
   people.forEach(([name,group,belt],i)=>{
     const lv=1+Math.floor(rnd()*(belt===JR?JR_BELT.levels:levelsOf(belt)));
-    const n={id:'sample'+i, name, group, belt:belt===JR?0:belt, level:lv, head:Math.floor(rnd()*HEADS), balance:0, earned:0, spent:0, lost:0, createdAt:now-120*DAY, sample:true};
+    const n={id:'sample'+i, name, group, belt:belt===JR?0:belt, level:lv, head:Math.floor(rnd()*HEADS), balance:0, earned:0, spent:0, lost:0, createdAt:now-120*DAY, sample:true, bday: i%7===0 ? String(new Date(now).getMonth()+1).padStart(2,'0')+'-'+String(i===0 ? new Date(now).getDate() : (i%28)+1).padStart(2,'0') : ''};
     // history before the last 6 weeks is folded into the totals; higher belts have been around longer
     const past=Math.floor((belt===JR?80:250+belt*420)*(0.6+rnd()*0.8));
     n.earned=past; n.spent=Math.floor(past*(0.2+rnd()*0.5)); n.balance=past-n.spent;
@@ -964,7 +1024,8 @@ async function clearSamples(){
 // added in Admin > Team with a first name, a role and a PIN. Firestore security rules enforce what each role can change.
 const isDir = () => S.role==='director';
 const canWrite = () => S.role==='director' || S.role==='sensei';
-const isParent = () => S.role==='parent';
+const isParent = () => S.role==='parent' || S.role==='family';
+const isFamily = () => S.role==='family';
 const pendingReqs = () => S.requests.filter(r=>r.status==='pending');
 const heldFor = id => pendingReqs().filter(r=>r.type==='redeem' && r.ninjaId===id).reduce((a,r)=>a+(r.cost||0),0);
 async function sendRequest(type, data, msg){
@@ -1215,13 +1276,13 @@ function render(){
   document.getElementById('addBtn').textContent = isDir() ? 'Add ninja' : 'Send for approval';
   const chip=document.getElementById('roleChip');
   chip.className='role-chip'+(isDir()?' dir':'');
-  chip.innerHTML = S.mode==='local' ? `Preview as <button data-act="asRole" data-role="director" aria-pressed="${isDir()}">Director</button><button data-act="asRole" data-role="sensei" aria-pressed="${S.role==='sensei'}">Sensei</button><button data-act="asRole" data-role="parent" aria-pressed="${isParent()}">Parent</button>`
-    : (S.isOwner ? 'Center Director' : isParent() ? 'Parent view' : (personName(S.me) ? esc(personName(S.me))+' · ' : '') + ROLE_NAMES[S.role]);
+  chip.innerHTML = S.mode==='local' ? `Preview as <button data-act="asRole" data-role="director" aria-pressed="${isDir()}">Director</button><button data-act="asRole" data-role="sensei" aria-pressed="${S.role==='sensei'}">Sensei</button><button data-act="asRole" data-role="parent" aria-pressed="${S.role==='parent'}">Parent</button><button data-act="asRole" data-role="family" aria-pressed="${isFamily()}">Family</button>`
+    : (S.isOwner ? 'Center Director' : isFamily() ? `${esc(S.ninjas[S.famNinja]?.name||'')} · Family` : isParent() ? 'Parent view' : (personName(S.me) ? esc(personName(S.me))+' · ' : '') + ROLE_NAMES[S.role]);
   document.getElementById('lockBtn').hidden = S.mode!=='db';
   document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
   document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
   document.getElementById('editShop').hidden = !isDir() || !!S.shopEdit;
-  if(!S.loaded) return;
+  if(!S.loaded){ renderLobby(false); return; }
   renderTicker();
   if(S.view==='board') renderBoard();
   if(S.view==='dash') renderDash();
@@ -1230,6 +1291,7 @@ function render(){
   if(S.view==='roster') renderRoster();
   if(S.view==='admin') renderAdmin();
   renderDrawer();
+  renderLobby(false);
 }
 
 function emptyDojo(){
@@ -1266,6 +1328,7 @@ function renderDash(){
 }
 function renderBoard(){
   renderParentQr();
+  renderFamilyCard();
   renderParentRewards();
   const all=ninjaList();
   const board=document.getElementById('boardList');
@@ -1320,6 +1383,8 @@ function tickerRaw(){
   if(fresh.some(n=>now-n.createdAt >= 2*DAY)){
     add('welcome-all', `🎉 A big ninja welcome to ${fresh.length>1?'our new ninjas':'our new ninja'} ${andList(fresh.map(n=>n.name))}!`);
   }
+  const td=new Date(now), mmdd=String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
+  all.filter(n=>n.bday===mmdd).forEach(n=>add('bday:'+n.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy birthday, <b>${esc(n.name)}</b>! Have an awesome day! 🎉`));
   const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
   const itemOf = id => [...earnList(), ...bonusItems(), ...shopTiers().flatMap(t=>t.items)].find(x=>x.id===id);
@@ -1638,6 +1703,51 @@ function renderParentRewards(){
   </div>`;
 }
 document.getElementById('parentRewards').addEventListener('click', e=>{ const b=e.target.closest('[data-rmonth]'); if(!b) return; S.rewardMonth=+b.dataset.rmonth; renderParentRewards(); });
+// Parents: link a ninja with the family code, then see their progress and request rewards.
+function renderFamilyCard(){
+  const host=document.getElementById('familyCard');
+  if(!isParent()){ host.innerHTML=''; return; }
+  if(host.contains(document.activeElement) && !isFamily()) return;
+  if(!isFamily()){
+    host.innerHTML = `<div class="card fam-link"><div class="fam-link-text"><h2 style="margin:0">👨‍👩‍👧 Is your ninja here?</h2><p class="hint" style="margin:4px 0 0">Enter your family code from the front desk to see your ninja's progress and request big rewards.</p></div>
+      <form id="famForm" class="fam-form"><select id="famNinja" aria-label="Your ninja" required><option value="">Your ninja</option>${ninjaList().map(n=>`<option value="${esc(n.id)}">${esc(n.name)}</option>`).join('')}</select>
+      <input id="famCodeIn" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Family code" aria-label="Family code" required><button class="btn primary" type="submit">Open</button></form></div>`;
+    return;
+  }
+  const n=S.ninjas[S.famNinja]; if(!n){ host.innerHTML=''; return; }
+  const b=beltFor(n), held=heldFor(n.id), avail=(n.balance||0)-held, ms=monthStart(Date.now());
+  const wins=achievements(ms).filter(l=>l.ninjaId===n.id).slice(0,4), earned=S.log.filter(l=>l.ninjaId===n.id && l.kind==='earn' && l.at>=ms).reduce((a,l)=>a+(l.amt||0),0);
+  const mine=S.requests.filter(r=>r.ninjaId===n.id).slice(0,5), waiting=id=>mine.some(r=>r.status==='pending' && r.item===id);
+  const rewards=parentTiers().flatMap(t=>t.items);
+  host.innerHTML = `<div class="card fam-card2">
+    <div class="fam-head">${avatar(n,72)}<div style="flex:1;min-width:0"><div class="eyebrow" style="color:#fff;opacity:.85">My ninja</div><h2 style="margin:0;color:#fff">${esc(n.name)}</h2><div style="font-weight:800;opacity:.9">${b.i===BLACK?'Black Belt':`${esc(b.name)} belt · ${esc(stepName(b.i,b.level))}`}</div></div>
+      <div style="text-align:right"><div class="bal num">${coin(30)}${fmt(avail)}</div>${held?`<small style="font-weight:800;opacity:.9">${fmt(held)} on hold</small>`:''}</div></div>
+    <div class="fam-grid">
+      <div><span class="eyebrow">Belt progress</span><div class="medals" style="margin-top:6px">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),36,k+1===b.level?'cur':k+1>b.level?'dim':'')).join('')}</div>
+        <span class="eyebrow" style="margin-top:12px;display:block">This month · ${fmt(earned)} bucks earned</span>
+        <ul class="fam-wins">${wins.map(l=>{ const a=achText(l); return `<li>${a.img?badge(a.img,26):`<span>${esc(a.em)}</span>`}${esc(a.t)}</li>`; }).join('') || '<li class="hint">Big wins this month will show here.</li>'}</ul></div>
+      <div><span class="eyebrow">Rewards you can request</span><div class="fam-rewards">${rewards.map(it=>{ const c=amountOf('redeem',it), ok=avail>=c, w=waiting(it.id), pct=Math.min(100, c? avail/c*100 : 100);
+        return `<div class="fam-rw ${ok?'ok':''}">${iconHTML(it,44)}<div style="flex:1;min-width:0"><b>${esc(it.label)}</b><div class="num" style="font-weight:900;color:var(--gold-deep)">${coin(16)} ${fmt(c)}</div><div class="meter"><i style="width:${pct}%"></i></div></div>
+          ${w ? '<span class="status pending">Requested</span>' : ok ? `<button class="btn gold" data-act="famReq" data-item="${esc(it.id)}">Request</button>` : `<small class="hint">${fmt(c-avail)} to go</small>`}</div>`; }).join('') || '<p class="hint">No rewards to request right now.</p>'}</div></div></div>
+    ${mine.length?`<div><span class="eyebrow">My requests</span><div class="fam-reqs">${mine.map(r=>{ const it=findItem('redeem', r.item); return `<div><span>${esc(it?.label||'Reward')} · ${fmt(r.cost)} bucks</span><span class="status ${r.status}">${r.status==='pending'?'Waiting for the front desk':r.status==='approved'?'Confirmed! 🎉':'Declined'}</span></div>`; }).join('')}</div></div>`:''}
+  </div>`;
+}
+async function familyRequest(itemId){
+  const n=S.ninjas[S.famNinja], it=findItem('redeem', itemId); if(!n || !it || !isFamily()) return;
+  const c=amountOf('redeem', it); if((n.balance||0)-heldFor(n.id) < c){ toast('Not enough bucks for this one yet.'); return; }
+  await sendRequest('redeem', {ninjaId:n.id, item:it.id, cost:c, byName:`${n.name}'s family`}, `Request sent! The front desk will confirm ${it.label} for ${n.name}.`);
+  render();
+}
+async function linkFamily(id, code){
+  const n=S.ninjas[id];
+  if(!n){ toast('Pick your ninja first.'); return; }
+  if(!/^\d{6}$/.test(code)){ toast('The family code is 6 digits.'); return; }
+  if(!n.famKey){ toast(`${n.name} has no family code yet. Please ask the front desk.`); return; }
+  if(S.mode!=='db'){ if((S.demoFam||{})[id]!==code){ toast('That code does not match. Please check with the front desk.'); return; } S.role='family'; S.famNinja=id; render(); return; }
+  try{ await firebase.auth().signInWithEmailAndPassword(famEmail(n.famKey), pinPass(code)); location.reload(); }
+  catch(e){ toast(e.code==='auth/too-many-requests' ? 'Too many tries. Wait a minute and try again.' : 'That code does not match. Please check with the front desk.'); }
+}
+document.addEventListener('submit', e=>{ if(e.target.id!=='famForm') return; e.preventDefault(); linkFamily(document.getElementById('famNinja').value, document.getElementById('famCodeIn').value.trim()); });
 function iconHTML(o, size){
   if(o.pic && PIC_LIB.includes(o.pic)) return `<img class="mascot pic" src="mascots/${o.pic}.webp" alt="" style="height:${size}px;width:auto">`;
   return `<span class="em" style="font-size:${Math.round(size*0.55)}px">${esc(o.icon||'🎁')}</span>`;
@@ -1647,7 +1757,8 @@ function iconHTML(o, size){
 // Changes go to a draft (S.shopEdit) and are saved together with Save changes.
 // Moving a reward to another category keeps its own "right away" setting.
 function openShopEditor(){
-  S.shopEdit = JSON.parse(JSON.stringify(shopTiers())).map(t=>({...t, items:t.items.map(it=>({...it, cost:amountOf('redeem', it), quick:isQuick(t, it)}))}));
+  const par=new Set(parentTiers().map(t=>t.id));
+  S.shopEdit = JSON.parse(JSON.stringify(shopTiers())).map(t=>({...t, parents:par.has(t.id), items:t.items.map(it=>({...it, cost:amountOf('redeem', it), quick:isQuick(t, it)}))}));
   S.iconFor=null; render();
 }
 function renderShopEditor(){
@@ -1659,7 +1770,8 @@ function renderShopEditor(){
       <div class="se-head">
         <button class="se-ic" data-se-act="icon" data-t="${ti}" aria-label="Change category icon" title="Change icon">${t.icon||t.pic?iconHTML(t,40):'<span class="hint">Icon</span>'}</button>
         <div class="se-fields">${f(ti,null,'name',t.name,'Category name','class="se-name" maxlength="40"')}${f(ti,null,'blurb',t.blurb,'Short description','maxlength="80"')}
-          <label class="se-check"><input type="checkbox" data-se="tier" data-t="${ti}" data-f="quick" ${(t.items.length ? t.items.every(it=>it.quick) : t.quick)?'checked':''}> Senseis can give every reward here right away (no approval)</label></div>
+          <label class="se-check"><input type="checkbox" data-se="tier" data-t="${ti}" data-f="quick" ${(t.items.length ? t.items.every(it=>it.quick) : t.quick)?'checked':''}> Senseis can give every reward here right away (no approval)</label>
+          <label class="se-check"><input type="checkbox" data-se="tier" data-t="${ti}" data-f="parents" ${t.parents?'checked':''}> Parents can request these from their phone (you approve)</label></div>
         <div class="se-tools"><button class="btn ghost" data-se-act="moveTier" data-t="${ti}" data-d="-1" ${ti?'':'disabled'} aria-label="Move up">${up}</button><button class="btn ghost" data-se-act="moveTier" data-t="${ti}" data-d="1" ${ti<T.length-1?'':'disabled'} aria-label="Move down">${dn}</button><button class="btn ghost danger" data-se-act="delTier" data-t="${ti}">Delete category</button></div>
       </div>
       <div class="items">${t.items.map((it,ii)=>`<div class="item se-item">
@@ -1691,13 +1803,14 @@ async function saveShop(){
   }
   const tiers = JSON.parse(JSON.stringify(T.map(t=>({...t, name:t.name.trim(), blurb:(t.blurb||'').trim(), quick:t.items.length ? t.items.every(it=>it.quick) : !!t.quick,
     items:t.items.map(it=>({...it, label:it.label.trim(), note:(it.note||'').trim(), quick:!!it.quick, cost:Math.max(0, Math.round(Number(it.cost)||0))}))}))));
-  const doc = {tiers, quickIds:tiers.flatMap(t=>t.items.filter(it=>it.quick).map(it=>it.id)), updatedAt:Date.now()};
+  const doc = {tiers, quickIds:tiers.flatMap(t=>t.items.filter(it=>it.quick).map(it=>it.id)), parentIds:tiers.filter(t=>t.parents).flatMap(t=>t.items.map(it=>it.id)), updatedAt:Date.now()};
   try{ await api.set('settings', 'shop', doc); }catch{ return; }
   S.shop = doc; S.shopEdit=null; S.iconFor=null; render(); toast('Reward Shop saved.');
 }
 document.getElementById('tiers').addEventListener('input', e=>{
   const el=e.target, d=el.dataset; if(!S.shopEdit || !d.se) return;
   const t=S.shopEdit[+d.t], o = d.se==='tier' ? t : t.items[+d.i];
+  if(d.f==='parents'){ o.parents=el.checked; return; }
   if(d.f==='quick'){
     o.quick=el.checked;
     if(d.se==='tier') t.items.forEach(it=>it.quick=el.checked); else t.quick=t.items.every(it=>it.quick);
@@ -1788,8 +1901,22 @@ async function saveSetup(){
 }
 function reqRow(r, mine){
   const d=describeReq(r);
-  return `<div class="req"><div class="ic2">${d.ic}</div><div><div class="what">${d.html}</div><div class="meta">${r.status==='pending'?'Asked by':'Decided'} <span data-uid="${esc(r.status==='pending'?r.by:(r.decidedBy||r.by))}">…</span> · ${ago(r.status==='pending'?r.at:(r.decidedAt||r.at))} <span class="status ${r.status}">${r.status==='pending'?'Waiting':r.status}</span>${r.note?` · ${esc(r.note)}`:''}</div></div>
+  return `<div class="req"><div class="ic2">${d.ic}</div><div><div class="what">${d.html}</div><div class="meta">${r.status==='pending'?'Asked by':'Decided'} ${r.status==='pending' && r.byName ? esc(r.byName) : `<span data-uid="${esc(r.status==='pending'?r.by:(r.decidedBy||r.by))}">…</span>`} · ${ago(r.status==='pending'?r.at:(r.decidedAt||r.at))} <span class="status ${r.status}">${r.status==='pending'?'Waiting':r.status}</span>${r.note?` · ${esc(r.note)}`:''}</div></div>
     <div class="acts2">${r.status==='pending' ? (isDir() ? `<button class="btn primary" data-act="approve" data-id="${r.id}">Approve</button><button class="btn ghost" data-act="reject" data-id="${r.id}">Decline</button>` : (r.by===S.me ? `<button class="btn ghost" data-act="cancelReq" data-id="${r.id}">Cancel</button>` : '')) : ''}</div></div>`;
+}
+function renderLobbyAdmin(){
+  const host=document.getElementById('lobbyAdmin'); if(!host || host.contains(document.activeElement)) return;
+  const c=S.lobbyCfg||{}, off=new Set(c.off||[]);
+  host.innerHTML = `<div class="lb-admin"><div><span class="eyebrow">Slides</span><div class="lb-checks">${LB_SLIDES.map(x=>`<label class="se-check"><input type="checkbox" data-lbslide="${x.id}" ${off.has(x.id)?'':'checked'}> ${x.icon} ${x.name}</label>`).join('')}</div>
+      <p class="hint" style="margin:6px 0 0">Slides with nothing to show are skipped, for example Birthdays in a month without birthdays.</p></div>
+    <div style="display:grid;gap:10px"><span class="eyebrow">Dojo goal this month</span>
+      <label class="f">Bucks to earn together<input id="lbGoalT" type="number" min="0" step="100" value="${c.goalTarget||''}" placeholder="e.g. 10000"></label>
+      <label class="f">Prize<input id="lbGoalP" maxlength="60" value="${esc(c.goalPrize||'')}" placeholder="e.g. 🍕 Pizza Party for everyone!"></label>
+      <label class="f">Birthday message (optional)<input id="lbBday" maxlength="80" value="${esc(c.bdayNote||'')}" placeholder="e.g. Birthday ninjas get 25 bonus bucks!"></label></div></div>`;
+}
+async function saveLobbyCfg(patch){
+  const next={...(S.lobbyCfg||{}), ...patch}; S.lobbyCfg=next;
+  try{ await api.set('settings', 'lobby', next); toast('Lobby TV updated.'); }catch{}
 }
 function renderAdmin(){
   const pend=pendingReqs();
@@ -1801,9 +1928,11 @@ function renderAdmin(){
   document.getElementById('rolesInfo').innerHTML = `<div class="roles">
     <div><b>Center Director</b>You (signing in with your email), plus anyone you add to the Team list as Center Director.<ul><li>Everything senseis can do</li><li>Approves requests</li><li>Adds and removes ninjas, sets belts and levels</li><li>Quick setup and bucks amounts</li><li>Edits the Reward Shop: rewards, categories, prices and icons</li></ul></div>
     <div><b>Sensei</b>The people you add to the Team list as Sensei. They sign in on dojo devices with their name and PIN.<ul><li>Gives Ninja Bucks and penalties</li><li>Posts news to the ticker</li><li>Gives Quick Perks right away</li><li>Requests bigger rewards, new ninjas and belt or level changes for approval</li></ul></div>
-    <div><b>View only</b>For the classroom TV. Add a person such as "Classroom TV" with the View only role and a PIN.<ul><li>Sees the Leaderboard, Dashboard, Reward Shop and news</li><li>Cannot change anything</li></ul></div></div>
+    <div><b>View only</b>For the lobby TV. Add a person such as "Lobby TV" with the View only role and a PIN.<ul><li>Shows the lobby slideshow full screen</li><li>Cannot change anything</li></ul></div>
+    <div><b>Families</b>Each family uses its own 6-digit code (create it in the ninja's profile).<ul><li>Sees their own ninja's balance, belt progress and wins</li><li>Requests rewards in categories marked for parents; you approve</li></ul></div></div>
     <p class="hint" style="margin:12px 0 0"><b>Locking:</b> tap Lock at the top when you step away. Dojo devices lock themselves after 10 minutes without use, except View only screens.</p>`;
   renderTeam();
+  renderLobbyAdmin();
   renderSetup();
   const hasSample = Object.values(S.ninjas).some(n=>n.sample);
   document.getElementById('sampleBar').innerHTML = S.mode!=='db' ? '' : hasSample ? `<div class="card spread"><span>Sample ninjas are in your dojo (marked Sample). Remove them when you're ready. Your real ninjas stay.</span><button class="btn" data-act="clearSamples">Remove sample ninjas</button></div>` : '';
@@ -1826,6 +1955,32 @@ function renderRoster(){
     || `<div class="card empty" style="grid-column:1/-1"><p>No ninjas yet. Add your first one above.</p></div>`;
 }
 
+function familyCodeHTML(n){
+  const shown = S.famShow?.id===n.id ? S.famShow.code : null;
+  return `<div class="card fam-card" style="padding:16px"><div class="spread"><h3 style="font-size:18px;margin:0">👨‍👩‍👧 Family code</h3>${n.famKey?'<span class="status approved">Set</span>':''}</div>
+    ${shown ? `<p style="margin:8px 0 4px;font-weight:800">Give this code to ${esc(n.name)}'s family. It is shown only once.</p><div class="fam-code">${shown.split('').join(' ')}</div>`
+      : `<p class="hint" style="margin:6px 0 10px">${n.famKey ? 'A family code is set. Making a new one signs the family out until they enter the new code.' : `Parents use this code on their phone to see ${esc(n.name)}'s progress and request rewards.`}</p>`}
+    <button class="btn ${n.famKey?'ghost':'primary'}" data-act="famCode" ${S.famBusy?'disabled':''}>${n.famKey?'Make a new code':'Create family code'}</button></div>`;
+}
+const famEmail = key => `fam-${key}@staff.${window.FIREBASE_CONFIG?.authDomain||'demo'}`;
+async function createFamilyCode(id){
+  const n=S.ninjas[id]; if(!n || !isDir()) return;
+  const code=String(Math.floor(100000+Math.random()*900000)), key=uid();
+  S.famBusy=true; renderDrawer();
+  try{
+    if(S.mode==='db'){
+      if(!secondary) secondary = firebase.initializeApp(window.FIREBASE_CONFIG, 'staff-admin');
+      const cred = await secondary.auth().createUserWithEmailAndPassword(famEmail(key), pinPass(code));
+      await secondary.auth().signOut();
+      const db=firebase.firestore(), old=await db.collection('families').where('ninjaId','==',id).get();
+      await Promise.all(old.docs.map(d=>d.ref.delete()));
+      await db.doc('families/'+cred.user.uid).set({ninjaId:id, createdAt:Date.now()});
+    } else { S.demoFam={...(S.demoFam||{}), [id]:code}; }
+    await api.update('ninjas', id, {famKey:key});
+    S.famShow={id, code}; toast(`Family code ready for ${n.name}.`);
+  }catch(e){ console.warn(e); toast('Could not make a family code. Check the connection and try again.'); }
+  S.famBusy=false; renderDrawer();
+}
 function renderDrawer(){
   const host=document.getElementById('drawerHost'); const n=S.ninjas[S.drawer];
   if(!n){ host.innerHTML=''; return; }
@@ -1849,9 +2004,13 @@ function renderDrawer(){
       <div class="medals">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),44,k+1===b.level?'cur':k+1>b.level?'dim':'',`${b.name} · ${stepName(b.i,k+1)}`)).join('')}</div>
       <span class="eyebrow" style="margin-top:8px">Belt collection</span>
       <div class="collection">${(b.i===JR?ALL_BELTS:MAIN_BELTS).map(k=>badge(DONE(k),44,(k<b.i || b.i===BLACK)?'':'dim',`${beltInfo(k).name} belt ${k<b.i||b.i===BLACK?'complete':''}`)).join('')}</div></div>
+    ${isDir() ? familyCodeHTML(n) : ''}
     <div class="card" style="padding:16px"><h3 style="font-size:18px">Edit</h3>
       <div style="display:grid;gap:10px;margin-top:10px">
         <label class="f">Name<input id="editName" value="${esc(n.name)}" maxlength="24" ${isDir()?'':'disabled'}></label>
+        <div class="f"><span>Birthday <span class="hint">(month and day, for the lobby birthday slide)</span></span><div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+          <select id="editBdayM" aria-label="Birthday month" ${isDir()?'':'disabled'}><option value="">Month</option>${MONTHS.map((m,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(n)?.m===k+1?'selected':''}>${m}</option>`).join('')}</select>
+          <select id="editBdayD" aria-label="Birthday day" ${isDir()?'':'disabled'}><option value="">Day</option>${Array.from({length:31},(_,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(n)?.d===k+1?'selected':''}>${k+1}</option>`).join('')}</select></div></div>
         <label class="f">Group<select id="editGroup"><option value="ninja" ${n.group==='ninja'?'selected':''}>Create (8+)</option><option value="junior" ${n.group==='junior'?'selected':''}>JR (5–7)</option></select></label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Belt<select id="editBelt">${beltOpts(b.i, ALL_BELTS)}</select></label>
         <label class="f">Level<select id="editLevel">${levelOpts(b.i, b.level)}</select></label></div>
@@ -1864,6 +2023,175 @@ function renderDrawer(){
   host.querySelector('.drawer').scrollTop = prevScroll; S.drawerShown = S.drawer;
   if(keep){ const el=document.getElementById(keep); el && el.focus({preventScroll:true}); }
 }
+
+
+/* ---------- lobby TV slideshow ---------- */
+// The View only (lobby TV) login shows a full-screen slideshow; anyone can preview it at #lobby.
+const LB_SLIDES = [
+  {id:'create', name:'Create Leaderboard', icon:'⚡', secs:10},
+  {id:'jr', name:'JR Leaderboard', icon:'🌸', secs:10},
+  {id:'achieve', name:'Achievements Board', icon:'⭐', secs:12},
+  {id:'bday', name:'Birthday Spotlight', icon:'🎂', secs:8},
+  {id:'spot', name:'Ninja Spotlight', icon:'🌟', secs:8},
+  {id:'path', name:'The Ninja Path', icon:'🗺️', secs:10},
+  {id:'goal', name:'Dojo Goal', icon:'🎯', secs:8},
+  {id:'legend', name:'Legendary Rewards', icon:'👑', secs:10},
+];
+const LB = {i:-1, timer:null, spot:0, on:false};
+const lobbyOn = () => S.role==='viewer' || S.view==='lobby';
+const lbAv = (n, size) => { const c=beltFor(n).i===JR ? '#EC4899' : beltFor(n).color; return `<span class="lb-av" style="width:${size}px;height:${size}px;border-width:${Math.max(4,size/16|0)}px;border-color:${c==='#F4F4F2'?'#C9C9D6':c}"><img src="mascots/head${headOf(n)}.webp" alt=""></span>`; };
+const lbCoin = size => `<span class="lb-coin">${coin(size)}</span>`;
+const dayStart = ts => { const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); };
+const monthStart = ts => { const d=new Date(ts); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); };
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const bdayOf = n => /^\d\d-\d\d$/.test(n.bday||'') ? {m:+n.bday.slice(0,2), d:+n.bday.slice(3)} : null;
+
+// Big moments in the log: belts, levels, curriculum bonuses and finished projects.
+function achievements(from, to=Infinity){
+  const bonusIds=new Set(bonusItems().map(x=>x.id)), seen=new Set(), out=[];
+  S.log.filter(l=>l.at>=from && l.at<to && l.kind==='earn' && S.ninjas[l.ninjaId] && (STEPS.some(x=>x.id===l.item) || bonusIds.has(l.item) || l.amt>=20)).forEach(l=>{
+    const k=l.ninjaId+'|'+l.item+'|'+(l.toBelt??'')+'|'+(l.toLevel??''); if(seen.has(k)) return; seen.add(k); out.push(l); });
+  const rank = l => l.item==='blackbelt' ? 1e6 : l.item==='beltup' ? 5e5 : (l.amt||0);
+  return out.sort((a,b)=>rank(b)-rank(a) || b.at-a.at);
+}
+function achText(l){
+  if(l.item==='blackbelt') return {t:'Earned BLACK BELT!', img:'b8_a'};
+  if(l.item==='beltup') return {t:Number.isInteger(l.toBelt) ? `Belted up to ${beltInfo(l.toBelt).name} Belt` : 'Belted up!', img:Number.isInteger(l.toBelt) ? DONE(l.toBelt-1<JR?JR:l.toBelt-1) : 'b2_done'};
+  if(l.item==='levelup') return {t:Number.isInteger(l.toBelt) ? `${beltInfo(l.toBelt).name} · ${stepName(l.toBelt,l.toLevel)}` : 'Leveled up', img:Number.isInteger(l.toBelt) ? BADGE(l.toBelt,l.toLevel) : 'b4_l1'};
+  const g=bonusList().find(g=>g.items.some(x=>x.id===l.item));
+  return {t:`${g?g.name+' · ':''}${l.label} +${fmt(l.amt)}`, em:l.icon||'⭐'};
+}
+function lbAvailable(){
+  const cfg=S.lobbyCfg||{}, off=new Set(cfg.off||[]), now=Date.now(), m=new Date().getMonth()+1, all=ninjaList();
+  return LB_SLIDES.filter(x=>{
+    if(off.has(x.id)) return false;
+    if(x.id==='create') return all.some(n=>n.group!=='junior');
+    if(x.id==='jr') return all.some(n=>n.group==='junior');
+    if(x.id==='bday') return all.some(n=>bdayOf(n)?.m===m);
+    if(x.id==='spot') return lbSpotlights().length>0;
+    if(x.id==='goal') return (cfg.goalTarget|0)>0;
+    if(x.id==='legend') return lbLegendTier()?.items.length>0;
+    if(x.id==='achieve') return achievements(monthStart(now)).length>0;
+    return all.length>0;
+  });
+}
+function lbSpotlights(){ const since=Date.now()-7*DAY, bonus=new Set(bonusItems().map(x=>x.id));
+  return S.log.filter(l=>l.at>=since && l.kind==='earn' && S.ninjas[l.ninjaId] && (l.item==='beltup' || l.item==='blackbelt' || (bonus.has(l.item) && l.amt>=250))).slice(0,6); }
+function lbLegendTier(){ const T=shopTiers(); return T.find(t=>t.parents) || T.find(t=>t.id==='legendary') || T[T.length-1]; }
+
+function lbFrame(slide, list, body){
+  const qr = window.qrcode ? (()=>{ const q=qrcode(0,'M'); q.addData(PARENT_URL); q.make(); return q.createSvgTag({cellSize:4, margin:1, scalable:true}); })() : '';
+  return `<div class="lb-top"><div class="lb-brand">${coin(52)}<div><div class="d" style="font-size:30px;line-height:1">Dojo Bucks</div><div style="font-weight:900;font-size:14px;letter-spacing:.1em;color:#69658E">LOBBY</div></div></div>
+    <div class="lb-chip">${slide.icon} ${esc(slide.name)}</div><div class="lb-dots">${list.map(x=>`<i class="${x.id===slide.id?'on':''}"></i>`).join('')}</div>
+    ${S.role!=='viewer'?'<button class="lb-exit" data-act="lobbyExit">✕ Exit</button>':''}<div class="lb-cn"><img src="mascots/cn-logo.png" alt="Code Ninjas" style="height:38px;display:block"></div></div>
+    <div class="lb-slide">${body}</div>
+    <div class="lb-qr">${qr}<div><div class="d" style="font-size:26px;line-height:1.05">Parents: scan me!</div><div style="font-weight:800;font-size:16px;color:#69658E">Leaderboard · rewards</div></div></div>`;
+}
+const P = 'top:128px;bottom:156px';
+function lbBoard(group){
+  const L=ninjaList().filter(n=>group==='junior' ? n.group==='junior' : n.group!=='junior').sort((a,b)=>(b.balance||0)-(a.balance||0));
+  const jr=group==='junior', col=jr?'#C2255C':'#6C45D9', big=190;
+  const pod=L.slice(0,3).map((n,i)=>{ const size=i?big*.8|0:big, b=beltFor(n);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;order:${[1,0,2][i]}">${i?'':`<div style="font-size:${big/3|0}px;line-height:1">👑</div>`}
+      <div style="position:relative">${lbAv(n,size)}<img src="badges/${BADGE(b.i,b.level)}.webp" alt="" style="position:absolute;right:-16px;bottom:-6px;height:${size/2.2|0}px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))"></div>
+      <div class="d" style="font-size:${i?36:44}px">${esc(n.name)}</div>
+      <div style="width:${big*1.5|0}px;height:${[230,175,135][i]}px;border-radius:24px 24px 0 0;background:${['linear-gradient(#FFE07A,#F6B60A)','linear-gradient(#EEF1F7,#B8C1D3)','linear-gradient(#F6D0AE,#CD8E62)'][i]};display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 -8px 0 rgba(0,0,0,.08)"><div class="d" style="font-size:64px;line-height:1">${i+1}</div><div class="d" style="font-size:34px;display:flex;align-items:center;gap:6px">${lbCoin(30)} ${fmt(n.balance)}</div></div></div>`; }).join('');
+  const rows=L.slice(3,9).map((n,i)=>{ const b=beltFor(n); return `<div style="display:flex;align-items:center;gap:14px;padding:12px 18px;background:#F1EFFA;border-radius:18px"><span class="d" style="font-size:30px;color:#69658E;width:44px">${i+4}</span>${lbAv(n,58)}<div style="flex:1;min-width:0"><div style="font-size:28px;font-weight:900;line-height:1.1">${esc(n.name)}</div><div style="font-size:17px;font-weight:800;color:#69658E">${esc(b.name)} · ${esc(stepName(b.i,b.level))}</div></div><span class="d" style="font-size:32px;color:#A86F00;display:flex;align-items:center;gap:6px">${lbCoin(28)} ${fmt(n.balance)}</span></div>`; }).join('');
+  return `<div class="lb-panel" style="left:50px;${P};width:1040px;padding:30px 36px;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between"><div><div class="d" style="font-size:58px;line-height:1;color:${col}">${jr?'JR Leaderboard':'Create Leaderboard'}</div><div style="font-weight:800;font-size:24px;color:#69658E">${jr?'Ages 5–7':'Ages 8+'} · ranked by balance</div></div><span class="lb-pill" style="background:#DDF5EB;color:#16956A">● Live</span></div>
+      <div style="display:flex;justify-content:center;align-items:flex-end;gap:30px;margin-top:auto">${pod}</div></div>
+    <div class="lb-panel" style="left:1120px;right:50px;${P};padding:26px;display:flex;flex-direction:column;gap:10px"><div class="d" style="font-size:30px">${jr?'🌸':'⚡'} Next up</div>${rows || '<p style="font-weight:800;color:#69658E;font-size:22px">More ninjas will show up here.</p>'}</div>`;
+}
+function lbAchieve(){
+  const now=Date.now(), ws=weekStart(now), ms=monthStart(now), ds=dayStart(now);
+  const col=(bg,title,sub,list)=>`<div class="lb-panel" style="position:relative;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:0">
+    <div style="background:${bg};color:#fff;border-radius:22px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center"><span class="d" style="font-size:36px">${title}</span><span style="font-weight:900;font-size:20px;opacity:.9">${sub}</span></div>
+    ${list.slice(0,5).map(l=>{ const n=S.ninjas[l.ninjaId], a=achText(l); return `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:18px;background:#F7F5FD;flex:1;max-height:120px">${lbAv(n,62)}<div style="flex:1;min-width:0"><div style="font-weight:900;font-size:24px">${esc(n.name)}</div><div style="font-weight:800;font-size:18px;color:#69658E">${esc(a.t)}</div></div>${a.img?`<img src="badges/${a.img}.webp" alt="" style="height:62px">`:`<span style="font-size:44px">${esc(a.em)}</span>`}</div>`; }).join('') || '<p style="font-weight:800;color:#69658E;font-size:22px;margin:10px">Big wins will show up here.</p>'}</div>`;
+  const md=new Date(now), wd=new Date(ws), we=new Date(ws+6*DAY), f=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return `<div style="position:absolute;left:50px;right:50px;${P};display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px">
+    ${col('linear-gradient(135deg,#16956A,#3CCB8E)','☀️ Today',md.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}),achievements(ds))}
+    ${col('linear-gradient(135deg,#339AF0,#6C45D9)','📅 This week',`${f(wd)} – ${f(we)}`,achievements(ws))}
+    ${col('linear-gradient(135deg,#9C36B5,#E5402B)','🏅 This month',MONTHS[md.getMonth()],achievements(ms))}</div>`;
+}
+function lbBday(){
+  const now=new Date(), m=now.getMonth()+1, today=now.getDate();
+  const L=ninjaList().filter(n=>bdayOf(n)?.m===m).sort((a,b)=>bdayOf(a).d-bdayOf(b).d).slice(0,6);
+  const next=ninjaList().filter(n=>bdayOf(n)?.m===(m%12)+1).map(n=>n.name);
+  const cards=L.map((n,i)=>{ const t=bdayOf(n).d===today; return `<div style="background:${t?'linear-gradient(160deg,#FFE07A,#F6B60A)':'#fff'};border-radius:30px;padding:30px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 20px 40px -18px rgba(30,26,60,.5);transform:rotate(${[-3,2,0,-2,3,-1][i]}deg) ${t?'scale(1.08)':''};position:relative">${t?'<span class="lb-pill" style="position:absolute;top:-20px;background:#E5402B;color:#fff;font-size:22px">🎉 TODAY!</span>':''}${lbAv(n,150)}<div class="d" style="font-size:44px">${esc(n.name)}</div><div class="lb-pill" style="background:${t?'#fff':'#F1EFFA'};font-size:22px">🎂 ${MONTHS[m-1].slice(0,3)} ${bdayOf(n).d}</div></div>`; }).join('');
+  return `<div class="lb-panel" style="left:90px;right:90px;${P};padding:30px 50px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;overflow:hidden">
+    <div style="position:absolute;inset:0;background:radial-gradient(circle at 8% 18%,#FFD43B44 0 60px,transparent 61px),radial-gradient(circle at 93% 14%,#E6498033 0 80px,transparent 81px),radial-gradient(circle at 90% 88%,#339AF033 0 70px,transparent 71px),radial-gradient(circle at 6% 86%,#40C05733 0 60px,transparent 61px)"></div>
+    <div style="position:relative;text-align:center"><div class="d" style="font-size:90px;line-height:1">🎂 ${MONTHS[m-1]} Birthdays 🎈</div><div style="font-size:30px;font-weight:800;color:#69658E;margin-top:6px">Happy birthday, ninjas! Give them a big dojo cheer</div></div>
+    <div style="position:relative;display:grid;grid-template-columns:repeat(${Math.max(L.length,3)},minmax(0,300px));justify-content:center;gap:30px;width:100%">${cards}</div>
+    <div style="position:relative;display:flex;gap:20px">${S.lobbyCfg?.bdayNote?`<div class="lb-pill" style="font-size:26px;background:#FFF1C7;color:#A86F00;padding:14px 24px">🎁 ${esc(S.lobbyCfg.bdayNote)}</div>`:''}${next.length?`<div class="lb-pill" style="font-size:26px;background:#F1EFFA;padding:14px 24px">🎈 ${MONTHS[m%12]}: ${esc(next.slice(0,5).join(', '))}</div>`:''}</div></div>`;
+}
+function lbSpot(){
+  const list=lbSpotlights(); const l=list[LB.spot % list.length], n=S.ninjas[l.ninjaId], a=achText(l), b=beltFor(n);
+  const belt = l.item==='beltup' || l.item==='blackbelt';
+  const color = belt && Number.isInteger(l.toBelt) ? (beltInfo(l.toBelt).color==='#F4F4F2'?'#69658E':beltInfo(l.toBelt).color) : '#6C45D9';
+  return `<div class="lb-panel" style="left:130px;right:130px;${P};display:grid;grid-template-columns:640px 1fr;overflow:hidden">
+    <div style="background:linear-gradient(160deg,${color},#221B4D);display:grid;place-items:center;position:relative">${a.img?`<img src="badges/${a.img}.webp" alt="" style="position:absolute;width:220px;top:40px;right:40px;filter:drop-shadow(0 10px 20px rgba(0,0,0,.3))">`:`<span style="position:absolute;top:40px;right:50px;font-size:150px">${esc(a.em)}</span>`}${lbAv(n,340)}<img src="mascots/hiyah.webp" alt="" style="position:absolute;left:20px;bottom:10px;height:240px"></div>
+    <div style="padding:60px 70px;display:flex;flex-direction:column;gap:22px;justify-content:center"><span class="lb-pill" style="align-self:flex-start;background:#FFF1C7;color:#A86F00;font-size:26px">${belt?'🥋 NEW BELT!':'⭐ BIG ACHIEVEMENT!'}</span>
+      <div class="d" style="font-size:120px;line-height:.95">${esc(n.name)}</div><div style="font-size:48px;font-weight:900;color:${color}">${esc(a.t)}!</div>
+      <div style="font-size:30px;color:#69658E;font-weight:800">${esc(b.name)} · ${esc(stepName(b.i,b.level))} · ${ago(l.at)}</div>
+      <div style="display:flex;gap:16px"><span class="lb-pill" style="background:#F1EFFA;font-size:28px;padding:14px 22px">${lbCoin(28)} ${fmt(n.balance)} bucks</span><span class="lb-pill" style="background:#F1EFFA;font-size:28px;padding:14px 22px">👏 Give ${esc(n.name)} a high five!</span></div></div></div>`;
+}
+function lbPath(){
+  const all=ninjaList(), create=all.filter(n=>n.group!=='junior'), jrN=all.length-create.length;
+  const pts=[[130,840],[330,760],[520,840],[720,760],[920,830],[1120,750],[1320,820],[1540,720],[1770,610]].map(([x,y])=>[x,y-90]);
+  const path=pts.map(([x,y],i)=>(i?'L':'M')+x+','+y).join(' ');
+  const st=MAIN_BELTS.map((k,i)=>{ const c=create.filter(n=>beltFor(n).i===k).length, [x,y]=pts[i]; return `<div style="position:absolute;left:${x-60}px;top:${y-62}px;width:120px;text-align:center;z-index:3"><img src="badges/${DONE(k)}.webp" alt="" style="width:96px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.25))${c?'':';opacity:.55'}"><div style="background:#fff;border-radius:999px;font-weight:900;font-size:19px;padding:3px 0;margin-top:-6px;box-shadow:0 4px 10px rgba(0,0,0,.15)">${BELTS[k].name} · ${c}</div></div>`; }).join('');
+  const leaders=[...create].sort((a,b)=>beltFor(b).i-beltFor(a).i || beltFor(b).level-beltFor(a).level || (b.earned||0)-(a.earned||0)).slice(0,3);
+  const card=(n,i)=>{ const b=beltFor(n); return `<div style="background:${i?'#fff':'linear-gradient(160deg,#FFF4C2,#fff)'};border-radius:28px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 0 3px ${i?'#DCD7EE':'#F6B60A'};position:relative;${i?'':'transform:translateY(-14px)'}"><span style="position:absolute;top:-24px;font-size:46px">${['🥇','🥈','🥉'][i]}</span>${lbAv(n,118)}<div class="d" style="font-size:38px;line-height:1">${esc(n.name)}</div><div style="display:flex;align-items:center;gap:6px;font-weight:900;font-size:21px"><img src="badges/${BADGE(b.i,b.level)}.webp" alt="" style="height:36px">${esc(b.name)} Belt</div><div style="font-weight:800;font-size:18px;color:#69658E">${esc(stepName(b.i,b.level))}</div></div>`; };
+  const order=[1,0,2].filter(i=>leaders[i]).map(i=>card(leaders[i],i)).join('');
+  const recent=S.log.find(l=>l.item==='beltup' && Date.now()-l.at<7*DAY && S.ninjas[l.ninjaId] && S.ninjas[l.ninjaId].group!=='junior');
+  let callout=''; if(recent){ const k=beltFor(S.ninjas[recent.ninjaId]).i, pt=pts[k]; if(pt) callout=`<div style="position:absolute;left:${pt[0]-110}px;top:${pt[1]+52}px;width:220px;text-align:center;z-index:4">${lbAv(S.ninjas[recent.ninjaId],56)}<br><div class="lb-pill" style="background:#E5402B;color:#fff;margin-top:4px;white-space:nowrap">${esc(S.ninjas[recent.ninjaId].name)} just got here! 🎉</div></div>`; }
+  const ms=monthStart(Date.now()), mlog=S.log.filter(l=>l.at>=ms);
+  return `<svg width="1920" height="990" style="position:absolute;inset:0;z-index:2"><path d="${path}" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><path d="${path}" fill="none" stroke="#F6B60A" stroke-width="8" stroke-dasharray="2 22" stroke-linecap="round"/></svg>${st}${callout}
+    ${leaders.length?`<div class="lb-panel" style="left:50%;transform:translateX(-50%);top:128px;width:900px;padding:22px 30px 26px;z-index:4"><div style="text-align:center;margin-bottom:24px"><div class="d" style="font-size:46px;line-height:1">🏃 Leading the Ninja Path</div><div style="font-weight:800;font-size:22px;color:#69658E">The ninjas furthest along the road to Black Belt</div></div><div style="display:grid;grid-template-columns:repeat(${leaders.length},1fr);gap:22px;align-items:end">${order}</div></div>`:''}
+    <div class="lb-panel" style="left:50px;top:128px;width:400px;padding:22px;z-index:4"><div class="d" style="font-size:34px;line-height:1.05">The road to Black Belt</div><div style="display:grid;gap:8px;margin-top:12px">
+      <div class="lb-pill" style="background:#DDF5EB;color:#16956A">🥋 ${mlog.filter(l=>l.item==='beltup').length} belt-ups this month</div><div class="lb-pill" style="background:#F3E8FF;color:#7B2CBF">⭐ ${mlog.filter(l=>l.item==='levelup').length} level-ups this month</div><div class="lb-pill" style="background:#FFE3E8;color:#C2255C">🌸 ${jrN} JR ninjas on JR Pink</div></div></div>`;
+}
+function lbGoal(){
+  const cfg=S.lobbyCfg||{}, target=cfg.goalTarget|0, now=new Date(), ms=monthStart(now.getTime());
+  const earnL=S.log.filter(l=>l.at>=ms && l.kind==='earn'), sum=L=>L.reduce((a,l)=>a+(l.amt||0),0), total=sum(earnL);
+  const jrSum=sum(earnL.filter(l=>S.ninjas[l.ninjaId]?.group==='junior')), pct=Math.min(100, target? total/target*100 : 0);
+  const left=new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()-now.getDate()+1, done=total>=target;
+  return `<div class="lb-panel" style="left:110px;right:110px;${P};display:grid;grid-template-columns:1.25fr 1fr;overflow:hidden">
+    <div style="padding:56px 64px;display:flex;flex-direction:column;gap:22px;justify-content:center"><span class="lb-pill" style="align-self:flex-start;background:#DDF5EB;color:#16956A;font-size:24px">🎯 ${MONTHS[now.getMonth()].toUpperCase()} DOJO GOAL</span>
+      <div class="d" style="font-size:88px;line-height:.95">${done?'We did it! 🎉':`Earn ${fmt(target)} bucks together!`}</div>${cfg.goalPrize?`<div style="font-size:36px;font-weight:900">Prize: <span style="color:#E5402B">${esc(cfg.goalPrize)}</span></div>`:''}
+      <div style="height:66px;border-radius:999px;background:#E7E3F5;position:relative;overflow:hidden"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#16956A,#3CCB8E);border-radius:999px"></div><span class="d" style="position:absolute;left:22px;top:9px;font-size:38px;color:${pct>25?'#fff':'#1E1A3C'};display:flex;align-items:center;gap:8px">${lbCoin(34)} ${fmt(total)}</span><span class="d" style="position:absolute;right:22px;top:9px;font-size:38px;color:#69658E">${fmt(target)}</span></div>
+      <div style="display:flex;gap:14px"><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">📅 ${left} day${left===1?'':'s'} left</span><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">⚡ Create ${fmt(total-jrSum)}</span><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">🌸 JR ${fmt(jrSum)}</span></div></div>
+    <div style="background:linear-gradient(160deg,#FFE07A,#F6B60A);display:grid;place-items:center;position:relative"><div style="font-size:260px;filter:drop-shadow(0 20px 30px rgba(0,0,0,.25))">${esc(cfg.goalIcon||'🍕')}</div><img src="mascots/hiyah.webp" alt="" style="position:absolute;bottom:10px;right:20px;height:300px"></div></div>`;
+}
+function lbLegend(){
+  const t=lbLegendTier(), ms=monthStart(Date.now()), items=t.items.slice(0,5);
+  const cnt=id=>S.log.filter(l=>l.kind==='redeem' && l.item===id && l.at>=ms).length;
+  return `<div class="lb-panel" style="left:50px;right:50px;${P};padding:28px 40px;display:flex;flex-direction:column;gap:22px;justify-content:space-evenly">
+    <div><div class="d" style="font-size:68px;line-height:1;color:#7B2CBF">${esc(t.icon||'👑')} ${esc(t.name)}</div><div style="font-size:27px;font-weight:800;color:#69658E">Big dreams take big saving. Parents can request these from their phone!</div></div>
+    <div style="display:grid;grid-template-columns:repeat(${items.length},1fr);gap:20px">${items.map(it=>{ const c=cnt(it.id); return `<div style="background:linear-gradient(170deg,#fff,#F3E8FF);border-radius:26px;padding:22px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 0 3px #D8B4FE">${iconHTML(it,190)}<div class="d" style="font-size:30px;line-height:1.05">${esc(it.label)}</div><div class="d" style="font-size:32px;color:#A86F00;display:flex;align-items:center;gap:6px">${lbCoin(28)} ${fmt(amountOf('redeem',it))}</div><div style="font-weight:900;color:#7B2CBF;font-size:18px">${c?`${c} this month`:'Who will be first?'}</div></div>`; }).join('')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;background:#221B4D;color:#fff;border-radius:26px;padding:20px 26px">${[['Scan the QR + family code','Code from the front desk, one per child'],['Pick a reward','See your ninja\'s balance and progress'],['Front desk confirms','Bucks are held until approved']].map(([a,b],i)=>`<div style="display:flex;gap:14px;align-items:center"><span class="d" style="background:#E5402B;border-radius:50%;width:56px;height:56px;display:grid;place-items:center;font-size:30px;flex:none">${i+1}</span><div><div class="d" style="font-size:29px">${a}</div><div style="font-weight:800;font-size:19px;color:#BDB6EA">${b}</div></div></div>`).join('')}</div></div>`;
+}
+const LB_RENDER = {create:()=>lbBoard('ninja'), jr:()=>lbBoard('junior'), achieve:lbAchieve, bday:lbBday, spot:lbSpot, path:lbPath, goal:lbGoal, legend:lbLegend};
+function lbFit(){
+  const host=document.getElementById('lobby'), st=document.getElementById('lbStage'); if(host.hidden) return;
+  const dock=document.querySelector('.tk-dock .ticker')?.offsetHeight || 0; host.style.bottom=dock+'px';
+  const k=Math.min(host.clientWidth/1920, host.clientHeight/990); st.style.transform=`translate(-50%,-50%) scale(${k})`;
+}
+function renderLobby(advance){
+  const on=lobbyOn(), host=document.getElementById('lobby');
+  host.hidden=!on; document.body.classList.toggle('lobby-on', on);
+  if(!on){ clearTimeout(LB.timer); LB.timer=null; LB.on=false; return; }
+  if(!S.loaded) return;
+  const list=lbAvailable();
+  if(!list.length){ document.getElementById('lbStage').innerHTML=lbFrame({icon:'🥷',name:'Dojo Bucks'}, [], `<div class="lb-panel" style="left:300px;right:300px;top:300px;padding:60px;text-align:center"><div class="d" style="font-size:60px">Welcome to the dojo! 🥷</div></div>`); lbFit(); return; }
+  if(advance || !LB.on || LB.i<0 || LB.i>=list.length){ LB.i = advance ? (LB.i+1)%list.length : Math.max(0, Math.min(LB.i, list.length-1)); if(advance && list[LB.i].id==='spot') LB.spot++; }
+  const cur=list[LB.i]; LB.cur=cur.id;
+  const html=lbFrame(cur, list, LB_RENDER[cur.id]());
+  if(html!==LB.html){ LB.html=html; document.getElementById('lbStage').innerHTML=html; }
+  lbFit();
+  if(!LB.on || advance){ LB.on=true; clearTimeout(LB.timer); LB.timer=setTimeout(()=>renderLobby(true), cur.secs*1000); }
+}
+addEventListener('resize', lbFit);
 
 /* ---------- events ---------- */
 const findItem = (kind,id) => (kind==='earn'?[...earnList(), ...bonusItems()]:kind==='penalty'?penList():shopTiers().flatMap(t=>t.items)).find(x=>x.id===id);
@@ -1889,7 +2217,9 @@ document.addEventListener('click', e=>{
     case 'redeem': redeem(findItem('redeem', t.dataset.item)); break;
     case 'undo': { const u=document.getElementById('toastHost')._undo; document.getElementById('toastHost').innerHTML=''; if(u) undoAll(u); break; }
     case 'adjust': adjustBucks(S.drawer, Number(t.dataset.sign)); break;
-    case 'open': if(isParent()) break; S.adj={amt:'', note:''}; S.drawer=id; S.confirmRemove=false; render(); setTimeout(()=>document.getElementById('drawerClose')?.focus(),0); break;
+    case 'famCode': createFamilyCode(S.drawer); break;
+    case 'famReq': familyRequest(t.dataset.item); break;
+    case 'open': if(isParent()) break; S.adj={amt:'', note:''}; S.famShow=null; S.drawer=id; S.confirmRemove=false; render(); setTimeout(()=>document.getElementById('drawerClose')?.focus(),0); break;
     case 'closeDrawer': S.drawer=null; render(); break;
     case 'closeCelebrate': document.getElementById('celebrateHost').innerHTML=''; break;
     case 'head': S.head=+t.dataset.head; render(); break;
@@ -1901,7 +2231,7 @@ document.addEventListener('click', e=>{
     case 'setupSave': saveSetup(); break;
     case 'setupReset': document.getElementById('setupHost').dataset.ready=''; render(); break;
     case 'tpl': { const nm=document.getElementById('tplNinja').value; const txt=NEWS_TEMPLATES[+t.dataset.k].replace('{ninja}', nm || '___'); const inp=document.getElementById('newsText'); inp.value=txt; inp.focus(); if(txt.includes('___')){ const i=txt.indexOf('___'); inp.setSelectionRange(i,i+3); } break; }
-    case 'asRole': S.role=t.dataset.role; S.me = 'preview-'+S.role; S.drawer=null; render(); break;
+    case 'asRole': S.role=t.dataset.role; S.me = 'preview-'+S.role; S.drawer=null; if(S.role==='family') S.famNinja = S.famNinja && S.ninjas[S.famNinja] ? S.famNinja : ninjaList()[0]?.id; render(); break;
     case 'approve': { const r=S.requests.find(x=>x.id===id); if(r) approveReq(r).then(()=>toast('Approved.')).catch(()=>{}); break; }
     case 'reject': { const r=S.requests.find(x=>x.id===id); if(r) rejectReq(r).catch(()=>{}); break; }
     case 'approveAll': (async()=>{ const list=pendingReqs().slice().reverse(); for(const r of list){ try{ await approveReq(r); }catch{} } toast(`Approved ${list.length} request${list.length===1?'':'s'}.`); })(); break;
@@ -1919,6 +2249,7 @@ document.addEventListener('click', e=>{
     case 'lock': lockNow(); break;
     case 'toggleNews': S.newsOpen=!S.newsOpen; S.tkEditing=null; S.tkSel.clear(); renderNewsPanel(true); break;
     case 'tkEdit': S.tkEditing=t.dataset.key; S.tkEditText=t.dataset.text; renderNewsPanel(); document.getElementById('tkEditText')?.focus(); break;
+    case 'lobbyExit': location.hash='#board'; break;
     case 'tkCancel': S.tkEditing=null; renderNewsPanel(); break;
     case 'tkHide': case 'tkSave': case 'tkReset': case 'tkShowAll': case 'tkHideSel': tickerAction(a, t.dataset.key); break;
     case 'delNews': api.del('news', id).then(()=>renderNewsPanel()).catch(()=>{}); break;
@@ -1928,6 +2259,11 @@ document.addEventListener('click', e=>{
 document.addEventListener('change', e=>{
   const el=e.target;
   if(el.dataset && el.dataset.item && el.type==='number'){ const v=Number(el.value); if(Number.isFinite(v)) saveAmount(el.dataset.kind, el.dataset.item, v); }
+  if(el.dataset && el.dataset.lbslide){ const off=new Set(S.lobbyCfg?.off||[]); el.checked ? off.delete(el.dataset.lbslide) : off.add(el.dataset.lbslide); saveLobbyCfg({off:[...off]}); return; }
+  if(el.id==='lbGoalT'){ saveLobbyCfg({goalTarget:Math.max(0, Math.round(Number(el.value)||0))}); return; }
+  if(el.id==='lbGoalP'){ saveLobbyCfg({goalPrize:el.value.trim()}); return; }
+  if(el.id==='lbBday'){ saveLobbyCfg({bdayNote:el.value.trim()}); return; }
+  if(el.id==='editBdayM' || el.id==='editBdayD'){ const m=document.getElementById('editBdayM').value, d=document.getElementById('editBdayD').value; if(isDir()) api.update('ninjas', S.drawer, {bday: m&&d ? `${m}-${d}` : ''}).catch(()=>{}); return; }
   if(el.dataset && el.dataset.staffrole){ setStaffRole(el.dataset.staffrole, el.value); return; }
   if(el.dataset && el.dataset.su){
     if(el.id.startsWith('su-belt-')){ const lvSel=document.getElementById('su-lv-'+el.dataset.su); lvSel.innerHTML=levelOpts(+el.value, 1); }
@@ -1965,7 +2301,7 @@ document.getElementById('addForm').addEventListener('submit', e=>{
   if(isDir()) addNinja(name, grp, bl, lv, st).catch(()=>{});
   else sendRequest('add', {name, group:grp, belt:bl, level:lv, start:st, head:S.head}, `${name} is waiting for the Center Director to approve.`); document.getElementById('newName').value=''; document.getElementById('newBucks').value='0'; document.getElementById('newName').focus();
 });
-function route(){ const h=(location.hash||'').slice(1); S.view=['board','dash','award','shop','roster','admin'].includes(h)?h:'board'; S.confirm=null; render(); }
+function route(){ const h=(location.hash||'').slice(1); S.view=['board','dash','award','shop','roster','admin','lobby'].includes(h)?h:'board'; S.confirm=null; render(); }
 addEventListener('hashchange', route);
 setInterval(()=>{ if(S.loaded){ if(S.view==='dash') renderDash(); renderTicker(); } }, 60000);
 
@@ -2055,8 +2391,10 @@ function bumpIdle(){ clearTimeout(idleT); if(S.mode==='db' && S.viaPin && S.role
     S.me=user.uid; S.isOwner = (user.email||'').toLowerCase()===OWNER_EMAIL;
     if(!S.isOwner){
       let d=null; try{ d=await firebase.firestore().doc('staff/'+user.uid).get(); }catch(e){}
-      if(!d || !d.exists){ await firebase.auth().signOut(); showSignin('That login is no longer on the team. Ask your Center Director.'); return; }
-      S.role=d.data().role; S.viaPin = !!(user.email||'').includes('@staff.');
+      let fam=null; if(!d || !d.exists){ try{ fam=await firebase.firestore().doc('families/'+user.uid).get(); }catch(e){} }
+      if(fam && fam.exists){ S.role='family'; S.famNinja=fam.data().ninjaId; S.viaPin=true; }
+      else if(!d || !d.exists){ await firebase.auth().signOut(); showSignin(PARENT_LINK ? 'That family code has changed. Please contact the front desk.' : 'That login is no longer on the team. Ask your Center Director.'); return; }
+      else { S.role=d.data().role; S.viaPin = !!(user.email||'').includes('@staff.'); }
     } else S.role='director';
     started=true; document.getElementById('signin').hidden=true;
     startDb(firebase.firestore()); bumpIdle(); route();
