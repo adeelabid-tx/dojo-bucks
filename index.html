@@ -227,6 +227,8 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .lb-ring.paused .core{background:#E5402B}
 .lb-ring.paused .prog{stroke:#F6B60A}
 .lb-cn{background:#fff;border-radius:16px;padding:10px 18px;box-shadow:0 8px 24px -10px rgba(30,26,60,.4)}
+.lb-lock{position:absolute;left:14px;bottom:14px;z-index:30;border:0;border-radius:999px;background:rgba(34,27,77,.82);color:#fff;font-weight:900;font-size:15px;padding:10px 16px;cursor:pointer;box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+.lb-lock.confirm{background:#E5402B}
 .lb-exit{background:#fff;border:0;border-radius:999px;padding:10px 18px;font-weight:900;font-size:20px;cursor:pointer}
 .lb-panel{position:absolute;background:rgba(255,255,255,.93);border-radius:36px;box-shadow:0 30px 70px -25px rgba(30,26,60,.5)}
 .lb-slide{position:absolute;inset:0;animation:lbIn .6s ease}
@@ -263,10 +265,7 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 @media (max-width:800px){ .lb-admin{grid-template-columns:1fr} }
 .lb-checks{display:grid;gap:8px;margin-top:8px}
 .lb-checks input{width:18px;height:18px}
-body.lobby-on .tk-row{padding-block:6px}
-body.lobby-on .tk-item{font-size:30px}
-body.lobby-on .tk-item .badge{width:40px;height:40px}
-body.lobby-on .tk-tag{font-size:17px}
+@media (min-width:900px){ body.lobby-on .tk-row{padding-block:6px} body.lobby-on .tk-item{font-size:30px} body.lobby-on .tk-item .badge{width:40px;height:40px} body.lobby-on .tk-tag{font-size:17px} }
 /* news ticker */
 .tk-dock{position:fixed;left:0;right:0;bottom:0;z-index:30;box-shadow:0 -6px 20px rgba(0,0,0,.18)}
 .ticker{background:var(--hero);color:var(--hero-ink);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -745,7 +744,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
     <div id="siBody"></div>
   </div>
 </div>
-<div class="lobby" id="lobby" hidden><div class="lb-stage" id="lbStage"></div></div>
+<div class="lobby" id="lobby" hidden><div class="lb-stage" id="lbStage"></div><button class="lb-lock" id="lbLock" data-act="lbLock" hidden aria-label="Lock this screen">🔒 Lock</button></div>
 <div id="drawerHost"></div>
 <div id="toastHost"></div>
 <div id="celebrateHost"></div>
@@ -2242,6 +2241,7 @@ function renderLobby(advance){
   const on=lobbyOn(), host=document.getElementById('lobby');
   host.hidden=!on; document.body.classList.toggle('lobby-on', on);
   if(!on){ clearTimeout(LB.timer); LB.timer=null; LB.on=false; return; }
+  document.getElementById('lbLock').hidden = S.role!=='viewer';
   if(!S.loaded) return;
   const list=lbAvailable();
   if(!list.length){ document.getElementById('lbStage').innerHTML=lbFrame({icon:'🥷',name:'Dojo Bucks'}, [], `<div class="lb-panel" style="left:300px;right:300px;top:300px;padding:60px;text-align:center"><div class="d" style="font-size:60px">Welcome to the dojo! 🥷</div></div>`); LB.html=''; lbFit(); return; }
@@ -2327,6 +2327,11 @@ document.addEventListener('click', e=>{
     case 'toggleNews': S.newsOpen=!S.newsOpen; S.tkEditing=null; S.tkSel.clear(); renderNewsPanel(true); break;
     case 'tkEdit': S.tkEditing=t.dataset.key; S.tkEditText=t.dataset.text; renderNewsPanel(); document.getElementById('tkEditText')?.focus(); break;
     case 'lobbyExit': location.hash='#board'; break;
+    case 'lbLock': {
+      // Two taps, so a passer-by can't lock the lobby TV by accident.
+      if(!t.classList.contains('confirm')){ t.classList.add('confirm'); t.textContent='Tap again to lock'; clearTimeout(LB.lockT); LB.lockT=setTimeout(()=>{ t.classList.remove('confirm'); t.textContent='🔒 Lock'; }, 4000); break; }
+      if(S.mode==='db') lockNow('Locked.'); else { S.role='director'; S.me='preview-director'; location.hash='#board'; render(); }
+      break; }
     case 'lbPause': case 'lbNext': case 'lbPrev': lbControl(a); break;
     case 'tkCancel': S.tkEditing=null; renderNewsPanel(); break;
     case 'tkHide': case 'tkSave': case 'tkReset': case 'tkShowAll': case 'tkHideSel': tickerAction(a, t.dataset.key); break;
