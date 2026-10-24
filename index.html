@@ -720,7 +720,7 @@ function startDb(db){
   db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
   db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => ({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
   if(isParent()){
-    db.doc('staff/'+S.me).onSnapshot(d => { if(!d.exists) lockNow('The parent code has changed. Ask the dojo for the new one.'); }, () => {});
+    db.doc('staff/'+S.me).onSnapshot(d => { if(!d.exists) lockNow('The parent access code has changed. Please contact the front desk for the new one.'); }, () => {});
   } else {
   db.collection('staff').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.staff=m; if(!S.isOwner && !m[S.me]) return lockNow('You are no longer on the team.'); if(!S.isOwner){ S.role=m[S.me].role; } render(); if(S.isOwner && !S.parentChecked){ S.parentChecked=true; ensureParentLogin(db); } }, () => {});
   db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
@@ -1525,7 +1525,8 @@ function renderSignin(){
   const host=document.getElementById('siBody');
   if(SI.step==='parent'){
     host.innerHTML = SI.parent ? `<h2 class="si-h" style="text-align:center">Dojo Leaderboard for parents</h2>
-      <form class="si-form" id="siParent"><label class="f" style="text-align:center">Parent code<input class="si-code" id="siCode" inputmode="numeric" maxlength="6" autocomplete="off" value="0000"></label>
+      <form class="si-form" id="siParent"><p class="hint" style="margin:0;text-align:center">Please contact the front desk to get the parent access code.</p>
+      <label class="f" style="text-align:center">Parent access code<input class="si-code" id="siCode" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="····"></label>
       <button class="btn primary" type="submit">See the leaderboard</button></form>
       <p class="si-err">${esc(SI.err)}</p>`
       : `<h2 class="si-h">Dojo Leaderboard for parents</h2><p class="hint">The parent view is not switched on yet. Ask the dojo.</p>`;
@@ -1562,7 +1563,7 @@ async function showSignin(msg){
 }
 async function trySignin(email, password){
   try{ await firebase.auth().signInWithEmailAndPassword(email, password); }
-  catch(e){ SI.pin=''; SI.err = e.code==='auth/too-many-requests' ? 'Too many tries. Wait a minute and try again.' : SI.step==='pin' ? 'That PIN is not right. Try again.' : SI.step==='parent' ? 'That code is not right. Ask the dojo for the parent code.' : 'Email or password is not right.'; renderSignin(); }
+  catch(e){ SI.pin=''; SI.err = e.code==='auth/too-many-requests' ? 'Too many tries. Wait a minute and try again.' : SI.step==='pin' ? 'That PIN is not right. Try again.' : SI.step==='parent' ? 'That code is not right. Please contact the front desk for the access code.' : 'Email or password is not right.'; renderSignin(); }
 }
 document.getElementById('signin').addEventListener('click', e=>{
   const b=e.target.closest('[data-si]'); if(!b) return; const a=b.dataset.si;
@@ -1574,7 +1575,7 @@ document.getElementById('signin').addEventListener('click', e=>{
   renderSignin();
 });
 document.addEventListener('keydown', e=>{ if(document.getElementById('signin').hidden || SI.step!=='pin') return; if(/^[0-9]$/.test(e.key)) document.querySelector(`[data-si="digit"][data-d="${e.key}"]`)?.click(); if(e.key==='Backspace') document.querySelector('[data-si="back"]')?.click(); });
-document.addEventListener('submit', e=>{ if(e.target.id!=='siParent') return; e.preventDefault(); const c=document.getElementById('siCode').value.trim(); if(!PIN_OK(c)){ SI.err='The parent code is 4 to 6 digits.'; renderSignin(); return; } S.viaPin=true; trySignin(SI.parent.email, pinPass(c)); });
+document.addEventListener('submit', e=>{ if(e.target.id!=='siParent') return; e.preventDefault(); const c=document.getElementById('siCode').value.trim(); if(!PIN_OK(c)){ SI.err='The access code is 4 to 6 digits.'; renderSignin(); return; } S.viaPin=true; trySignin(SI.parent.email, pinPass(c)); });
 document.addEventListener('submit', e=>{ if(e.target.id!=='siForm') return; e.preventDefault(); S.viaPin=false; trySignin(document.getElementById('siEmail').value.trim(), document.getElementById('siPass').value); });
 function lockNow(msg){
   if(S.mode!=='db') return;
