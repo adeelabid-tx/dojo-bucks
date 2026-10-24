@@ -361,6 +361,8 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .se-tier .se-name{font-family:var(--f-display);font-size:22px}
 .se-item .cost input{width:100px}
 .se-check{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.se-check.sm{font-size:13px;color:var(--muted)}
+.se-check input{width:auto;flex:none;margin:0;padding:0;border:0}
 .se-move{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--muted)}
 .se-ic{border:2px dashed var(--line);background:var(--sunk);border-radius:14px;min-width:64px;min-height:64px;display:grid;place-items:center;padding:4px;cursor:pointer}
 .se-ic:hover{border-color:var(--gold)}
@@ -674,7 +676,9 @@ const TIERS = [
 ];
 // The Reward Shop the director edits (settings/shop); until it is first saved, the built-in TIERS above.
 const shopTiers = () => S.shop?.tiers || TIERS;
-const quickIds = () => shopTiers().filter(t=>t.quick).flatMap(t=>t.items.map(it=>it.id));
+// Each reward can be marked for senseis to give without approval; older shops set it per category.
+const isQuick = (t, it) => it.quick ?? !!t.quick;
+const quickIds = () => shopTiers().flatMap(t=>t.items.filter(it=>isQuick(t, it)).map(it=>it.id));
 // Pictures and emoji the director can choose for rewards and categories.
 const PIC_LIB = ['sensei_ada','sensei_alan','gamer','bdaygamer','blockcoder','codergirl','grateful','hiyah','buddies','tablet','head0','head1','head2','head3','head4','head5','head6','head7'];
 const EMOJI_LIB = {
@@ -1373,8 +1377,9 @@ function iconHTML(o, size){
 
 /* ---------- Reward Shop editor (Center Director) ---------- */
 // Changes go to a draft (S.shopEdit) and are saved together with Save changes.
+// Moving a reward to another category keeps its own "right away" setting.
 function openShopEditor(){
-  S.shopEdit = JSON.parse(JSON.stringify(shopTiers())).map(t=>({...t, items:t.items.map(it=>({...it, cost:amountOf('redeem', it)}))}));
+  S.shopEdit = JSON.parse(JSON.stringify(shopTiers())).map(t=>({...t, items:t.items.map(it=>({...it, cost:amountOf('redeem', it), quick:isQuick(t, it)}))}));
   S.iconFor=null; render();
 }
 function renderShopEditor(){
@@ -1386,7 +1391,7 @@ function renderShopEditor(){
       <div class="se-head">
         <button class="se-ic" data-se-act="icon" data-t="${ti}" aria-label="Change category icon" title="Change icon">${t.icon||t.pic?iconHTML(t,40):'<span class="hint">Icon</span>'}</button>
         <div class="se-fields">${f(ti,null,'name',t.name,'Category name','class="se-name" maxlength="40"')}${f(ti,null,'blurb',t.blurb,'Short description','maxlength="80"')}
-          <label class="se-check"><input type="checkbox" data-se="tier" data-t="${ti}" data-f="quick" ${t.quick?'checked':''}> Senseis can give these right away (no approval)</label></div>
+          <label class="se-check"><input type="checkbox" data-se="tier" data-t="${ti}" data-f="quick" ${(t.items.length ? t.items.every(it=>it.quick) : t.quick)?'checked':''}> Senseis can give every reward here right away (no approval)</label></div>
         <div class="se-tools"><button class="btn ghost" data-se-act="moveTier" data-t="${ti}" data-d="-1" ${ti?'':'disabled'} aria-label="Move up">${up}</button><button class="btn ghost" data-se-act="moveTier" data-t="${ti}" data-d="1" ${ti<T.length-1?'':'disabled'} aria-label="Move down">${dn}</button><button class="btn ghost danger" data-se-act="delTier" data-t="${ti}">Delete category</button></div>
       </div>
       <div class="items">${t.items.map((it,ii)=>`<div class="item se-item">
@@ -1395,6 +1400,7 @@ function renderShopEditor(){
           ${f(ti,ii,'label',it.label,'Reward name','maxlength="50"')}
           ${f(ti,ii,'note',it.note,'Note (optional)','maxlength="60"')}
           <label class="cost">${coin(22)}<input type="number" min="0" step="1" data-se="item" data-t="${ti}" data-i="${ii}" data-f="cost" value="${it.cost||0}" aria-label="Price"></label>
+          <label class="se-check sm"><input type="checkbox" data-se="item" data-t="${ti}" data-i="${ii}" data-f="quick" ${it.quick?'checked':''}> Senseis can give right away</label>
           ${T.length>1?`<label class="se-move">Move to <select data-se-act-change="moveTo" data-t="${ti}" data-i="${ii}">${T.map((x,k)=>`<option value="${k}" ${k===ti?'selected':''}>${esc(x.name||'Untitled')}</option>`).join('')}</select></label>`:''}
           <button class="btn ghost danger go" data-se-act="delItem" data-t="${ti}" data-i="${ii}">Delete reward</button>
         </div>`).join('')}
@@ -1415,16 +1421,20 @@ async function saveShop(){
     if(!(t.name||'').trim()){ toast('Every category needs a name.'); return; }
     for(const it of t.items){ if(!(it.label||'').trim()){ toast(`Every reward in ${t.name} needs a name.`); return; } }
   }
-  const tiers = JSON.parse(JSON.stringify(T.map(t=>({...t, name:t.name.trim(), blurb:(t.blurb||'').trim(), quick:!!t.quick,
-    items:t.items.map(it=>({...it, label:it.label.trim(), note:(it.note||'').trim(), cost:Math.max(0, Math.round(Number(it.cost)||0))}))}))));
-  const doc = {tiers, quickIds:tiers.filter(t=>t.quick).flatMap(t=>t.items.map(it=>it.id)), updatedAt:Date.now()};
+  const tiers = JSON.parse(JSON.stringify(T.map(t=>({...t, name:t.name.trim(), blurb:(t.blurb||'').trim(), quick:t.items.length ? t.items.every(it=>it.quick) : !!t.quick,
+    items:t.items.map(it=>({...it, label:it.label.trim(), note:(it.note||'').trim(), quick:!!it.quick, cost:Math.max(0, Math.round(Number(it.cost)||0))}))}))));
+  const doc = {tiers, quickIds:tiers.flatMap(t=>t.items.filter(it=>it.quick).map(it=>it.id)), updatedAt:Date.now()};
   try{ await api.set('settings', 'shop', doc); }catch{ return; }
   S.shop = doc; S.shopEdit=null; S.iconFor=null; render(); toast('Reward Shop saved.');
 }
 document.getElementById('tiers').addEventListener('input', e=>{
   const el=e.target, d=el.dataset; if(!S.shopEdit || !d.se) return;
   const t=S.shopEdit[+d.t], o = d.se==='tier' ? t : t.items[+d.i];
-  if(d.f==='quick') o.quick=el.checked;
+  if(d.f==='quick'){
+    o.quick=el.checked;
+    if(d.se==='tier') t.items.forEach(it=>it.quick=el.checked); else t.quick=t.items.every(it=>it.quick);
+    renderShopEditor(); return;
+  }
   else if(d.f==='cost') o.cost=Math.max(0, Math.round(Number(el.value)||0));
   else { o[d.f]=el.value; if(d.f==='label') delete o.say; }
 });
@@ -1443,7 +1453,7 @@ document.getElementById('tiers').addEventListener('click', e=>{
     case 'addTier': T.push({id:'t_'+uid(), name:'New category', blurb:'', icon:'🎁', items:[]}); break;
     case 'delTier': T.splice(ti,1); break;
     case 'moveTier': swap(T, ti, ti+Number(b.dataset.d)); break;
-    case 'addItem': T[ti].items.push({id:'r_'+uid(), label:'New reward', note:'', icon:'🎁', cost:50}); break;
+    case 'addItem': T[ti].items.push({id:'r_'+uid(), label:'New reward', note:'', icon:'🎁', cost:50, quick:T[ti].items.length ? T[ti].items.every(it=>it.quick) : !!T[ti].quick}); break;
     case 'delItem': T[ti].items.splice(ii,1); break;
     case 'moveItem': swap(T[ti].items, ii, ii+Number(b.dataset.d)); break;
     case 'icon': S.iconFor={t:ti, i:b.dataset.i==null?null:ii}; break;
