@@ -614,7 +614,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
       <div id="boardTop"></div>
       <div class="card board">
         <div class="spread">
-          <h2 class="lb-title">Dojo Leaderboard</h2>
+          <h2 class="lb-title" id="lbTitle">Dojo Leaderboard</h2>
           <div class="row">
             <div class="seg" id="metricSeg" role="group" aria-label="Rank by">
               <button data-metric="balance">Balance</button>
@@ -1377,6 +1377,7 @@ function renderDash(){
   renderFeed();
 }
 function renderBoard(){
+  document.getElementById('lbTitle').textContent = isParent() ? '🏆 Leaderboard' : 'Dojo Leaderboard';
   renderParentQr();
   renderFamilyCard();
   renderParentLobby();
@@ -1400,8 +1401,8 @@ function renderBoard(){
         <td class="n hide-sm${on('earned')}">${fmt(n.earned)}</td>
         <td class="n hide-sm${on('spent')}">${fmt(n.spent)}</td>
         <td class="n bal${on('balance')}"><span>${coin(18)}${fmt(n.balance)}</span></td></tr>`).join('');
-    board.innerHTML = `<div class="podium">${pod}</div>${rest?`<h3 class="eyebrow" style="margin:18px 0 6px">All other ninjas</h3>
-      <div class="lbt-wrap"><table class="lbt"><thead><tr><th>#</th><th>Ninja</th><th>Belt</th><th class="n hide-sm${on('earned')}">Earned</th><th class="n hide-sm${on('spent')}">Spent</th><th class="n${on('balance')}">Balance</th></tr></thead><tbody>${rest}</tbody></table></div>${list.length>cut?`<button class="btn ghost" data-act="lbAll" style="margin-top:10px;width:100%">Show all ${list.length} ninjas</button>`:''}`:''}`;
+    board.innerHTML = `<div class="podium">${pod}</div>${rest?`${isParent()?'<div style="height:14px"></div>':'<h3 class="eyebrow" style="margin:18px 0 6px">All other ninjas</h3>'}
+      <div class="lbt-wrap"><table class="lbt"><thead><tr><th>#</th><th>Ninja</th><th>Belt</th><th class="n hide-sm${on('earned')}">Earned</th><th class="n hide-sm${on('spent')}">Spent</th><th class="n${on('balance')}">Balance</th></tr></thead><tbody>${rest}</tbody></table></div>${list.length>cut?`<button class="btn ghost" data-act="lbAll" style="margin-top:10px;width:100%">Show all ${list.length}</button>`:''}`:''}`;
   }
 }
 // QR code on the leaderboard so parents can open the parent view on their phones.
@@ -1729,7 +1730,7 @@ function monthRange(back){ const a=new Date(); a.setDate(1); a.setHours(0,0,0,0)
 function renderParentRewards(){
   const host=document.getElementById('parentRewards');
   if(!isParent()){ host.innerHTML=''; return; }
-  const m=monthRange(S.rewardMonth||0), last=monthRange(1), cur=monthRange(0);
+  const m=monthRange(0);
   const red=S.log.filter(l=>l.kind==='redeem' && l.at>=m.from && l.at<m.to);
   const byItem=new Map(), byNinja=new Map();
   red.forEach(l=>{
@@ -1742,19 +1743,17 @@ function renderParentRewards(){
   const items=[...byItem.values()].sort((a,b)=>b.count-a.count).slice(0,4);
   const kids=[...byNinja.entries()].sort((a,b)=>b[1].count-a[1].count || b[1].bucks-a[1].bucks).slice(0,3);
   const top=items[0], medals=['🥇','🥈','🥉'];
-  const toggle=`<div class="seg" role="group" aria-label="Month"><button data-rmonth="0" aria-pressed="${!S.rewardMonth}">This month</button><button data-rmonth="1" aria-pressed="${S.rewardMonth===1}">${last.name}</button></div>`;
   host.innerHTML = `<div class="card pr-card">
-    <div class="spread"><h2 style="margin:0">🎉 Reward Buzz · ${m.name}</h2>${toggle}</div>
+    <h2 style="margin:0">🎉 Popular rewards</h2>
     ${!red.length ? `<div class="pr-empty"><span>🛍️</span><p>No rewards yet in ${m.name}. Who will be first?</p></div>` : `
     <div class="pr-grid">
-      <div class="pr-hot"><span class="pr-tag">🔥 Most loved reward</span>${iconHTML(top.it,96)}<b>${esc(top.it.label)}</b><small>picked ${top.count} time${top.count===1?'':'s'}</small></div>
+      <div class="pr-hot"><span class="pr-tag">🔥 Favourite</span>${iconHTML(top.it,96)}<b>${esc(top.it.label)}</b><small>picked ${top.count} time${top.count===1?'':'s'}</small></div>
       <div class="pr-box"><span class="pr-tag">🛍️ Top shoppers</span>${kids.map(([id,x],i)=>`<div class="pr-kid"><span class="pr-medal">${medals[i]}</span>${S.ninjas[id]?avatar(S.ninjas[id],44):''}<b>${esc(S.ninjas[id]?.name||x.name)}</b><small>${x.count} reward${x.count===1?'':'s'}</small></div>`).join('')}</div>
-      <div class="pr-box pr-count"><span class="pr-tag">🎁 Rewards won</span><div class="pr-big">${red.length}</div>
-        ${items.length>1?`<div class="pr-also">${items.slice(1).map(x=>`<span title="${esc(x.it.label)}">${iconHTML(x.it,36)}<i>${x.count}</i></span>`).join('')}</div><small>Also popular</small>`:''}</div>
+      <div class="pr-box pr-count"><div class="pr-big">${red.length}</div><small>rewards this month</small>
+        ${items.length>1?`<div class="pr-also">${items.slice(1).map(x=>`<span title="${esc(x.it.label)}">${iconHTML(x.it,36)}<i>${x.count}</i></span>`).join('')}</div>`:''}</div>
     </div>`}
   </div>`;
 }
-document.getElementById('parentRewards').addEventListener('click', e=>{ const b=e.target.closest('[data-rmonth]'); if(!b) return; S.rewardMonth=+b.dataset.rmonth; renderParentRewards(); });
 // Parents: link a ninja with the family code, then see their progress and request rewards.
 function renderFamilyCard(){
   const host=document.getElementById('familyCard');
