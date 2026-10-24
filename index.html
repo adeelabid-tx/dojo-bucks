@@ -63,7 +63,7 @@ nav.tabs a[aria-current="page"]{background:var(--ink);color:var(--surface)}
 .banner{background:var(--gold-soft);color:var(--ink);font-size:14px}
 .banner .wrap{padding-block:8px}
 
-main{padding-block:20px 60px}
+main{padding-block:20px 120px}
 section.view{display:flex;flex-direction:column;gap:20px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);min-width:0}
 .card h2{font-size:22px}
@@ -204,17 +204,19 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 @media (min-width:1000px){ .lbview .lb{display:grid;grid-template-columns:1fr 1fr;column-gap:28px} }
 .lbview .lb .amt{font-size:22px}
 /* news ticker */
-.ticker{background:var(--hero);color:var(--hero-ink)}
-.tk-row{display:flex;align-items:center;gap:12px;padding-block:8px}
-.tk-label{flex:none;background:var(--accent);color:#fff;font-family:var(--f-display);font-size:15px;letter-spacing:.04em;padding:4px 10px;border-radius:8px;animation:tkpulse 2s ease-in-out infinite}
+.tk-dock{position:fixed;left:0;right:0;bottom:0;z-index:30;box-shadow:0 -6px 20px rgba(0,0,0,.18)}
+.ticker{background:var(--hero);color:var(--hero-ink);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tk-dock .news-panel{max-height:55vh;overflow:auto;border-top:1px solid var(--line);border-bottom:0}
+.tk-row{display:flex;align-items:center;gap:12px;padding-block:10px}
+.tk-label{flex:none;background:var(--accent);color:#fff;font-family:var(--f-display);font-size:18px;letter-spacing:.04em;padding:5px 12px;border-radius:8px;animation:tkpulse 2s ease-in-out infinite}
 @keyframes tkpulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent)}}
 .tk-viewport{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
 .tk-track{display:inline-flex;white-space:nowrap;will-change:transform}
 .tk-group{display:inline-flex;gap:44px;padding-right:44px}
-.tk-item{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:15px}
+.tk-item{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:20px}
 .tk-item b{color:var(--gold)}
-.tk-item .badge{width:24px;height:24px}
-.tk-tag{background:var(--gold);color:#2B1D00;font-weight:900;font-size:11px;letter-spacing:.08em;padding:2px 7px;border-radius:5px}
+.tk-item .badge{width:30px;height:30px}
+.tk-tag{background:var(--gold);color:#2B1D00;font-weight:900;font-size:13px;letter-spacing:.08em;padding:3px 8px;border-radius:5px}
 .tk-post{flex:none;border:0;background:rgba(255,255,255,.12);color:var(--hero-ink);font-weight:800;border-radius:10px;padding:6px 12px;font-size:13px}
 .tk-post:hover{background:rgba(255,255,255,.22)}
 .news-panel{background:var(--surface);border-bottom:1px solid var(--line)}
@@ -377,7 +379,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
 .empty p{margin:0;color:var(--muted);max-width:44ch}
 
 /* toast + celebrate */
-.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--surface);border-radius:16px;padding:12px 14px 12px 18px;display:flex;gap:14px;align-items:center;font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.35);max-width:calc(100% - 32px)}
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--surface);border-radius:16px;padding:12px 14px 12px 18px;display:flex;gap:14px;align-items:center;font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.35);max-width:calc(100% - 32px)}
 .toast button{border:0;background:var(--gold);color:#2B1D00;border-radius:10px;padding:6px 12px;font-weight:900}
 .celebrate{position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:rgba(10,8,25,.7);padding:16px}
 .celebrate .box{background:var(--hero);color:var(--hero-ink);border-radius:28px;padding:30px 26px;text-align:center;max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;animation:zoom .45s cubic-bezier(.2,1.4,.4,1)}
@@ -411,15 +413,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
     </nav>
     <img class="cn-logo" src="mascots/cn-logo.png" width="196" height="41" alt="Code Ninjas">
   </div>
-  <div class="ticker" role="region" aria-label="Dojo news">
-    <div class="wrap tk-row">
-      <span class="tk-label">Dojo News</span>
-      <div class="tk-viewport"><div class="tk-track" id="tkTrack"></div></div>
-      <button class="tk-post" data-act="toggleNews" id="newsBtn">Post news</button>
-    </div>
-  </div>
 </header>
-<div id="newsPanel"></div>
 <div class="banner" id="banner" hidden><div class="wrap" id="bannerText"></div></div>
 
 <main class="wrap">
@@ -566,6 +560,16 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
     <div class="card"><h2>Recent decisions</h2><div id="decided" style="margin-top:10px"></div></div>
   </section>
 </main>
+<footer class="tk-dock">
+  <div id="newsPanel"></div>
+  <div class="ticker" role="region" aria-label="Dojo news">
+    <div class="wrap tk-row">
+      <span class="tk-label">Dojo News</span>
+      <div class="tk-viewport"><div class="tk-track" id="tkTrack"></div></div>
+      <button class="tk-post" data-act="toggleNews" id="newsBtn">Post news</button>
+    </div>
+  </div>
+</footer>
 
 <div class="signin" id="signin" hidden>
   <div class="si-card">
