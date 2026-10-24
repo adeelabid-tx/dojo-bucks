@@ -2038,6 +2038,7 @@ const LB_SLIDES = [
   {id:'jr', name:'JR Leaderboard', icon:'🌸', secs:10},
   {id:'achieve', name:'Achievements Board', icon:'⭐', secs:12},
   {id:'bday', name:'Birthday Spotlight', icon:'🎂', secs:8},
+  {id:'welcome', name:'Welcome New Ninjas', icon:'👋', secs:8},
   {id:'spot', name:'Ninja Spotlight', icon:'🌟', secs:8},
   {id:'path', name:'The Ninja Path', icon:'🗺️', secs:10},
   {id:'goal', name:'Dojo Goal', icon:'🎯', secs:8},
@@ -2075,6 +2076,7 @@ function lbAvailable(){
     if(x.id==='create') return all.some(n=>n.group!=='junior');
     if(x.id==='jr') return all.some(n=>n.group==='junior');
     if(x.id==='bday') return all.some(n=>bdayOf(n)?.m===m);
+    if(x.id==='welcome') return lbNewNinjas().length>0;
     if(x.id==='spot') return lbSpotlights().length>0;
     if(x.id==='goal') return (cfg.goalTarget|0)>0;
     if(x.id==='legend') return lbLegendTier()?.items.length>0;
@@ -2120,6 +2122,22 @@ function lbAchieve(){
     ${col('linear-gradient(135deg,#16956A,#3CCB8E)','☀️ Today',md.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}),achievements(ds))}
     ${col('linear-gradient(135deg,#339AF0,#6C45D9)','📅 This week',`${f(wd)} – ${f(we)}`,achievements(ws))}
     ${col('linear-gradient(135deg,#9C36B5,#E5402B)','🏅 This month',MONTHS[md.getMonth()],achievements(ms))}</div>`;
+}
+// Ninjas who joined in the last 2 weeks (the same window as the ticker welcome), newest first.
+const lbNewNinjas = () => ninjaList().filter(n=>n.createdAt && Date.now()-n.createdAt < 14*DAY).sort((a,b)=>b.createdAt-a.createdAt);
+function lbWelcome(){
+  const L=lbNewNinjas(), shown=L.slice(0,5), more=L.length-shown.length, size=shown.length>3?150:190;
+  const cards=shown.map((n,i)=>{ const b=beltFor(n), fresh=Date.now()-n.createdAt < 2*DAY, joined=new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return `<div style="background:${fresh?'linear-gradient(160deg,#FFE07A,#F6B60A)':'#fff'};border-radius:30px;padding:30px 18px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 20px 40px -18px rgba(30,26,60,.5);transform:rotate(${[-3,2,-1,3,-2][i]}deg);position:relative">
+      ${fresh?'<span class="lb-pill" style="position:absolute;top:-20px;background:#E5402B;color:#fff;font-size:22px">✨ NEW!</span>':''}${lbAv(n,size)}
+      <div class="d" style="font-size:46px;line-height:1">${esc(n.name)}</div>
+      <div style="display:flex;align-items:center;gap:6px;font-weight:900;font-size:21px"><img src="badges/${BADGE(b.i,b.level)}.webp" alt="" style="height:34px">${esc(b.name)}${b.i===JR?'':' Belt'}</div>
+      <div class="lb-pill" style="background:${fresh?'#fff':'#F1EFFA'};font-size:20px">${n.group==='junior'?'🌸 JR':'⚡ Create'} · joined ${joined}</div></div>`; }).join('');
+  return `<div class="lb-panel" style="left:90px;right:90px;${P};padding:30px 50px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;overflow:hidden;background:linear-gradient(160deg,rgba(108,69,217,.95),rgba(34,27,77,.95))">
+    <div style="position:absolute;inset:0;background:radial-gradient(circle at 8% 18%,#FFD43B33 0 60px,transparent 61px),radial-gradient(circle at 93% 14%,#E6498033 0 80px,transparent 81px),radial-gradient(circle at 90% 88%,#339AF033 0 70px,transparent 71px),radial-gradient(circle at 6% 86%,#40C05733 0 60px,transparent 61px)"></div>
+    <div style="position:relative;text-align:center;color:#fff"><div class="d" style="font-size:96px;line-height:1">Welcome to the dojo! 👋</div><div style="font-size:32px;font-weight:800;color:#D9D3FF;margin-top:8px">Say hi to our newest ${L.length===1?'ninja':'ninjas'}!</div></div>
+    <div style="position:relative;display:grid;grid-template-columns:repeat(${Math.max(shown.length,1)},minmax(0,${shown.length>3?300:360}px));justify-content:center;gap:34px;width:100%">${cards}</div>
+    <div style="position:relative;display:flex;gap:16px;align-items:center"><span style="font-size:64px">🎉</span><span class="lb-pill" style="background:#fff;font-size:26px;padding:14px 26px">${more>0?`…and ${more} more new ${more===1?'ninja':'ninjas'}! `:''}High-five a new ninja today! 🙌</span><span style="font-size:64px">🥷</span></div></div>`;
 }
 function lbBday(){
   const now=new Date(), m=now.getMonth()+1, today=now.getDate();
@@ -2179,7 +2197,7 @@ function lbLegend(){
     <div style="display:grid;grid-template-columns:repeat(${items.length},1fr);gap:20px">${items.map(it=>{ const c=cnt(it.id); return `<div style="background:linear-gradient(170deg,#fff,#F3E8FF);border-radius:26px;padding:22px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 0 3px #D8B4FE">${iconHTML(it,190)}<div class="d" style="font-size:30px;line-height:1.05">${esc(it.label)}</div><div class="d" style="font-size:32px;color:#A86F00;display:flex;align-items:center;gap:6px">${lbCoin(28)} ${fmt(amountOf('redeem',it))}</div><div style="font-weight:900;color:#7B2CBF;font-size:18px">${c?`${c} this month`:'Who will be first?'}</div></div>`; }).join('')}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;background:#221B4D;color:#fff;border-radius:26px;padding:20px 26px">${[['Scan the QR + family code','Code from the front desk, one per child'],['Pick a reward','See your ninja\'s balance and progress'],['Front desk confirms','Bucks are held until approved']].map(([a,b],i)=>`<div style="display:flex;gap:14px;align-items:center"><span class="d" style="background:#E5402B;border-radius:50%;width:56px;height:56px;display:grid;place-items:center;font-size:30px;flex:none">${i+1}</span><div><div class="d" style="font-size:29px">${a}</div><div style="font-weight:800;font-size:19px;color:#BDB6EA">${b}</div></div></div>`).join('')}</div></div>`;
 }
-const LB_RENDER = {create:()=>lbBoard('ninja'), jr:()=>lbBoard('junior'), achieve:lbAchieve, bday:lbBday, spot:lbSpot, path:lbPath, goal:lbGoal, legend:lbLegend};
+const LB_RENDER = {create:()=>lbBoard('ninja'), jr:()=>lbBoard('junior'), achieve:lbAchieve, bday:lbBday, welcome:lbWelcome, spot:lbSpot, path:lbPath, goal:lbGoal, legend:lbLegend};
 function lbFit(){
   const host=document.getElementById('lobby'), st=document.getElementById('lbStage'); if(host.hidden) return;
   const dock=document.querySelector('.tk-dock .ticker')?.offsetHeight || 0; host.style.bottom=dock+'px';
