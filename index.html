@@ -233,7 +233,10 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .news-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .tk-man{display:flex;flex-direction:column;gap:8px}
 .np-top{position:sticky;top:0;z-index:2;background:var(--surface);padding-block:8px}
-.tk-prev{min-width:0}
+.tk-prev{min-width:0;flex:1}
+.tk-pick{flex:none;display:flex}
+.news-panel .tk-pick input,.news-panel .tk-bulk input{flex:none;min-width:0;width:18px;height:18px;padding:0;margin:0}
+.tk-bulk{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .tk-prev .badge{width:22px;height:22px;vertical-align:middle}
 .tk-edit{flex:1;min-width:0}
 .tk-edit input{width:100%;box-sizing:border-box;border:2px solid var(--gold);border-radius:10px;padding:8px 10px;font-weight:700;background:var(--surface);color:var(--ink)}
@@ -747,7 +750,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -1360,27 +1363,42 @@ const NEWS_TEMPLATES = [
 function renderNewsPanel(focus){
   const host=document.getElementById('newsPanel'); document.getElementById('newsBtn').textContent = S.newsOpen ? 'Close' : 'Post news';
   if(!S.newsOpen){ host.innerHTML=''; return; }
+  const keepScroll=host.querySelector('.news-panel')?.scrollTop||0;
   host.innerHTML = `<div class="news-panel"><div class="wrap">
-    <div class="spread np-top"><h2 style="margin:0;font-size:20px">📣 Dojo News</h2><button class="btn primary" data-act="toggleNews">Done</button></div>
+    <div class="spread np-top"><h2 style="margin:0;font-size:20px">📣 Dojo News</h2><div class="row" style="gap:10px">${isDir() ? tickerBulkHTML() : ''}<button class="btn primary" data-act="toggleNews">Done</button></div></div>
     <div class="row" style="gap:8px"><span class="eyebrow">Quick templates</span>
       <select id="tplNinja" aria-label="Ninja for the template"><option value="">Pick a ninja (optional)</option>${ninjaList().map(n=>`<option>${esc(n.name)}</option>`).join('')}</select></div>
     <div class="tpls">${NEWS_TEMPLATES.map((t,k)=>`<button type="button" class="tpl" data-act="tpl" data-k="${k}">${esc(t.replace('{ninja}','[Ninja]'))}</button>`).join('')}</div>
     <form id="newsForm"><input id="newsText" maxlength="120" placeholder="Breaking news, e.g. Pizza party Friday for everyone on track!" autocomplete="off" aria-label="News to show on the ticker"><button class="btn primary" type="submit">Post to ticker</button></form>
     ${isDir() ? tickerManagerHTML() : S.news.length ? `<ul class="news-list">${S.news.map(n=>`<li><span><span class="tk-tag">BREAKING</span> ${esc(n.text)} <small class="hint">· ${ago(n.at)}</small></span><button class="btn ghost" data-act="delNews" data-id="${n.id}">Remove</button></li>`).join('')}</ul>` : '<p class="hint" style="margin:0">Posts show first on the ticker until you remove them. Achievements, rewards and bucks show up on their own.</p>'}
   </div></div>`;
+  host.querySelector('.news-panel').scrollTop=keepScroll;
   if(focus) document.getElementById('newsText').focus();
+}
+function tickerBulkHTML(){
+  const rows=tickerShown(), n=[...S.tkSel].filter(k=>rows.some(x=>x.key===k)).length, all=rows.length && rows.every(x=>S.tkSel.has(x.key));
+  return rows.length ? `<label class="se-check tk-bulk"><input type="checkbox" id="tkSelAll" ${all?'checked':''}> Select all</label><button class="btn ghost danger" data-act="tkHideSel" ${n?'':'disabled'}>Remove selected${n?` (${n})`:''}</button>` : '';
 }
 function tickerManagerHTML(){
   const rows=tickerShown(), hiddenN=(S.tickerCfg.hidden||[]).filter(k=>tickerRaw().some(x=>x.key===k)).length;
   const plain=h=>{ const d=document.createElement('div'); d.innerHTML=h; return d.textContent.replace(/\s+/g,' ').trim(); };
+  const live=new Set(rows.map(x=>x.key)); [...S.tkSel].forEach(k=>{ if(!live.has(k)) S.tkSel.delete(k); });
   return `<div class="tk-man"><div class="spread"><span class="eyebrow">On the ticker now · Center Director</span>${hiddenN?`<button class="btn ghost sm" data-act="tkShowAll">Show ${hiddenN} hidden update${hiddenN===1?'':'s'} again</button>`:''}</div>
+
     <ul class="news-list">${rows.map(x=>`<li>${S.tkEditing===x.key
       ? `<span class="tk-edit"><input id="tkEditText" maxlength="140" value="${esc(S.tkEditText)}" aria-label="New text"></span><span class="row" style="gap:6px;flex:none"><button class="btn primary sm" data-act="tkSave" data-key="${esc(x.key)}">Save</button>${x.edited?`<button class="btn ghost sm" data-act="tkReset" data-key="${esc(x.key)}">Undo edit</button>`:''}<button class="btn ghost sm" data-act="tkCancel">Cancel</button></span>`
-      : `<span class="tk-prev">${x.html}${x.edited?' <small class="hint">· edited</small>':''}${x.news?'':' <small class="hint">· automatic</small>'}</span><span class="row" style="gap:6px;flex:none"><button class="btn ghost sm" data-act="tkEdit" data-key="${esc(x.key)}" data-text="${esc(plain(x.html))}">Edit</button><button class="btn ghost sm" data-act="tkHide" data-key="${esc(x.key)}">Remove</button></span>`}</li>`).join('') || '<li><span class="hint">Nothing on the ticker right now.</span></li>'}</ul></div>`;
+      : `<label class="tk-pick"><input type="checkbox" data-tksel="${esc(x.key)}" ${S.tkSel.has(x.key)?'checked':''} aria-label="Select this update"></label><span class="tk-prev">${x.html}${x.edited?' <small class="hint">· edited</small>':''}${x.news?'':' <small class="hint">· automatic</small>'}</span><span class="row" style="gap:6px;flex:none"><button class="btn ghost sm" data-act="tkEdit" data-key="${esc(x.key)}" data-text="${esc(plain(x.html))}">Edit</button><button class="btn ghost sm" data-act="tkHide" data-key="${esc(x.key)}">Remove</button></span>`}</li>`).join('') || '<li><span class="hint">Nothing on the ticker right now.</span></li>'}</ul></div>`;
 }
 async function tickerAction(a, key){
   const item=tickerRaw().find(x=>x.key===key), cfg=S.tickerCfg, hidden=cfg.hidden||[], edits=cfg.edits||[];
-  if(a==='tkShowAll'){ if(await saveTickerCfg([], edits)) toast('Hidden updates are back on the ticker.'); }
+  if(a==='tkHideSel'){
+    const pick=tickerRaw().filter(x=>S.tkSel.has(x.key)); if(!pick.length) return;
+    try{ await Promise.all(pick.filter(x=>x.news).map(x=>api.del('news', x.news))); }catch{ return; }
+    const auto=pick.filter(x=>!x.news).map(x=>x.key);
+    if(auto.length && !await saveTickerCfg([...hidden, ...auto], edits)) return;
+    S.tkSel.clear(); toast(`Removed ${pick.length} update${pick.length===1?'':'s'} from the ticker.`);
+  }
+  else if(a==='tkShowAll'){ if(await saveTickerCfg([], edits)) toast('Hidden updates are back on the ticker.'); }
   else if(!item){ toast('That update has already left the ticker.'); }
   else if(a==='tkHide'){
     if(item.news){ try{ await api.del('news', item.news); }catch{ return; } toast('News removed from the ticker.'); }
@@ -1758,10 +1776,10 @@ document.addEventListener('click', e=>{
     case 'removeStaff': removeStaff(id).then(renderTeam); break;
     case 'backup': downloadBackup(); break;
     case 'lock': lockNow(); break;
-    case 'toggleNews': S.newsOpen=!S.newsOpen; S.tkEditing=null; renderNewsPanel(true); break;
+    case 'toggleNews': S.newsOpen=!S.newsOpen; S.tkEditing=null; S.tkSel.clear(); renderNewsPanel(true); break;
     case 'tkEdit': S.tkEditing=t.dataset.key; S.tkEditText=t.dataset.text; renderNewsPanel(); document.getElementById('tkEditText')?.focus(); break;
     case 'tkCancel': S.tkEditing=null; renderNewsPanel(); break;
-    case 'tkHide': case 'tkSave': case 'tkReset': case 'tkShowAll': tickerAction(a, t.dataset.key); break;
+    case 'tkHide': case 'tkSave': case 'tkReset': case 'tkShowAll': case 'tkHideSel': tickerAction(a, t.dataset.key); break;
     case 'delNews': api.del('news', id).then(()=>renderNewsPanel()).catch(()=>{}); break;
     case 'clearSamples': clearSamples().catch(()=>{}); break;
   }
@@ -1779,6 +1797,10 @@ document.addEventListener('change', e=>{
   if(el.id==='editBelt'){ const v=+el.value, lv=Math.min(beltFor(S.ninjas[S.drawer]).level, levelsOf(v)); api.update('ninjas',S.drawer, v===JR ? {group:'junior', level:lv} : {group:'ninja', belt:v, level:lv}).catch(()=>{}); }
   if(el.id==='editLevel'){ api.update('ninjas',S.drawer,{level:+el.value}).catch(()=>{}); }
   if(el.id==='editGroup'){ const n=S.ninjas[S.drawer]; api.update('ninjas',S.drawer, el.value==='junior' ? {group:'junior', level:Math.min(beltFor(n).level, JR_BELT.levels)} : {group:'ninja', belt:n.belt|0, level:1}).catch(()=>{}); }
+});
+document.addEventListener('change', e=>{ const el=e.target;
+  if(el.dataset && el.dataset.tksel!=null){ el.checked ? S.tkSel.add(el.dataset.tksel) : S.tkSel.delete(el.dataset.tksel); renderNewsPanel(); }
+  else if(el.id==='tkSelAll'){ tickerShown().forEach(x=>el.checked ? S.tkSel.add(x.key) : S.tkSel.delete(x.key)); renderNewsPanel(); }
 });
 document.addEventListener('input', e=>{ if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='adjNote') S.adj.note=e.target.value; if(e.target.id==='tkEditText') S.tkEditText=e.target.value; });
 { const vp=document.querySelector('.tk-viewport'); vp.addEventListener('mouseenter',()=>tk.paused=true); vp.addEventListener('mouseleave',()=>tk.paused=false); }
