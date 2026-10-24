@@ -1960,6 +1960,7 @@ function renderRoster(){
 }
 
 function familyCodeHTML(n){
+  if(S.bdayDraft && S.bdayDraft.id!==S.drawer) S.bdayDraft=null;
   const shown = S.famShow?.id===n.id ? S.famShow.code : null;
   return `<div class="card fam-card" style="padding:16px"><div class="spread"><h3 style="font-size:18px;margin:0">👨‍👩‍👧 Family code</h3>${n.famKey?'<span class="status approved">Set</span>':''}</div>
     ${shown ? `<p style="margin:8px 0 4px;font-weight:800">Give this code to ${esc(n.name)}'s family. It is shown only once.</p><div class="fam-code">${shown.split('').join(' ')}</div>`
@@ -1988,7 +1989,7 @@ async function createFamilyCode(id){
 function renderDrawer(){
   const host=document.getElementById('drawerHost'); const n=S.ninjas[S.drawer];
   if(!n){ host.innerHTML=''; return; }
-  const b=beltFor(n);
+  const b=beltFor(n), bd = S.bdayDraft && S.bdayDraft.id===n.id ? S.bdayDraft : null;
   const hist=S.log.filter(l=>l.ninjaId===n.id).slice(0,30);
   const keep = document.activeElement && host.contains(document.activeElement) ? document.activeElement.id : null;
   const prevScroll = S.drawerShown===S.drawer ? (host.querySelector('.drawer')?.scrollTop || 0) : 0;
@@ -2013,8 +2014,9 @@ function renderDrawer(){
       <div style="display:grid;gap:10px;margin-top:10px">
         <label class="f">Name<input id="editName" value="${esc(n.name)}" maxlength="24" ${isDir()?'':'disabled'}></label>
         <div class="f"><span>Birthday <span class="hint">(month and day, for the lobby birthday slide)</span></span><div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
-          <select id="editBdayM" aria-label="Birthday month" ${isDir()?'':'disabled'}><option value="">Month</option>${MONTHS.map((m,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(n)?.m===k+1?'selected':''}>${m}</option>`).join('')}</select>
-          <select id="editBdayD" aria-label="Birthday day" ${isDir()?'':'disabled'}><option value="">Day</option>${Array.from({length:31},(_,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(n)?.d===k+1?'selected':''}>${k+1}</option>`).join('')}</select></div></div>
+          <select id="editBdayM" aria-label="Birthday month" ${isDir()?'':'disabled'}><option value="">Month</option>${MONTHS.map((m,k)=>{ const v=String(k+1).padStart(2,'0'); return `<option value="${v}" ${(bd ? bd.m===v : bdayOf(n)?.m===k+1)?'selected':''}>${m}</option>`; }).join('')}</select>
+          <select id="editBdayD" aria-label="Birthday day" ${isDir()?'':'disabled'}><option value="">Day</option>${Array.from({length:31},(_,k)=>{ const v=String(k+1).padStart(2,'0'); return `<option value="${v}" ${(bd ? bd.d===v : bdayOf(n)?.d===k+1)?'selected':''}>${k+1}</option>`; }).join('')}</select></div>
+          ${bd && !!bd.m!==!!bd.d ? `<small class="hint">Pick the ${bd.m?'day':'month'} too to save.</small>`:''}</div>
         <label class="f">Group<select id="editGroup"><option value="ninja" ${n.group==='ninja'?'selected':''}>Create (8+)</option><option value="junior" ${n.group==='junior'?'selected':''}>JR (5–7)</option></select></label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Belt<select id="editBelt">${beltOpts(b.i, ALL_BELTS)}</select></label>
         <label class="f">Level<select id="editLevel">${levelOpts(b.i, b.level)}</select></label></div>
@@ -2283,7 +2285,12 @@ document.addEventListener('change', e=>{
   if(el.id==='lbGoalT'){ saveLobbyCfg({goalTarget:Math.max(0, Math.round(Number(el.value)||0))}); return; }
   if(el.id==='lbGoalP'){ saveLobbyCfg({goalPrize:el.value.trim()}); return; }
   if(el.id==='lbBday'){ saveLobbyCfg({bdayNote:el.value.trim()}); return; }
-  if(el.id==='editBdayM' || el.id==='editBdayD'){ const m=document.getElementById('editBdayM').value, d=document.getElementById('editBdayD').value; if(isDir()) api.update('ninjas', S.drawer, {bday: m&&d ? `${m}-${d}` : ''}).catch(()=>{}); return; }
+  if(el.id==='editBdayM' || el.id==='editBdayD'){
+    // Save only once both month and day are picked (or both cleared); keep a half-picked date on screen meanwhile.
+    const m=document.getElementById('editBdayM').value, d=document.getElementById('editBdayD').value;
+    S.bdayDraft={id:S.drawer, m, d};
+    if(isDir() && (!!m===!!d)) api.update('ninjas', S.drawer, {bday: m ? `${m}-${d}` : ''}).then(()=>{ S.bdayDraft=null; toast(m ? 'Birthday saved.' : 'Birthday removed.'); }).catch(()=>{});
+    return; }
   if(el.dataset && el.dataset.staffrole){ setStaffRole(el.dataset.staffrole, el.value); return; }
   if(el.dataset && el.dataset.su){
     if(el.id.startsWith('su-belt-')){ const lvSel=document.getElementById('su-lv-'+el.dataset.su); lvSel.innerHTML=levelOpts(+el.value, 1); }
