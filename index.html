@@ -2322,10 +2322,10 @@ const plRow = (n, right, sub) => `<div class="pl-row">${avatar(n,40)}<div class=
 const plCards = {
   create:()=>plBoard('ninja'), jr:()=>plBoard('junior'),
   achieve:()=>{ const now=Date.now(), k=S.plAch||'week', from = k==='today'?dayStart(now):k==='week'?weekStart(now):monthStart(now), L=achievements(from).slice(0,5);
-    return plCard('⭐','Achievements', `<div class="seg pl-seg">${[['today','Today'],['week','This week'],['month','This month']].map(([v,t])=>`<button data-plach="${v}" aria-pressed="${k===v}">${t}</button>`).join('')}</div>
+    return plCard('⭐','Big Wins', `<div class="seg pl-seg">${[['today','Today'],['week','This week'],['month','This month']].map(([v,t])=>`<button data-plach="${v}" aria-pressed="${k===v}">${t}</button>`).join('')}</div>
       ${L.map(l=>{ const n=S.ninjas[l.ninjaId], a=achText(l); return plRow(n, a.img?badge(a.img,34):`<span class="pl-em">${esc(a.em)}</span>`, esc(a.t)); }).join('') || '<p class="hint">Big wins will show up here.</p>'}`); },
   bday:()=>{ const now=new Date(), m=now.getMonth()+1, L=ninjaList().filter(n=>bdayOf(n)?.m===m).sort((a,b)=>bdayOf(a).d-bdayOf(b).d);
-    return plCard('🎂',`${MONTHS[m-1]} birthdays`, L.map(n=>{ const t=bdayOf(n).d===now.getDate(); return `<div class="pl-row ${t?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${t?'🎉 Today! Happy birthday!':`🎂 ${MONTHS[m-1].slice(0,3)} ${bdayOf(n).d}`}</small></div></div>`; }).join('')
+    return plCard('🎂',`${MONTHS[m-1]} Birthdays`, L.map(n=>{ const t=bdayOf(n).d===now.getDate(); return `<div class="pl-row ${t?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${t?'🎉 Celebrating Today':`🎂 ${MONTHS[m-1].slice(0,3)} ${bdayOf(n).d}`}</small></div></div>`; }).join('')
       + (S.lobbyCfg?.bdayNote?`<p class="pl-note">🎁 ${esc(S.lobbyCfg.bdayNote)}</p>`:''),'pl-bday'); },
   welcome:()=>plCard('👋','Welcome, new ninjas!', lbNewNinjas().map(n=>{ const b=beltFor(n); return `<div class="pl-row ${Date.now()-n.createdAt<2*DAY?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${n.group==='junior'?'🌸 JR':'⚡ Create'} · ${esc(b.name)} · joined ${new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div></div>`; }).join('')+'<p class="pl-note">🙌 High-five a new ninja today!</p>','pl-welcome'),
   spot:()=>{ const l=lbSpotlights()[0], n=S.ninjas[l.ninjaId], a=achText(l), b=beltFor(n);
@@ -2334,8 +2334,8 @@ const plCards = {
     return plCard('🗺️','The Ninja Path', `<p class="hint" style="margin:0 0 8px">Leading the road to Black Belt</p>${leaders.map((n,i)=>{ const b=beltFor(n); return plRow(n, badge(BADGE(b.i,b.level),34), `${['🥇','🥈','🥉'][i]} ${b.i===BLACK?'Black Belt':`${esc(b.name)} Belt · ${esc(stepName(b.i,b.level))}`}`); }).join('')}
       <div class="pl-belts">${MAIN_BELTS.map(k=>{ const c=create.filter(n=>beltFor(n).i===k).length; return `<span class="${c?'':'dim'}">${badge(DONE(k),26)}${c}</span>`; }).join('')}</div>`); },
   goal:()=>{ const c=S.lobbyCfg||{}, target=c.goalTarget|0, now=new Date(), total=S.log.filter(l=>l.at>=monthStart(now.getTime()) && l.kind==='earn').reduce((a,l)=>a+(l.amt||0),0), pct=Math.min(100,target?total/target*100:0), left=new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()-now.getDate()+1;
-    return plCard(esc(c.goalIcon||'🎯'),`${MONTHS[now.getMonth()]} dojo goal`, `<div class="pl-big">${total>=target?'We did it! 🎉':`Earn ${fmt(target)} bucks together!`}</div>${c.goalPrize?`<p style="margin:4px 0 10px;font-weight:900;color:var(--accent)">Prize: ${esc(c.goalPrize)}</p>`:''}
-      <div class="pl-bar"><i style="width:${pct}%"></i></div><div class="spread" style="margin-top:6px;font-weight:900"><span>${coin(18)} ${fmt(total)}</span><span class="hint" style="margin:0">${left} day${left===1?'':'s'} left · goal ${fmt(target)}</span></div>`,'pl-goal'); },
+    return plCard(esc(c.goalIcon||'🎯'),`${MONTHS[now.getMonth()]} Goal`, `<div class="pl-big">${total>=target?'We did it! 🎉':`Earn ${fmt(target)} bucks together!`}</div>${c.goalPrize?`<p style="margin:4px 0 10px;font-weight:900;color:var(--accent)">Prize: ${esc(c.goalPrize)}</p>`:''}
+      <div class="pl-bar"><i style="width:${pct}%"></i></div><div class="spread" style="margin-top:6px;font-weight:900"><span>${coin(18)} ${fmt(total)}</span><span class="hint" style="margin:0">${left} day${left===1?'':'s'} left</span></div>`,'pl-goal'); },
   legend:()=>{ const t=lbLegendTier();
     return plCard(esc(t.icon||'👑'), esc(t.name), t.items.slice(0,5).map(it=>`<div class="pl-row">${iconHTML(it,40)}<div class="pl-nm"><b>${esc(it.label)}</b></div><span class="pl-price">${coin(16)} ${fmt(amountOf('redeem',it))}</span></div>`).join('')
       + `<p class="pl-note">${isFamily()?'📱 Request these from <b>My Ninja</b> above.':'📱 Enter your family code above to request these for your ninja.'}</p>`,'pl-legend'); },
@@ -2346,9 +2346,9 @@ function plBoard(group){
 }
 function plHTML(skipBoards){
   // On the parents' page, leaderboards and rewards already have their own sections.
-  const list=lbAvailable().filter(x=>!(skipBoards && (x.id==='create'||x.id==='jr'||x.id==='legend')));
+  const list=lbAvailable().filter(x=>!(skipBoards && (x.id==='create'||x.id==='jr'||x.id==='legend'||x.id==='spot')));
   if(!list.length) return '';
-  return `<div class="pl-wrap"><div class="spread pl-top"><h2 style="margin:0">🥷 Dojo Lobby</h2><span class="hint" style="margin:0">Swipe for more →</span></div>
+  return `<div class="pl-wrap"><div class="spread pl-top"><h2 style="margin:0">🥷 Lobby</h2><span class="hint" style="margin:0">Swipe →</span></div>
     <div class="pl-track" id="plTrack">${list.map(x=>plCards[x.id]()).join('')}</div>
     <div class="pl-dots">${list.map((x,i)=>`<button data-pldot="${i}" aria-label="${esc(x.name)}"></button>`).join('')}</div></div>`;
 }
