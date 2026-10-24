@@ -250,6 +250,18 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .pod.p1 .av{width:72px;height:72px}
 .lb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .lbt-wrap{overflow-x:auto}
+.pr-card{margin-top:20px;display:flex;flex-direction:column;gap:14px}
+.pr-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media (max-width:700px){ .pr-cols{grid-template-columns:1fr} }
+.pr-cols h3{margin:0 0 8px}
+.pr-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.pr-list li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.pr-list li:first-child{border-top:0}
+.pr-list .rk{font-family:var(--f-display);color:var(--muted);font-size:18px;width:20px;flex:none}
+.pr-list .pr-ic{width:44px;display:grid;place-items:center;flex:none}
+.pr-list b{flex:1;min-width:0;font-size:16px}
+.pr-n{font-family:var(--f-display);font-size:18px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap}
+.pr-n small{font-family:var(--f-body);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:3px}
 .parent-qr{display:flex;align-items:center;gap:12px;background:#fff;color:#1E1A3A;border:1px solid var(--line);border-radius:14px;padding:8px 14px 8px 8px;max-width:300px}
 .parent-qr svg{width:96px;height:96px;display:block;flex:none}
 .parent-qr b{display:block;font-family:var(--f-display);font-size:17px}
@@ -483,6 +495,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
         </div>
         <div id="boardList"></div>
       </div>
+      <div id="parentRewards"></div>
   </section>
 
   <!-- DASHBOARD -->
@@ -716,7 +729,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -762,7 +775,9 @@ function makeDbApi(db){
 }
 function startDb(db){
   S.mode='db'; api = makeDbApi(db);
-  const since = weekStart(Date.now()) - 7*7*DAY;
+  // Enough history for the charts (7 weeks) and the parents' monthly rewards (this month and last month).
+  const pm=new Date(); pm.setDate(1); pm.setHours(0,0,0,0); pm.setMonth(pm.getMonth()-1);
+  const since = Math.min(weekStart(Date.now()) - 7*7*DAY, pm.getTime());
   let gotN=false, gotL=false;
   const ready = () => { if(gotN && gotL){ S.loaded=true; } render(); };
   db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
@@ -1169,6 +1184,7 @@ function renderDash(){
 }
 function renderBoard(){
   renderParentQr();
+  renderParentRewards();
   const all=ninjaList();
   const board=document.getElementById('boardList');
   const list=filtered().sort((a,b)=>(b[S.metric]||0)-(a[S.metric]||0));
@@ -1370,6 +1386,33 @@ function renderShop(){
           : `<button class="btn ${ok?'gold':''} go" data-act="askRedeem" data-item="${esc(it.id)}" ${ok && !S.readOnly && canWrite()?'':'disabled'}>${ok?(canRedeemNow(it)?'Redeem':'Request reward'):'Keep saving'}</button>`}
       </div>`; }).join('')}${t.items.length?'':'<p class="hint" style="margin:0">No rewards here yet.</p>'}</div></div>`).join('');
 }
+// Parents: the most popular rewards and the top redeemers, for this month or last month.
+function monthRange(back){ const a=new Date(); a.setDate(1); a.setHours(0,0,0,0); a.setMonth(a.getMonth()-back); const b=new Date(a); b.setMonth(b.getMonth()+1); return {from:a.getTime(), to:b.getTime(), name:a.toLocaleString('en-US',{month:'long'})}; }
+function renderParentRewards(){
+  const host=document.getElementById('parentRewards');
+  if(!isParent()){ host.innerHTML=''; return; }
+  const m=monthRange(S.rewardMonth||0), last=monthRange(1), cur=monthRange(0);
+  const red=S.log.filter(l=>l.kind==='redeem' && l.at>=m.from && l.at<m.to);
+  const byItem=new Map(), byNinja=new Map();
+  red.forEach(l=>{
+    const it=findItem('redeem', l.item), k=l.item;
+    if(!byItem.has(k)) byItem.set(k, {it:it||{icon:l.icon, label:l.label}, count:0});
+    byItem.get(k).count++;
+    if(!byNinja.has(l.ninjaId)) byNinja.set(l.ninjaId, {name:l.name, count:0, bucks:0});
+    const n=byNinja.get(l.ninjaId); n.count++; n.bucks+=l.amt||0;
+  });
+  const items=[...byItem.values()].sort((a,b)=>b.count-a.count).slice(0,5);
+  const kids=[...byNinja.entries()].sort((a,b)=>b[1].count-a[1].count || b[1].bucks-a[1].bucks).slice(0,5);
+  const empty=`<p class="hint" style="margin:0">No rewards redeemed in ${m.name} yet.</p>`;
+  host.innerHTML = `<div class="card pr-card">
+    <div class="spread"><div><h2 style="margin:0">Rewards in ${m.name}</h2><p class="hint" style="margin:2px 0 0">${red.length ? `${red.length} reward${red.length===1?'':'s'} redeemed` : 'What ninjas are spending their bucks on'}</p></div>
+      <div class="seg" role="group" aria-label="Month"><button data-rmonth="0" aria-pressed="${!S.rewardMonth}">${cur.name}</button><button data-rmonth="1" aria-pressed="${S.rewardMonth===1}">${last.name}</button></div></div>
+    <div class="pr-cols">
+      <div><h3 class="eyebrow">Most popular rewards</h3>${items.length ? `<ol class="pr-list">${items.map((x,i)=>`<li><span class="rk">${i+1}</span><span class="pr-ic">${iconHTML(x.it,40)}</span><b>${esc(x.it.label)}</b><span class="pr-n">${x.count}×</span></li>`).join('')}</ol>` : empty}</div>
+      <div><h3 class="eyebrow">Top redeemers</h3>${kids.length ? `<ol class="pr-list">${kids.map(([id,x],i)=>`<li><span class="rk">${i+1}</span>${S.ninjas[id]?avatar(S.ninjas[id],40):''}<b>${esc(S.ninjas[id]?.name||x.name)}</b><span class="pr-n">${x.count} reward${x.count===1?'':'s'}<small>${coin(14)}${fmt(x.bucks)}</small></span></li>`).join('')}</ol>` : empty}</div>
+    </div></div>`;
+}
+document.getElementById('parentRewards').addEventListener('click', e=>{ const b=e.target.closest('[data-rmonth]'); if(!b) return; S.rewardMonth=+b.dataset.rmonth; renderParentRewards(); });
 function iconHTML(o, size){
   if(o.pic && PIC_LIB.includes(o.pic)) return `<img class="mascot pic" src="mascots/${o.pic}.webp" alt="" style="height:${size}px;width:auto">`;
   return `<span class="em" style="font-size:${Math.round(size*0.55)}px">${esc(o.icon||'🎁')}</span>`;
