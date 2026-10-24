@@ -749,6 +749,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
       <div id="teamList" style="margin-top:14px"></div></div>
     <div class="card"><div class="spread"><div><h2>Lobby TV</h2><p class="hint" style="margin:4px 0 0">The View only login (for example "Lobby") shows a slideshow for parents. Choose the slides and set this month's dojo goal.</p></div><a class="btn" href="#lobby" style="text-decoration:none">Preview lobby</a></div>
       <div id="lobbyAdmin" style="margin-top:12px"></div></div>
+    <div class="card"><div class="spread"><div><h2>Clear redemption history</h2><p class="hint" style="margin:4px 0 0">For testing: removes every reward redemption from the history, Popular rewards and the lobby. Balances stay as they are. This can't be undone, so download a backup first.</p></div></div>
+      <div id="clearRedeem" style="margin-top:12px"></div></div>
     <div class="card"><div class="spread"><div><h2>Backup</h2><p class="hint" style="margin:4px 0 0">Download a copy of all ninjas, bucks, history, news and requests. Keep it somewhere safe, for example once a month.</p></div><button class="btn" data-act="backup">Download backup</button></div></div>
     <div class="card"><h2>Who can do what</h2><div id="rolesInfo" style="margin-top:10px"></div></div>
     <div class="card">
@@ -1972,6 +1974,33 @@ async function saveLobbyCfg(patch){
   const next={...(S.lobbyCfg||{}), ...patch}; S.lobbyCfg=next;
   try{ await api.set('settings', 'lobby', next); toast('Lobby TV updated.'); }catch{}
 }
+function renderClearRedeem(){
+  const host=document.getElementById('clearRedeem'); if(!host || (document.activeElement?.tagName==='INPUT' && host.contains(document.activeElement))) return;
+  const c=S.clearRedeem;
+  host.innerHTML = c==='busy' ? '<p class="hint" style="margin:0">Clearing…</p>'
+    : c ? `<div class="confirm"><p>Delete all reward redemptions from the history?</p>
+        <label class="se-check"><input type="checkbox" id="crSpent" checked> Also set every ninja's "Spent" total back to 0</label>
+        <div class="row"><button class="btn primary" data-act="clearRedeemGo">Yes, clear it</button><button class="btn ghost" data-act="clearRedeemNo">Cancel</button></div></div>`
+    : `<button class="btn" data-act="clearRedeemAsk">Clear redemption history</button>`;
+}
+// Testing tool: delete every redemption in the log (not only the recent ones loaded on screen).
+async function clearRedemptions(resetSpent){
+  if(!isDir()) return; S.clearRedeem='busy'; renderClearRedeem();
+  let n=0;
+  try{
+    if(S.mode==='db'){
+      const db=firebase.firestore(), q=await db.collection('log').where('kind','==','redeem').get();
+      for(let i=0;i<q.docs.length;i+=400){ const b=db.batch(); q.docs.slice(i,i+400).forEach(d=>b.delete(d.ref)); await b.commit(); }
+      n=q.size;
+      if(resetSpent){ const ns=Object.values(S.ninjas).filter(x=>x.spent); for(let i=0;i<ns.length;i+=400){ const b=db.batch(); ns.slice(i,i+400).forEach(x=>b.update(db.doc('ninjas/'+x.id),{spent:0})); await b.commit(); } }
+    } else {
+      const del=S.log.filter(l=>l.kind==='redeem'); n=del.length; for(const l of del) await api.del('log', l.id);
+      if(resetSpent) for(const x of Object.values(S.ninjas)) if(x.spent) await api.update('ninjas', x.id, {spent:0});
+    }
+    toast(`Cleared ${n} redemption${n===1?'':'s'}.`);
+  }catch(e){ console.warn(e); toast('Could not clear the history. Check the connection and try again.'); }
+  S.clearRedeem=null; render();
+}
 function renderAdmin(){
   const pend=pendingReqs();
   document.getElementById('approveAllBtn').hidden = pend.length<2;
@@ -1987,6 +2016,7 @@ function renderAdmin(){
     <p class="hint" style="margin:12px 0 0"><b>Locking:</b> tap Lock at the top when you step away. Dojo devices lock themselves after 10 minutes without use, except View only screens.</p>`;
   renderTeam();
   renderLobbyAdmin();
+  renderClearRedeem();
   renderSetup();
   const hasSample = Object.values(S.ninjas).some(n=>n.sample);
   document.getElementById('sampleBar').innerHTML = S.mode!=='db' ? '' : hasSample ? `<div class="card spread"><span>Sample ninjas are in your dojo (marked Sample). Remove them when you're ready. Your real ninjas stay.</span><button class="btn" data-act="clearSamples">Remove sample ninjas</button></div>` : '';
@@ -2425,6 +2455,9 @@ document.addEventListener('click', e=>{
     case 'tkEdit': S.tkEditing=t.dataset.key; S.tkEditText=t.dataset.text; renderNewsPanel(); document.getElementById('tkEditText')?.focus(); break;
     case 'lobbyExit': location.hash='#board'; break;
     case 'lbAll': S.lbAll=true; render(); break;
+    case 'clearRedeemAsk': S.clearRedeem=true; renderClearRedeem(); break;
+    case 'clearRedeemNo': S.clearRedeem=null; renderClearRedeem(); break;
+    case 'clearRedeemGo': clearRedemptions(document.getElementById('crSpent')?.checked); break;
     case 'lbLock': {
       // Two taps, so a passer-by can't lock the lobby TV by accident.
       if(!t.classList.contains('confirm')){ t.classList.add('confirm'); t.textContent='Tap again to lock'; clearTimeout(LB.lockT); LB.lockT=setTimeout(()=>{ t.classList.remove('confirm'); t.textContent='🔒 Lock'; }, 4000); break; }
