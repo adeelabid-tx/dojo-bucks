@@ -964,6 +964,13 @@ function startDb(db){
   const ready = () => { if(gotN && gotL){ S.loaded=true; } render(); };
   db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
   db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => ({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
+  // Everyone (staff, lobby, parents and families) needs the dojo's prices, goal, options and news.
+  db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
+  db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
+  db.doc('settings/lobby').onSnapshot(d => { S.lobbyCfg = d.exists ? d.data() : {goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}; render(); }, () => {});
+  db.doc('settings/actions').onSnapshot(d => { S.actions = d.exists ? d.data() : null; render(); }, () => {});
+  db.doc('settings/ticker').onSnapshot(d => { S.tickerCfg = d.exists ? d.data() : {hidden:[], edits:[]}; render(); }, () => {});
+  db.doc('settings/shop').onSnapshot(d => { S.shop = d.exists ? d.data() : null; render(); }, () => {});
   if(isFamily()){
     db.doc('families/'+S.me).onSnapshot(d => { if(!d.exists) lockNow('That family code has changed. Please contact the front desk for the new one.'); }, () => {});
     db.collection('requests').where('by','==',S.me).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b)=>b.at-a.at); render(); }, () => {});
@@ -972,12 +979,6 @@ function startDb(db){
   } else {
   db.collection('staff').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.staff=m; if(!S.isOwner && !m[S.me]) return lockNow('You are no longer on the team.'); if(!S.isOwner){ S.role=m[S.me].role; } render(); if(S.isOwner && !S.parentChecked){ S.parentChecked=true; ensureParentLogin(db); } }, () => {});
   db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
-  db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
-  db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
-  db.doc('settings/lobby').onSnapshot(d => { S.lobbyCfg = d.exists ? d.data() : {goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}; render(); }, () => {});
-  db.doc('settings/actions').onSnapshot(d => { S.actions = d.exists ? d.data() : null; render(); }, () => {});
-  db.doc('settings/ticker').onSnapshot(d => { S.tickerCfg = d.exists ? d.data() : {hidden:[], edits:[]}; render(); }, () => {});
-  db.doc('settings/shop').onSnapshot(d => { S.shop = d.exists ? d.data() : null; render(); }, () => {});
   db.doc('settings/owner').onSnapshot(d => { S.ownerUid = d.exists ? d.data().uid : null; }, () => {});
   }
   if(S.isOwner) db.doc('settings/owner').set({uid:S.me}).catch(()=>{});
@@ -1073,7 +1074,7 @@ const canWrite = () => S.role==='director' || S.role==='sensei';
 const isParent = () => S.role==='parent' || S.role==='family';
 const isFamily = () => S.role==='family';
 const pendingReqs = () => S.requests.filter(r=>r.status==='pending');
-const heldFor = id => pendingReqs().filter(r=>r.type==='redeem' && r.ninjaId===id).reduce((a,r)=>a+(r.cost||0),0);
+const heldFor = id => pendingReqs().filter(r=>r.type==='redeem' && r.ninjaId===id).reduce((a,r)=>{ const it=findItem('redeem', r.item); return a+(it?amountOf('redeem',it):(r.cost||0)); },0);
 async function sendRequest(type, data, msg){
   try{ await api.set('requests', uid(), {type, ...data, by:S.me, at:Date.now(), status:'pending'}); toast(msg || 'Sent to the Center Director for approval.'); }catch{}
 }
@@ -1083,7 +1084,8 @@ function describeReq(r){
   if(r.type==='add') return {ic:'🥷', html:`Add new ninja <b>${esc(r.name)}</b> · ${esc(rankOf(r))}${r.start?` · ${fmt(r.start)} starting bucks`:''}${r.welcome===true?' · 👋 show on the lobby Welcome screen':''}`};
   if(r.type==='rank') return {ic:'🥋', html:`Change ${nm(r.ninjaId)} to ${esc(rankOf(r))}`};
   if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); return {ic:it?.img?badge(it.img,36):'⭐', html:`${esc(it?.label||'Level Up')} for ${(r.ninjaIds||[]).map(nm).join(', ')}`}; }
-  if(r.type==='redeem'){ const it=findItem('redeem', r.item); return {ic:it?iconHTML(it,40):'🛍️', html:`${nm(r.ninjaId)} wants <b>${esc(it?.label||r.item)}</b> for ${fmt(r.cost)} bucks`}; }
+  if(r.type==='redeem'){ const it=findItem('redeem', r.item), now=it?amountOf('redeem',it):r.cost, changed=r.status==='pending' && it && now!==r.cost;
+    return {ic:it?iconHTML(it,40):'🛍️', html:`${nm(r.ninjaId)} wants <b>${esc(it?.label||r.item)}</b> for ${fmt(changed?now:r.cost)} bucks${changed?` <span class="status pending">price is now ${fmt(now)} (asked at ${fmt(r.cost)})</span>`:''}`}; }
   return {ic:'•', html:esc(r.type)};
 }
 const ROLE_NAMES = {director:'Center Director', sensei:'Sensei', viewer:'View only', parent:'Parents'};
@@ -1174,7 +1176,8 @@ async function approveReq(r){
   else if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]); if(it && ids.length) await give('earn', it, ids); else note='Nothing to apply'; }
   else if(r.type==='redeem'){ const n=S.ninjas[r.ninjaId], it=findItem('redeem', r.item);
     if(!n || !it){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Ninja or reward no longer exists'}); toast('That ninja or reward no longer exists, so this was declined.'); return; }
-    else if((n.balance||0) < r.cost){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Not enough bucks'}); toast(`${n.name} no longer has enough bucks, so this was declined.`); return; }
+    // Charge today's shop price; decline if the ninja can't cover it (the price may have changed since the request).
+    else if((n.balance||0) < amountOf('redeem', it)){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Not enough bucks'}); toast(`${n.name} no longer has enough bucks, so this was declined.`); return; }
     else await redeem(it, r.ninjaId, true); }
   await api.update('requests', r.id, {status:'approved', decidedBy:S.me, decidedAt:Date.now(), ...(note?{note}:{})});
 }
