@@ -1,0 +1,33 @@
+# Publishes firestore.rules to Firebase whenever it changes on main.
+# Needs a repository secret FIREBASE_SERVICE_ACCOUNT holding a Firebase service account key (JSON).
+name: Publish Firestore rules
+
+on:
+  push:
+    branches: [main]
+    paths: [firestore.rules, firebase.json, .github/workflows/deploy-rules.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Publish rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::Add the FIREBASE_SERVICE_ACCOUNT secret in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/key.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/key.json"
+          npx --yes firebase-tools@15.34.1 deploy --only firestore:rules --project dojo-bucks --non-interactive
+          rm -f "$RUNNER_TEMP/key.json"
