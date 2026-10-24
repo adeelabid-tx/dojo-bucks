@@ -215,11 +215,17 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .lb-top{position:absolute;top:26px;left:50px;right:50px;display:flex;align-items:center;gap:18px;z-index:5}
 .lb-brand{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.92);border-radius:999px;padding:8px 22px 8px 8px;box-shadow:0 8px 24px -10px rgba(30,26,60,.4)}
 .lb-chip{background:#221B4D;color:#fff;border-radius:999px;padding:10px 22px;font-weight:900;font-size:24px}
-.lb-dots{display:flex;gap:8px;margin-left:auto;margin-right:6px}.lb-dots i{width:14px;height:14px;border-radius:9px;background:rgba(255,255,255,.75);box-shadow:0 1px 4px rgba(0,0,0,.2);transition:width .3s}.lb-dots i.on{width:44px;background:#E5402B}
-.lb-ctrl{display:flex;gap:6px;background:rgba(255,255,255,.92);border-radius:999px;padding:6px;box-shadow:0 8px 24px -10px rgba(30,26,60,.4)}
-.lb-ctrl button{border:0;background:#F1EFFA;color:#1E1A3C;border-radius:999px;min-width:56px;height:52px;font-weight:900;font-size:22px;cursor:pointer;padding:0 16px}
-.lb-ctrl .lb-play{background:#221B4D;color:#fff;min-width:150px}
-.lb-ctrl .lb-play.paused{background:#E5402B}
+.lb-ctrl{margin-left:auto;margin-right:6px;display:flex;align-items:center;gap:12px}
+.lb-count{background:rgba(255,255,255,.92);border-radius:999px;padding:8px 18px;font-weight:900;font-size:22px;color:#221B4D;box-shadow:0 6px 16px -8px rgba(30,26,60,.5)}
+.lb-arrow{width:48px;height:48px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:#221B4D;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 16px -8px rgba(30,26,60,.5)}
+.lb-ring{position:relative;width:78px;height:78px;border:0;background:transparent;padding:0;cursor:pointer;display:grid;place-items:center}
+.lb-ring .ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.lb-ring .track{fill:none;stroke:rgba(255,255,255,.75);stroke-width:6}
+.lb-ring .prog{fill:none;stroke:#E5402B;stroke-width:6;stroke-linecap:round;stroke-dasharray:213.6;stroke-dashoffset:0;animation:lbRing linear forwards}
+@keyframes lbRing{from{stroke-dashoffset:0}to{stroke-dashoffset:213.6}}
+.lb-ring .core{width:60px;height:60px;border-radius:50%;background:#221B4D;color:#fff;display:grid;place-items:center;box-shadow:0 8px 20px -8px rgba(30,26,60,.6)}
+.lb-ring.paused .core{background:#E5402B}
+.lb-ring.paused .prog{stroke:#F6B60A}
 .lb-cn{background:#fff;border-radius:16px;padding:10px 18px;box-shadow:0 8px 24px -10px rgba(30,26,60,.4)}
 .lb-exit{background:#fff;border:0;border-radius:999px;padding:10px 18px;font-weight:900;font-size:20px;cursor:pointer}
 .lb-panel{position:absolute;background:rgba(255,255,255,.93);border-radius:36px;box-shadow:0 30px 70px -25px rgba(30,26,60,.5)}
@@ -2095,10 +2101,17 @@ function lbSpotlights(){ const since=Date.now()-7*DAY, bonus=new Set(bonusItems(
 function lbLegendTier(){ const T=shopTiers(); return T.find(t=>t.parents) || T.find(t=>t.id==='legendary') || T[T.length-1]; }
 
 const lbQr = () => { if(!window.qrcode) return ''; const q=qrcode(0,'M'); q.addData(PARENT_URL); q.make(); return q.createSvgTag({cellSize:4, margin:1, scalable:true}); };
+const LB_IC = {
+  pause:'<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.6" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6" fill="currentColor"/></svg>',
+  play:'<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M8.5 5.2v13.6c0 .8.9 1.3 1.6.8l10-6.8c.6-.4.6-1.2 0-1.6l-10-6.8C9.4 3.9 8.5 4.4 8.5 5.2z" fill="currentColor"/></svg>',
+  prev:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 4l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  next:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'};
 function lbFrame(slide, list, body){
   return `<div class="lb-top"><div class="lb-brand">${coin(52)}<div><div class="d" style="font-size:30px;line-height:1">Dojo Bucks</div><div style="font-weight:900;font-size:14px;letter-spacing:.1em;color:#69658E">LOBBY</div></div></div>
-    <div class="lb-chip">${slide.icon} ${esc(slide.name)}</div><div class="lb-dots">${list.map(x=>`<i class="${x.id===slide.id?'on':''}"></i>`).join('')}</div>
-    ${list.length>1?`<div class="lb-ctrl"><button data-act="lbPrev" aria-label="Previous slide">◀</button><button class="lb-play ${LB.paused?'paused':''}" data-act="lbPause" aria-label="${LB.paused?'Play':'Pause'}">${LB.paused?'▶ Play':'⏸ Pause'}</button><button data-act="lbNext" aria-label="Next slide">▶</button></div>`:''}
+    <div class="lb-chip">${slide.icon} ${esc(slide.name)}</div><div class="lb-ctrl">${list.length>1?`<span class="lb-count">${list.findIndex(x=>x.id===slide.id)+1} / ${list.length}</span>
+      <button class="lb-arrow" data-act="lbPrev" aria-label="Previous slide">${LB_IC.prev}</button>
+      <button class="lb-ring ${LB.paused?'paused':''}" data-act="lbPause" aria-label="${LB.paused?'Play':'Pause'}"><svg class="ring" viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="34" class="track"/><circle cx="38" cy="38" r="34" class="prog"/></svg><span class="core">${LB.paused?LB_IC.play:LB_IC.pause}</span></button>
+      <button class="lb-arrow" data-act="lbNext" aria-label="Next slide">${LB_IC.next}</button>`:''}</div>
     ${S.role!=='viewer'?'<button class="lb-exit" data-act="lobbyExit">✕ Exit</button>':''}<div class="lb-cn"><img src="mascots/cn-logo.png" alt="Code Ninjas" style="height:38px;display:block"></div></div>
     <div class="lb-slide">${body}</div>`;
 }
@@ -2212,32 +2225,48 @@ function lbFit(){
   const dock=document.querySelector('.tk-dock .ticker')?.offsetHeight || 0; host.style.bottom=dock+'px';
   const k=Math.min(host.clientWidth/1920, host.clientHeight/990); st.style.transform=`translate(-50%,-50%) scale(${k})`;
 }
+// Slide timing: LB.start is when the current slide began; while paused, LB.elapsed holds the time already shown.
+function lbBegin(){ LB.start=Date.now(); LB.elapsed=0; }
+function lbSchedule(){
+  clearTimeout(LB.timer); const list=lbAvailable(), cur=list[LB.i]; if(!cur || LB.paused) return;
+  const left=Math.max(0, cur.secs*1000-(Date.now()-LB.start));
+  LB.timer=setTimeout(()=>renderLobby(true), left);
+}
+// The ring around the play button drains with the slide's time and freezes while paused.
+function lbRing(){
+  const r=document.querySelector('#lbStage .lb-ring .prog'), cur=lbAvailable()[LB.i]; if(!r || !cur) return;
+  const done = LB.paused ? LB.elapsed : Date.now()-LB.start;
+  r.style.animationDuration=cur.secs+'s'; r.style.animationDelay=(-done/1000)+'s'; r.style.animationPlayState=LB.paused?'paused':'running';
+}
 function renderLobby(advance){
   const on=lobbyOn(), host=document.getElementById('lobby');
   host.hidden=!on; document.body.classList.toggle('lobby-on', on);
   if(!on){ clearTimeout(LB.timer); LB.timer=null; LB.on=false; return; }
   if(!S.loaded) return;
   const list=lbAvailable();
-  if(!list.length){ document.getElementById('lbStage').innerHTML=lbFrame({icon:'🥷',name:'Dojo Bucks'}, [], `<div class="lb-panel" style="left:300px;right:300px;top:300px;padding:60px;text-align:center"><div class="d" style="font-size:60px">Welcome to the dojo! 🥷</div></div>`); lbFit(); return; }
+  if(!list.length){ document.getElementById('lbStage').innerHTML=lbFrame({icon:'🥷',name:'Dojo Bucks'}, [], `<div class="lb-panel" style="left:300px;right:300px;top:300px;padding:60px;text-align:center"><div class="d" style="font-size:60px">Welcome to the dojo! 🥷</div></div>`); LB.html=''; lbFit(); return; }
+  const prev=LB.cur;
   if(advance || !LB.on || LB.i<0 || LB.i>=list.length){ LB.i = advance ? (LB.i+1)%list.length : Math.max(0, Math.min(LB.i, list.length-1)); if(advance && list[LB.i].id==='spot') LB.spot++; }
   const cur=list[LB.i]; LB.cur=cur.id;
+  if(advance || !LB.on || cur.id!==prev || !LB.start) lbBegin();
   const html=lbFrame(cur, list, LB_RENDER[cur.id]());
-  if(html!==LB.html){ LB.html=html; document.getElementById('lbStage').innerHTML=html; }
+  if(html!==LB.html){ LB.html=html; document.getElementById('lbStage').innerHTML=html; lbRing(); }
   lbFit();
-  if(!LB.on || advance){ LB.on=true; clearTimeout(LB.timer); if(!LB.paused) LB.timer=setTimeout(()=>renderLobby(true), cur.secs*1000); }
+  if(!LB.on || advance){ LB.on=true; lbSchedule(); }
 }
+function lbAutoResume(){ clearTimeout(LB.resume); LB.resume=setTimeout(()=>{ if(LB.paused) lbControl('lbPause'); }, LB_RESUME_MS); }
 // Pause keeps the current slide up so parents can read it; arrows step through by hand.
 function lbControl(a){
   const list=lbAvailable(); if(!list.length) return;
   if(a==='lbPause'){
-    LB.paused=!LB.paused; clearTimeout(LB.resume);
-    if(LB.paused){ clearTimeout(LB.timer); LB.resume=setTimeout(()=>{ LB.paused=false; LB.on=false; renderLobby(false); }, LB_RESUME_MS); }
-    LB.on=false; renderLobby(false); return;
+    if(!LB.paused){ LB.paused=true; LB.elapsed=Date.now()-LB.start; clearTimeout(LB.timer); lbAutoResume(); }
+    else { LB.paused=false; clearTimeout(LB.resume); LB.start=Date.now()-LB.elapsed; lbSchedule(); }
+    LB.html=''; renderLobby(false); return;
   }
   LB.i = (LB.i + (a==='lbNext'?1:-1) + list.length) % list.length;
   if(list[LB.i].id==='spot') LB.spot++;
-  if(LB.paused){ clearTimeout(LB.resume); LB.resume=setTimeout(()=>{ LB.paused=false; LB.on=false; renderLobby(false); }, LB_RESUME_MS); }
-  LB.on=false; renderLobby(false);
+  if(LB.paused) lbAutoResume();
+  LB.cur=list[LB.i].id; lbBegin(); LB.html=''; LB.on=true; renderLobby(false); lbSchedule();
 }
 addEventListener('resize', lbFit);
 
