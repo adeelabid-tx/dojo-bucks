@@ -1164,6 +1164,13 @@ function renderFeed(){
 function tickerItems(){
   const out=[], now=Date.now(), all=ninjaList();
   S.news.slice(0,8).forEach(n=>out.push(`<span class="tk-tag">BREAKING</span> ${esc(n.text)}`));
+  // New ninjas: a personal welcome for 2 days, and a shout-out naming everyone who joined in the last 2 weeks.
+  const fresh=all.filter(n=>n.createdAt && now-n.createdAt < 14*DAY).sort((a,b)=>b.createdAt-a.createdAt);
+  fresh.filter(n=>now-n.createdAt < 2*DAY).forEach(n=>out.push(`<span class="tk-tag">WELCOME</span> 👋 Welcome to the dojo, <b>${esc(n.name)}</b>! We're so happy you're here. Say hi to our newest ninja! 🥷`));
+  if(fresh.some(n=>now-n.createdAt >= 2*DAY)){
+    const names=fresh.map(n=>`<b>${esc(n.name)}</b>`), list = names.length<2 ? names[0] : names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+    out.push(`🎉 A big ninja welcome to ${names.length>1?'our new ninjas':'our new ninja'} ${list}!`);
+  }
   const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
   const itemOf = id => [...EARN, ...TIERS.flatMap(t=>t.items)].find(x=>x.id===id);
