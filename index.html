@@ -109,6 +109,8 @@ section .vault{padding-right:230px}
 .role-chip{font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:var(--sunk);color:var(--muted);border-radius:999px;padding:5px 10px;display:inline-flex;gap:6px;align-items:center}
 /* header: brand top-left, Code Ninjas logo top-right, tabs on the row below */
 header.top .wrap.hdr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"brand . logo" "nav nav nav";align-items:center;column-gap:16px;row-gap:8px}
+header.top .wrap.hdr{max-width:none;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+@media (max-width:600px){ header.top .wrap.hdr{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))} }
 header.top .hdr .brand{grid-area:brand;margin-right:0}
 header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .cn-logo{grid-area:logo;justify-self:end;width:164px;max-width:100%;height:auto;aspect-ratio:196/41;object-fit:contain}
