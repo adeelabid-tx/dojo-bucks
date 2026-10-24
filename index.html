@@ -966,9 +966,13 @@ async function give(kind, item, ids=[...S.selected]){
   const shown = undo.length===1 ? undo[0].d : amt;
   toast(newBlack.length && undo.length===1 ? `+${fmt(shown)} for ${who}: Earned Black Belt!` : kind==='earn' ? `+${fmt(shown)} for ${who}: ${item.label}` : `−${fmt(shown)} for ${who}: ${item.label}`, undo);
 }
+// Senseis give Quick Perks straight away; bigger rewards wait for the Center Director.
+const QUICK_IDS = TIERS.find(t=>t.id==='quick').items.map(it=>it.id);
+const canRedeemNow = item => isDir() || QUICK_IDS.includes(item.id);
 async function redeem(item, ninjaId=S.shopper, approved=false){
   const n=S.ninjas[ninjaId]; if(!n) return; const cost=amountOf('redeem',item);
-  if(!isDir() && !approved){ S.confirm=null; if((n.balance||0)-heldFor(n.id) < cost){ toast(`${n.name} needs more bucks for this.`); render(); return; }
+  if(!isDir() && !approved && QUICK_IDS.includes(item.id) && (n.balance||0)-heldFor(n.id) < cost){ S.confirm=null; toast(`${n.name} needs more bucks for this.`); render(); return; }
+  if(!canRedeemNow(item) && !approved){ S.confirm=null; if((n.balance||0)-heldFor(n.id) < cost){ toast(`${n.name} needs more bucks for this.`); render(); return; }
     await sendRequest('redeem', {ninjaId:n.id, item:item.id, cost}, `${n.name}'s ${item.label} is waiting for the Center Director.`); render(); return; }
   if((n.balance||0) < cost){ toast(`${n.name} needs ${fmt(cost-n.balance)} more bucks.`); return; }
   const logId=uid(); S.confirm=null;
@@ -1316,8 +1320,8 @@ function renderShop(){
       return `<div class="item ${ok?'ready':''}">${it.pic?`<img class="mascot pic" src="mascots/${it.pic}.webp" alt="">`:`<span class="em">${it.icon}</span>`}<h3>${esc(it.label)}</h3>${it.note?`<span class="hint" style="margin:0">${esc(it.note)}</span>`:''}
         ${S.editing ? `<label class="cost">${coin(22)}<input type="number" min="0" id="cost-${it.id}" data-kind="redeem" data-item="${it.id}" value="${c}" aria-label="Price of ${esc(it.label)}"></label>` : `<span class="cost num">${coin(22)}${fmt(c)}</span>`}
         ${n && !S.editing ? `<div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div><span class="need num">${ok ? 'You can get this!' : `${fmt(c-bal)} more to go`}</span>` : ''}
-        ${S.editing || !n ? '' : waiting(it.id) ? `<span class="status pending go" style="align-self:flex-start">Waiting for director approval</span>` : conf ? `<div class="confirm go"><p>${isDir()?`Spend ${fmt(c)} of ${esc(n.name)}'s bucks?`:`Ask the Center Director to approve ${fmt(c)} bucks for ${esc(n.name)}?`}</p><div class="row"><button class="btn gold" data-act="redeem" data-item="${it.id}">${isDir()?'Yes, redeem':'Send request'}</button><button class="btn ghost" data-act="cancelRedeem">No</button></div></div>`
-          : `<button class="btn ${ok?'gold':''} go" data-act="askRedeem" data-item="${it.id}" ${ok && !S.readOnly && canWrite()?'':'disabled'}>${ok?(isDir()?'Redeem':'Request reward'):'Keep saving'}</button>`}
+        ${S.editing || !n ? '' : waiting(it.id) ? `<span class="status pending go" style="align-self:flex-start">Waiting for director approval</span>` : conf ? `<div class="confirm go"><p>${canRedeemNow(it)?`Spend ${fmt(c)} of ${esc(n.name)}'s bucks?`:`Ask the Center Director to approve ${fmt(c)} bucks for ${esc(n.name)}?`}</p><div class="row"><button class="btn gold" data-act="redeem" data-item="${it.id}">${canRedeemNow(it)?'Yes, redeem':'Send request'}</button><button class="btn ghost" data-act="cancelRedeem">No</button></div></div>`
+          : `<button class="btn ${ok?'gold':''} go" data-act="askRedeem" data-item="${it.id}" ${ok && !S.readOnly && canWrite()?'':'disabled'}>${ok?(canRedeemNow(it)?'Redeem':'Request reward'):'Keep saving'}</button>`}
       </div>`; }).join('')}</div></div>`).join('');
 }
 
@@ -1375,7 +1379,7 @@ function renderAdmin(){
   dec.innerHTML = done.length ? done.map(r=>reqRow(r)).join('') : '<p class="hint" style="margin:0">Approved and declined requests will show here.</p>';
   document.getElementById('rolesInfo').innerHTML = `<div class="roles">
     <div><b>Center Director</b>You (signing in with your email), plus anyone you add to the Team list as Center Director.<ul><li>Everything senseis can do</li><li>Approves requests</li><li>Adds and removes ninjas, sets belts and levels</li><li>Quick setup, bucks amounts and shop prices</li></ul></div>
-    <div><b>Sensei</b>The people you add to the Team list as Sensei. They sign in on dojo devices with their name and PIN.<ul><li>Gives Ninja Bucks and penalties</li><li>Posts news to the ticker</li><li>Requests rewards, new ninjas and belt or level changes for approval</li></ul></div>
+    <div><b>Sensei</b>The people you add to the Team list as Sensei. They sign in on dojo devices with their name and PIN.<ul><li>Gives Ninja Bucks and penalties</li><li>Posts news to the ticker</li><li>Gives Quick Perks right away</li><li>Requests bigger rewards, new ninjas and belt or level changes for approval</li></ul></div>
     <div><b>View only</b>For the classroom TV. Add a person such as "Classroom TV" with the View only role and a PIN.<ul><li>Sees the Leaderboard, Dashboard, Reward Shop and news</li><li>Cannot change anything</li></ul></div></div>
     <p class="hint" style="margin:12px 0 0"><b>Locking:</b> tap Lock at the top when you step away. Dojo devices lock themselves after 10 minutes without use, except View only screens.</p>`;
   renderTeam();

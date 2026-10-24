@@ -13,6 +13,8 @@ service cloud.firestore {
     // Parents (shared parent code) only see the leaderboard and Dojo News.
     function canSee() { return canView() || (isStaff() && staffDoc().role == 'parent'); }
     function num(m, k) { return m.get(k, 0); }
+    // Rewards a sensei can give without director approval (ids from the Quick Perks list in index.html).
+    function quickPerks() { return ['break5', 'seat5', 'seat10', 'seat15', 'seatall']; }
 
     // Names and roles shown on the sign-in screen (no kids' data here).
     match /public/{doc} {
@@ -30,21 +32,27 @@ service cloud.firestore {
     match /ninjas/{id} {
       allow read: if canSee();
       allow create, delete: if isDirector();
-      // Senseis may only change bucks earned or lost (and the avatar). Belts, levels, names and spending need a director.
+      // Senseis may change bucks earned or lost (and the avatar), or spend bucks on Quick Perks.
+      // Belts, levels, names and bigger rewards need a director.
       allow update: if isDirector() || (isSensei()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'earned', 'lost', 'head'])
         && num(request.resource.data, 'balance') >= 0
-        && num(request.resource.data, 'balance') - num(resource.data, 'balance')
-           == (num(request.resource.data, 'earned') - num(resource.data, 'earned')) - (num(request.resource.data, 'lost') - num(resource.data, 'lost')));
+        && ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'earned', 'lost', 'head'])
+            && num(request.resource.data, 'balance') - num(resource.data, 'balance')
+               == (num(request.resource.data, 'earned') - num(resource.data, 'earned')) - (num(request.resource.data, 'lost') - num(resource.data, 'lost')))
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'spent'])
+            && num(request.resource.data, 'balance') - num(resource.data, 'balance')
+               == num(resource.data, 'spent') - num(request.resource.data, 'spent'))));
     }
     match /log/{id} {
       allow read: if canSee();
       allow create: if isDirector() || (isSensei()
         && request.resource.data.by == request.auth.uid
-        && request.resource.data.kind in ['earn', 'penalty']
-        && !(request.resource.data.item in ['levelup', 'beltup', 'blackbelt']));
+        && ((request.resource.data.kind in ['earn', 'penalty']
+             && !(request.resource.data.item in ['levelup', 'beltup', 'blackbelt']))
+          || (request.resource.data.kind == 'redeem' && request.resource.data.item in quickPerks())));
       allow update: if isDirector();
-      allow delete: if isDirector() || (isSensei() && resource.data.by == request.auth.uid && resource.data.kind in ['earn', 'penalty']);
+      allow delete: if isDirector() || (isSensei() && resource.data.by == request.auth.uid
+        && (resource.data.kind in ['earn', 'penalty'] || (resource.data.kind == 'redeem' && resource.data.item in quickPerks())));
     }
     match /news/{id} {
       allow read: if canSee();
