@@ -2345,7 +2345,8 @@ function plBoard(group){
   return plCard(group==='junior'?'🌸':'🏆', group==='junior'?'JR Leaderboard':'Leaderboard', L.map((n,i)=>plRow(n, `<span class="pl-price">${coin(16)} ${fmt(n.balance)}</span>`, `${i<3?['🥇','🥈','🥉'][i]:`#${i+1}`} · ${esc(beltFor(n).name)}`)).join(''));
 }
 function plHTML(skipBoards){
-  const list=lbAvailable().filter(x=>!(skipBoards && (x.id==='create'||x.id==='jr')));
+  // On the parents' page, leaderboards and rewards already have their own sections.
+  const list=lbAvailable().filter(x=>!(skipBoards && (x.id==='create'||x.id==='jr'||x.id==='legend')));
   if(!list.length) return '';
   return `<div class="pl-wrap"><div class="spread pl-top"><h2 style="margin:0">🥷 Dojo Lobby</h2><span class="hint" style="margin:0">Swipe for more →</span></div>
     <div class="pl-track" id="plTrack">${list.map(x=>plCards[x.id]()).join('')}</div>
