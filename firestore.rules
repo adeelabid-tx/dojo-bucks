@@ -13,8 +13,12 @@ service cloud.firestore {
     // Parents (shared parent code) only see the leaderboard and Dojo News.
     function canSee() { return canView() || (isStaff() && staffDoc().role == 'parent'); }
     function num(m, k) { return m.get(k, 0); }
-    // Rewards a sensei can give without director approval (ids from the Quick Perks list in index.html).
-    function quickPerks() { return ['break5', 'seat5', 'seat10', 'seat15', 'seatall']; }
+    // Rewards a sensei can give without director approval: the categories marked for it in the Reward Shop
+    // (settings/shop.quickIds), or the built-in Quick Perks until the director first saves the shop.
+    function quickPerks() {
+      let shop = /databases/$(database)/documents/settings/shop;
+      return exists(shop) ? get(shop).data.quickIds : ['break5', 'seat5', 'seat10', 'seat15', 'seatall'];
+    }
 
     // Names and roles shown on the sign-in screen (no kids' data here).
     match /public/{doc} {

@@ -348,6 +348,35 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .item.ready{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 40%,transparent)}
 .tier.legendary .item{background:linear-gradient(160deg,color-mix(in srgb,var(--legend) 16%,var(--surface)),var(--surface) 60%);border-color:color-mix(in srgb,var(--legend) 40%,var(--line))}
 .tier.legendary .tier-head h2{color:var(--legend)}
+.tier-head{align-items:center}
+.tier-ic{display:inline-flex;align-items:center}
+.se-bar{position:sticky;top:120px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--gold-soft);border:2px solid var(--gold);border-radius:16px;padding:12px 16px}
+.se-bar small{display:block;color:var(--muted);font-weight:700}
+@media (max-width:600px){ .se-bar{position:static} }
+.se-tier{border:2px dashed var(--line);border-radius:20px;padding:14px}
+.se-head{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.se-fields{flex:1;min-width:220px;display:flex;flex-direction:column;gap:6px}
+.se-tools{display:flex;gap:6px;flex-wrap:wrap}
+.se-tier input:not([type=checkbox]),.se-tier select{border:2px solid var(--line);border-radius:10px;padding:7px 10px;background:var(--surface);color:var(--ink);font-weight:700;width:100%;box-sizing:border-box}
+.se-tier .se-name{font-family:var(--f-display);font-size:22px}
+.se-item .cost input{width:100px}
+.se-check{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.se-move{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--muted)}
+.se-ic{border:2px dashed var(--line);background:var(--sunk);border-radius:14px;min-width:64px;min-height:64px;display:grid;place-items:center;padding:4px;cursor:pointer}
+.se-ic:hover{border-color:var(--gold)}
+.se-add{border:2px dashed var(--line);background:transparent;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);min-height:180px}
+.se-add:hover{border-color:var(--gold);color:var(--ink)}
+.btn.danger{color:#C92A2A}
+.btn.sm{padding:4px 9px;font-size:13px}
+.se-scrim{position:fixed;inset:0;z-index:65;background:rgba(10,8,25,.55);display:grid;place-items:center;padding:16px}
+.se-picker{background:var(--surface);border-radius:22px;padding:20px;width:min(640px,100%);max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.se-picker h3{margin:6px 0 0}
+.se-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px}
+.se-grid button{border:2px solid var(--line);background:var(--sunk);border-radius:12px;font-size:26px;height:52px;cursor:pointer;padding:2px}
+.se-grid button:hover{border-color:var(--gold)}
+.se-grid.pics{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+.se-grid.pics button{height:80px}
+.se-grid.pics img{max-height:70px;max-width:100%}
 .confirm{display:flex;flex-direction:column;gap:8px;background:var(--gold-soft);border-radius:14px;padding:10px}
 .confirm p{margin:0;font-weight:800;font-size:14px}
 
@@ -521,7 +550,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
     <div class="card">
       <div class="spread">
         <h2>Who is shopping?</h2>
-        <button class="btn ghost" data-act="toggleEdit" id="editShop">Change prices</button>
+        <button class="btn ghost" data-act="shopEdit" id="editShop">Edit shop</button>
       </div>
       <div class="shop-pick" id="shopPick"></div>
       <div class="wallet" id="wallet" style="margin-top:12px"></div>
@@ -620,7 +649,7 @@ const PEN = [
   {id:'damage',   icon:'🔧', label:'Damaged equipment', amt:25},
 ];
 const TIERS = [
-  {id:'quick', name:'Quick Perks', blurb:'Small rewards you can grab today.', items:[
+  {id:'quick', name:'Quick Perks', blurb:'Small rewards you can grab today.', quick:true, items:[
     {say:"a 5-minute free break", id:'break5', icon:'⏸️', label:'5-minute free break', note:'Any off-track activity', cost:25},
     {say:"the Sensei Seat for 5 mins", id:'seat5',  icon:'🪑', pic:'sensei_alan', label:'Sensei seat · 5 min', cost:40},
     {say:"the Sensei Seat for 10 mins", id:'seat10', icon:'🪑', pic:'sensei_ada', label:'Sensei seat · 10 min', cost:70},
@@ -643,6 +672,18 @@ const TIERS = [
     {say:"a Weeklong Summer Camp pass", id:'summer',  icon:'☀️', pic:'hiyah', label:'Weeklong Summer Camp', cost:8000},
   ]},
 ];
+// The Reward Shop the director edits (settings/shop); until it is first saved, the built-in TIERS above.
+const shopTiers = () => S.shop?.tiers || TIERS;
+const quickIds = () => shopTiers().filter(t=>t.quick).flatMap(t=>t.items.map(it=>it.id));
+// Pictures and emoji the director can choose for rewards and categories.
+const PIC_LIB = ['sensei_ada','sensei_alan','gamer','bdaygamer','blockcoder','codergirl','grateful','hiyah','buddies','tablet','head0','head1','head2','head3','head4','head5','head6','head7'];
+const EMOJI_LIB = {
+  'Prizes': ['🎁','🏆','🥇','🎖️','👑','💎','⭐','🌟','✨','🎉','🎊','🎈','🎀','🪙','💰','💳','🎟️','🛍️'],
+  'Games & fun': ['🎮','🕹️','👾','🎲','🧩','🃏','🎯','🎳','🎨','🖍️','🎵','🎧','📺','🎬','📸','🪁','🛹','⚽','🏀'],
+  'Tech & making': ['💻','🖥️','⌨️','🖱️','🤖','🚀','🛸','🔧','🛠️','🖨️','🔋','💡','🔬','🧪','📱','📚','✏️'],
+  'Food & treats': ['🍕','🍔','🌮','🍿','🍩','🍪','🧁','🎂','🍦','🍫','🍬','🍭','🥤','🧃','🍎'],
+  'Dojo & time': ['🥷','🥋','🪑','⏸️','⏰','⏱️','🧘','🛋️','🏕️','⛺','☀️','🏖️','🐉','🦖','🐱','🐶','🦄','🌈'],
+};
 const BELTS = [
   {name:'White', color:'#F4F4F2', levels:4}, {name:'Yellow', color:'#FFD43B', levels:4}, {name:'Orange', color:'#FF922B', levels:5},
   {name:'Green', color:'#40C057', levels:5}, {name:'Blue', color:'#339AF0', levels:6}, {name:'Purple', color:'#9C36B5', levels:6},
@@ -671,7 +712,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -680,7 +721,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const fmt = n => Math.round(n||0).toLocaleString();
 const DAY = 864e5;
 function weekStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d.getTime(); }
-const amountOf = (kind,item) => { const o = S.settings[kind==='earn'?'earn':kind==='penalty'?'pen':'shop'] || {}; const v = o[item.id]; return Number.isFinite(v) ? v : (item.amt ?? item.cost); };
+const amountOf = (kind,item) => { if(kind==='redeem' && S.shop) return item.cost||0; const o = S.settings[kind==='earn'?'earn':kind==='penalty'?'pen':'shop'] || {}; const v = o[item.id]; return Number.isFinite(v) ? v : (item.amt ?? item.cost); };
 const beltFor = n => { if(n?.group==='junior') return {...JR_BELT, i:JR, level:Math.min(JR_BELT.levels, Math.max(1, n?.level|0 || 1)), next:BELTS[0]};
   const i=Math.min(BELTS.length-1, Math.max(0, n?.belt|0)); return {...BELTS[i], i, level:Math.min(levelsOf(i), Math.max(1, n?.level|0 || 1)), next:BELTS[i+1]||null}; };
 const rankText = n => { const b=beltFor(n); return b.i===BLACK ? 'Black Belt ninja' : `${b.name} belt · ${stepName(b.i,b.level)}`; };
@@ -729,6 +770,7 @@ function startDb(db){
   db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
+  db.doc('settings/shop').onSnapshot(d => { S.shop = d.exists ? d.data() : null; render(); }, () => {});
   db.doc('settings/owner').onSnapshot(d => { S.ownerUid = d.exists ? d.data().uid : null; }, () => {});
   }
   if(S.isOwner) db.doc('settings/owner').set({uid:S.me}).catch(()=>{});
@@ -747,12 +789,12 @@ const LKEY='dojo-bucks-preview-v2';
 function startLocal(){
   S.mode='local'; S.role='director'; S.me='preview-director';
   let saved=null; try{ saved = JSON.parse(localStorage.getItem(LKEY)||'null'); }catch{}
-  if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; }
+  if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; }
   else { const s = makeSamples(); s.ninjas.forEach(n=>S.ninjas[n.id]=n); S.log = s.log.sort((a,b)=>b.at-a.at); S.news = s.news; }
-  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff})); }catch{} };
+  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop})); }catch{} };
   const col = c => c==='ninjas' ? 'ninjas' : c;
   api = {
-    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings') S.settings=d; else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
+    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
     update:async(c,id,d)=>{ if(c==='staff' && S.staff[id]) S.staff={...S.staff,[id]:{...S.staff[id],...d}}; if(c==='ninjas' && S.ninjas[id]) S.ninjas[id]={...S.ninjas[id],...d}; else if(c==='requests') S.requests=S.requests.map(r=>r.id===id?{...r,...d}:r); persist(); render(); },
     del:async(c,id)=>{ if(c==='staff'){ const m={...S.staff}; delete m[id]; S.staff=m; } if(c==='ninjas') delete S.ninjas[id]; else if(c==='log') S.log=S.log.filter(x=>x.id!==id); else if(c==='news') S.news=S.news.filter(x=>x.id!==id); else if(c==='requests') S.requests=S.requests.filter(x=>x.id!==id); persist(); render(); },
   };
@@ -833,7 +875,7 @@ function describeReq(r){
   if(r.type==='add') return {ic:'🥷', html:`Add new ninja <b>${esc(r.name)}</b> · ${esc(rankOf(r))}${r.start?` · ${fmt(r.start)} starting bucks`:''}`};
   if(r.type==='rank') return {ic:'🥋', html:`Change ${nm(r.ninjaId)} to ${esc(rankOf(r))}`};
   if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); return {ic:it?.img?badge(it.img,36):'⭐', html:`${esc(it?.label||'Level Up')} for ${(r.ninjaIds||[]).map(nm).join(', ')}`}; }
-  if(r.type==='redeem'){ const it=findItem('redeem', r.item); return {ic:it?.pic?`<img class="mascot" src="mascots/${it.pic}.webp" alt="" style="height:40px">`:(it?.icon||'🛍️'), html:`${nm(r.ninjaId)} wants <b>${esc(it?.label||r.item)}</b> for ${fmt(r.cost)} bucks`}; }
+  if(r.type==='redeem'){ const it=findItem('redeem', r.item); return {ic:it?iconHTML(it,40):'🛍️', html:`${nm(r.ninjaId)} wants <b>${esc(it?.label||r.item)}</b> for ${fmt(r.cost)} bucks`}; }
   return {ic:'•', html:esc(r.type)};
 }
 const ROLE_NAMES = {director:'Center Director', sensei:'Sensei', viewer:'View only', parent:'Parents'};
@@ -907,7 +949,7 @@ async function fillNames(root){
 }
 async function downloadBackup(){
   if(!isDir()) return;
-  const out={exportedAt:new Date().toISOString(), ninjas:S.ninjas, news:S.news, requests:S.requests, settings:S.settings};
+  const out={exportedAt:new Date().toISOString(), ninjas:S.ninjas, news:S.news, requests:S.requests, settings:S.settings, shop:S.shop};
   try{
     if(S.mode==='db'){ const snap=await firebase.firestore().collection('log').get(); out.log=snap.docs.map(d=>({id:d.id,...d.data()})); } else out.log=S.log;
   }catch(e){ out.log=S.log; }
@@ -923,7 +965,7 @@ async function approveReq(r){
     else await api.update('ninjas', r.ninjaId, r.group==='junior' ? {group:'junior', level:r.level} : {group:'ninja', belt:r.belt|0, level:r.level}); }
   else if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]); if(it && ids.length) await give('earn', it, ids); else note='Nothing to apply'; }
   else if(r.type==='redeem'){ const n=S.ninjas[r.ninjaId], it=findItem('redeem', r.item);
-    if(!n || !it){ note='Ninja or reward not found'; }
+    if(!n || !it){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Ninja or reward no longer exists'}); toast('That ninja or reward no longer exists, so this was declined.'); return; }
     else if((n.balance||0) < r.cost){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Not enough bucks'}); toast(`${n.name} no longer has enough bucks, so this was declined.`); return; }
     else await redeem(it, r.ninjaId, true); }
   await api.update('requests', r.id, {status:'approved', decidedBy:S.me, decidedAt:Date.now(), ...(note?{note}:{})});
@@ -967,11 +1009,10 @@ async function give(kind, item, ids=[...S.selected]){
   toast(newBlack.length && undo.length===1 ? `+${fmt(shown)} for ${who}: Earned Black Belt!` : kind==='earn' ? `+${fmt(shown)} for ${who}: ${item.label}` : `−${fmt(shown)} for ${who}: ${item.label}`, undo);
 }
 // Senseis give Quick Perks straight away; bigger rewards wait for the Center Director.
-const QUICK_IDS = TIERS.find(t=>t.id==='quick').items.map(it=>it.id);
-const canRedeemNow = item => isDir() || QUICK_IDS.includes(item.id);
+const canRedeemNow = item => isDir() || quickIds().includes(item.id);
 async function redeem(item, ninjaId=S.shopper, approved=false){
   const n=S.ninjas[ninjaId]; if(!n) return; const cost=amountOf('redeem',item);
-  if(!isDir() && !approved && QUICK_IDS.includes(item.id) && (n.balance||0)-heldFor(n.id) < cost){ S.confirm=null; toast(`${n.name} needs more bucks for this.`); render(); return; }
+  if(!isDir() && !approved && quickIds().includes(item.id) && (n.balance||0)-heldFor(n.id) < cost){ S.confirm=null; toast(`${n.name} needs more bucks for this.`); render(); return; }
   if(!canRedeemNow(item) && !approved){ S.confirm=null; if((n.balance||0)-heldFor(n.id) < cost){ toast(`${n.name} needs more bucks for this.`); render(); return; }
     await sendRequest('redeem', {ninjaId:n.id, item:item.id, cost}, `${n.name}'s ${item.label} is waiting for the Center Director.`); render(); return; }
   if((n.balance||0) < cost){ toast(`${n.name} needs ${fmt(cost-n.balance)} more bucks.`); return; }
@@ -1043,7 +1084,7 @@ function sparks(host){
 function celebrate(n, item, cost){
   const host=document.getElementById('celebrateHost');
   host.innerHTML = `<div class="celebrate" data-act="closeCelebrate"><div class="box">
-    ${item.pic?`<img class="mascot" src="mascots/${item.pic}.webp" alt="" style="height:150px">`:`<div class="em">${item.icon}</div>`}<div class="eyebrow" style="color:var(--hero-muted)">Reward unlocked</div>
+    ${item.pic&&PIC_LIB.includes(item.pic)?`<img class="mascot" src="mascots/${item.pic}.webp" alt="" style="height:150px">`:`<div class="em">${esc(item.icon||'🎁')}</div>`}<div class="eyebrow" style="color:var(--hero-muted)">Reward unlocked</div>
     <h2>${esc(item.label)}</h2><p>${esc(n.name)} spent <b>${fmt(cost)}</b> Ninja Bucks. Show this to your sensei!</p>
     <button class="btn gold" data-act="closeCelebrate" style="margin-top:8px">Awesome!</button></div></div>`;
   sparks(host);
@@ -1061,7 +1102,7 @@ function render(){
   document.querySelector('a[data-tab="dash"]').hidden = isParent();
   document.querySelector('a[data-tab="shop"]').hidden = isParent();
   if((S.view==='award' || S.view==='roster') && !canWrite()) S.view='board';
-  if(!isDir()) S.editing=false;
+  if(!isDir()){ S.editing=false; S.shopEdit=null; }
   document.getElementById('adminTab').hidden = !isDir();
   document.querySelector('a[data-tab="award"]').hidden = !canWrite();
   document.querySelector('a[data-tab="roster"]').hidden = !canWrite();
@@ -1078,7 +1119,7 @@ function render(){
   document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
   document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
   document.getElementById('editAward').textContent = S.editing ? 'Done changing' : 'Change amounts';
-  document.getElementById('editShop').textContent = S.editing ? 'Done changing' : 'Change prices';
+  document.getElementById('editShop').hidden = !isDir() || !!S.shopEdit;
   if(!S.loaded) return;
   renderTicker();
   if(S.view==='board') renderBoard();
@@ -1178,7 +1219,7 @@ function tickerItems(){
   }
   const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
-  const itemOf = id => [...EARN, ...TIERS.flatMap(t=>t.items)].find(x=>x.id===id);
+  const itemOf = id => [...EARN, ...shopTiers().flatMap(t=>t.items)].find(x=>x.id===id);
   let regular=0;
   // The same news for several ninjas becomes one line naming all of them.
   const WHO='\u0001', groups=new Map();
@@ -1314,16 +1355,106 @@ function renderShop(){
     <div class="hint" style="margin-left:auto">Spent so far: <b class="num">${fmt(n.spent)}</b> bucks</div>` : '';
   const bal=(n?.balance||0) - (n && !isDir() ? heldFor(n.id) : 0);
   const waiting = id => n && pendingReqs().some(r=>r.type==='redeem' && r.ninjaId===n.id && r.item===id);
-  document.getElementById('tiers').innerHTML = TIERS.map(t=>`<div class="tier ${t.id}"><div class="tier-head"><h2>${t.name}</h2><p>${t.blurb}</p></div><div class="items">${
+  if(S.shopEdit) return renderShopEditor();
+  document.getElementById('tiers').innerHTML = shopTiers().map(t=>`<div class="tier ${esc(t.id)}"><div class="tier-head">${t.icon||t.pic?`<span class="tier-ic">${iconHTML(t,36)}</span>`:''}<h2>${esc(t.name)}</h2><p>${esc(t.blurb||'')}</p></div><div class="items">${
     t.items.map(it=>{ const c=amountOf('redeem',it); const ok=n && bal>=c; const pct=Math.min(100, c? bal/c*100 : 100);
       const conf = S.confirm===it.id && ok;
-      return `<div class="item ${ok?'ready':''}">${it.pic?`<img class="mascot pic" src="mascots/${it.pic}.webp" alt="">`:`<span class="em">${it.icon}</span>`}<h3>${esc(it.label)}</h3>${it.note?`<span class="hint" style="margin:0">${esc(it.note)}</span>`:''}
-        ${S.editing ? `<label class="cost">${coin(22)}<input type="number" min="0" id="cost-${it.id}" data-kind="redeem" data-item="${it.id}" value="${c}" aria-label="Price of ${esc(it.label)}"></label>` : `<span class="cost num">${coin(22)}${fmt(c)}</span>`}
-        ${n && !S.editing ? `<div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div><span class="need num">${ok ? 'You can get this!' : `${fmt(c-bal)} more to go`}</span>` : ''}
-        ${S.editing || !n ? '' : waiting(it.id) ? `<span class="status pending go" style="align-self:flex-start">Waiting for director approval</span>` : conf ? `<div class="confirm go"><p>${canRedeemNow(it)?`Spend ${fmt(c)} of ${esc(n.name)}'s bucks?`:`Ask the Center Director to approve ${fmt(c)} bucks for ${esc(n.name)}?`}</p><div class="row"><button class="btn gold" data-act="redeem" data-item="${it.id}">${canRedeemNow(it)?'Yes, redeem':'Send request'}</button><button class="btn ghost" data-act="cancelRedeem">No</button></div></div>`
-          : `<button class="btn ${ok?'gold':''} go" data-act="askRedeem" data-item="${it.id}" ${ok && !S.readOnly && canWrite()?'':'disabled'}>${ok?(canRedeemNow(it)?'Redeem':'Request reward'):'Keep saving'}</button>`}
-      </div>`; }).join('')}</div></div>`).join('');
+      return `<div class="item ${ok?'ready':''}">${iconHTML(it,72)}<h3>${esc(it.label)}</h3>${it.note?`<span class="hint" style="margin:0">${esc(it.note)}</span>`:''}
+        <span class="cost num">${coin(22)}${fmt(c)}</span>
+        ${n ? `<div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div><span class="need num">${ok ? 'You can get this!' : `${fmt(c-bal)} more to go`}</span>` : ''}
+        ${!n ? '' : waiting(it.id) ? `<span class="status pending go" style="align-self:flex-start">Waiting for director approval</span>` : conf ? `<div class="confirm go"><p>${canRedeemNow(it)?`Spend ${fmt(c)} of ${esc(n.name)}'s bucks?`:`Ask the Center Director to approve ${fmt(c)} bucks for ${esc(n.name)}?`}</p><div class="row"><button class="btn gold" data-act="redeem" data-item="${it.id}">${canRedeemNow(it)?'Yes, redeem':'Send request'}</button><button class="btn ghost" data-act="cancelRedeem">No</button></div></div>`
+          : `<button class="btn ${ok?'gold':''} go" data-act="askRedeem" data-item="${esc(it.id)}" ${ok && !S.readOnly && canWrite()?'':'disabled'}>${ok?(canRedeemNow(it)?'Redeem':'Request reward'):'Keep saving'}</button>`}
+      </div>`; }).join('')}${t.items.length?'':'<p class="hint" style="margin:0">No rewards here yet.</p>'}</div></div>`).join('');
 }
+function iconHTML(o, size){
+  if(o.pic && PIC_LIB.includes(o.pic)) return `<img class="mascot pic" src="mascots/${o.pic}.webp" alt="" style="height:${size}px;width:auto">`;
+  return `<span class="em" style="font-size:${Math.round(size*0.55)}px">${esc(o.icon||'🎁')}</span>`;
+}
+
+/* ---------- Reward Shop editor (Center Director) ---------- */
+// Changes go to a draft (S.shopEdit) and are saved together with Save changes.
+function openShopEditor(){
+  S.shopEdit = JSON.parse(JSON.stringify(shopTiers())).map(t=>({...t, items:t.items.map(it=>({...it, cost:amountOf('redeem', it)}))}));
+  S.iconFor=null; render();
+}
+function renderShopEditor(){
+  const T=S.shopEdit, up='↑', dn='↓';
+  const f=(ti,ii,k,v,ph,extra='')=>`<input data-se="${ii==null?'tier':'item'}" data-t="${ti}" ${ii==null?'':`data-i="${ii}"`} data-f="${k}" value="${esc(v??'')}" placeholder="${ph}" aria-label="${ph}" ${extra}>`;
+  document.getElementById('tiers').innerHTML = `<div class="se-bar"><div><b>Editing the Reward Shop</b><small>Changes are saved when you press Save changes. Cancel throws them away.</small></div>
+      <div class="row"><button class="btn ghost" data-se-act="addTier">+ Add category</button><button class="btn ghost" data-se-act="cancel">Cancel</button><button class="btn primary" data-se-act="save">Save changes</button></div></div>`
+    + T.map((t,ti)=>`<div class="tier se-tier">
+      <div class="se-head">
+        <button class="se-ic" data-se-act="icon" data-t="${ti}" aria-label="Change category icon" title="Change icon">${t.icon||t.pic?iconHTML(t,40):'<span class="hint">Icon</span>'}</button>
+        <div class="se-fields">${f(ti,null,'name',t.name,'Category name','class="se-name" maxlength="40"')}${f(ti,null,'blurb',t.blurb,'Short description','maxlength="80"')}
+          <label class="se-check"><input type="checkbox" data-se="tier" data-t="${ti}" data-f="quick" ${t.quick?'checked':''}> Senseis can give these right away (no approval)</label></div>
+        <div class="se-tools"><button class="btn ghost" data-se-act="moveTier" data-t="${ti}" data-d="-1" ${ti?'':'disabled'} aria-label="Move up">${up}</button><button class="btn ghost" data-se-act="moveTier" data-t="${ti}" data-d="1" ${ti<T.length-1?'':'disabled'} aria-label="Move down">${dn}</button><button class="btn ghost danger" data-se-act="delTier" data-t="${ti}">Delete category</button></div>
+      </div>
+      <div class="items">${t.items.map((it,ii)=>`<div class="item se-item">
+          <div class="row" style="justify-content:space-between;align-items:flex-start"><button class="se-ic" data-se-act="icon" data-t="${ti}" data-i="${ii}" aria-label="Change reward icon" title="Change icon">${iconHTML(it,56)}</button>
+            <span class="row" style="gap:4px"><button class="btn ghost sm" data-se-act="moveItem" data-t="${ti}" data-i="${ii}" data-d="-1" ${ii?'':'disabled'} aria-label="Move left">←</button><button class="btn ghost sm" data-se-act="moveItem" data-t="${ti}" data-i="${ii}" data-d="1" ${ii<t.items.length-1?'':'disabled'} aria-label="Move right">→</button></span></div>
+          ${f(ti,ii,'label',it.label,'Reward name','maxlength="50"')}
+          ${f(ti,ii,'note',it.note,'Note (optional)','maxlength="60"')}
+          <label class="cost">${coin(22)}<input type="number" min="0" step="1" data-se="item" data-t="${ti}" data-i="${ii}" data-f="cost" value="${it.cost||0}" aria-label="Price"></label>
+          ${T.length>1?`<label class="se-move">Move to <select data-se-act-change="moveTo" data-t="${ti}" data-i="${ii}">${T.map((x,k)=>`<option value="${k}" ${k===ti?'selected':''}>${esc(x.name||'Untitled')}</option>`).join('')}</select></label>`:''}
+          <button class="btn ghost danger go" data-se-act="delItem" data-t="${ti}" data-i="${ii}">Delete reward</button>
+        </div>`).join('')}
+        <button class="item se-add" data-se-act="addItem" data-t="${ti}"><span class="em">＋</span><b>Add reward</b></button></div>
+    </div>`).join('')
+    + (S.iconFor ? iconPickerHTML() : '');
+}
+function iconPickerHTML(){
+  return `<div class="se-scrim" data-se-act="closeIcons"><div class="se-picker" role="dialog" aria-label="Choose an icon">
+    <div class="spread"><h2 style="margin:0">Choose an icon</h2><button class="btn ghost" data-se-act="closeIcons">Close</button></div>
+    <h3 class="eyebrow">Code Ninjas pictures</h3><div class="se-grid pics">${PIC_LIB.map(p=>`<button data-se-act="setPic" data-v="${p}" aria-label="${p}"><img src="mascots/${p}.webp" alt=""></button>`).join('')}</div>
+    ${Object.entries(EMOJI_LIB).map(([g,list])=>`<h3 class="eyebrow">${g}</h3><div class="se-grid">${list.map(x=>`<button data-se-act="setEmoji" data-v="${x}">${x}</button>`).join('')}</div>`).join('')}
+  </div></div>`;
+}
+async function saveShop(){
+  const T=S.shopEdit;
+  for(const t of T){
+    if(!(t.name||'').trim()){ toast('Every category needs a name.'); return; }
+    for(const it of t.items){ if(!(it.label||'').trim()){ toast(`Every reward in ${t.name} needs a name.`); return; } }
+  }
+  const tiers = JSON.parse(JSON.stringify(T.map(t=>({...t, name:t.name.trim(), blurb:(t.blurb||'').trim(), quick:!!t.quick,
+    items:t.items.map(it=>({...it, label:it.label.trim(), note:(it.note||'').trim(), cost:Math.max(0, Math.round(Number(it.cost)||0))}))}))));
+  const doc = {tiers, quickIds:tiers.filter(t=>t.quick).flatMap(t=>t.items.map(it=>it.id)), updatedAt:Date.now()};
+  try{ await api.set('settings', 'shop', doc); }catch{ return; }
+  S.shop = doc; S.shopEdit=null; S.iconFor=null; render(); toast('Reward Shop saved.');
+}
+document.getElementById('tiers').addEventListener('input', e=>{
+  const el=e.target, d=el.dataset; if(!S.shopEdit || !d.se) return;
+  const t=S.shopEdit[+d.t], o = d.se==='tier' ? t : t.items[+d.i];
+  if(d.f==='quick') o.quick=el.checked;
+  else if(d.f==='cost') o.cost=Math.max(0, Math.round(Number(el.value)||0));
+  else { o[d.f]=el.value; if(d.f==='label') delete o.say; }
+});
+document.getElementById('tiers').addEventListener('change', e=>{
+  const el=e.target; if(!S.shopEdit || el.dataset.seActChange!=='moveTo') return;
+  const from=S.shopEdit[+el.dataset.t], [it]=from.items.splice(+el.dataset.i,1); S.shopEdit[+el.value].items.push(it); renderShopEditor();
+});
+document.getElementById('tiers').addEventListener('click', e=>{
+  const b=e.target.closest('[data-se-act]'); if(!b || !S.shopEdit) return;
+  const a=b.dataset.seAct, T=S.shopEdit, ti=+b.dataset.t, ii=+b.dataset.i;
+  if(a==='closeIcons' && b!==e.target && e.target.closest('.se-picker') && !e.target.closest('button')) return;
+  const swap=(arr,i,j)=>{ if(j<0||j>=arr.length) return; [arr[i],arr[j]]=[arr[j],arr[i]]; };
+  switch(a){
+    case 'save': saveShop(); return;
+    case 'cancel': S.shopEdit=null; S.iconFor=null; render(); return;
+    case 'addTier': T.push({id:'t_'+uid(), name:'New category', blurb:'', icon:'🎁', items:[]}); break;
+    case 'delTier': T.splice(ti,1); break;
+    case 'moveTier': swap(T, ti, ti+Number(b.dataset.d)); break;
+    case 'addItem': T[ti].items.push({id:'r_'+uid(), label:'New reward', note:'', icon:'🎁', cost:50}); break;
+    case 'delItem': T[ti].items.splice(ii,1); break;
+    case 'moveItem': swap(T[ti].items, ii, ii+Number(b.dataset.d)); break;
+    case 'icon': S.iconFor={t:ti, i:b.dataset.i==null?null:ii}; break;
+    case 'closeIcons': S.iconFor=null; break;
+    case 'setPic': case 'setEmoji': { const f=S.iconFor, o = f.i==null ? T[f.t] : T[f.t].items[f.i];
+      if(a==='setPic') o.pic=b.dataset.v; else { o.icon=b.dataset.v; delete o.pic; }
+      S.iconFor=null; break; }
+  }
+  renderShopEditor();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.iconFor){ S.iconFor=null; renderShopEditor(); } });
 
 function renderSetup(){
   const host=document.getElementById('setupHost'), btn=document.getElementById('setupBtn');
@@ -1378,7 +1509,7 @@ function renderAdmin(){
   const dec=document.getElementById('decided'); const done=S.requests.filter(r=>r.status!=='pending').slice(0,25);
   dec.innerHTML = done.length ? done.map(r=>reqRow(r)).join('') : '<p class="hint" style="margin:0">Approved and declined requests will show here.</p>';
   document.getElementById('rolesInfo').innerHTML = `<div class="roles">
-    <div><b>Center Director</b>You (signing in with your email), plus anyone you add to the Team list as Center Director.<ul><li>Everything senseis can do</li><li>Approves requests</li><li>Adds and removes ninjas, sets belts and levels</li><li>Quick setup, bucks amounts and shop prices</li></ul></div>
+    <div><b>Center Director</b>You (signing in with your email), plus anyone you add to the Team list as Center Director.<ul><li>Everything senseis can do</li><li>Approves requests</li><li>Adds and removes ninjas, sets belts and levels</li><li>Quick setup and bucks amounts</li><li>Edits the Reward Shop: rewards, categories, prices and icons</li></ul></div>
     <div><b>Sensei</b>The people you add to the Team list as Sensei. They sign in on dojo devices with their name and PIN.<ul><li>Gives Ninja Bucks and penalties</li><li>Posts news to the ticker</li><li>Gives Quick Perks right away</li><li>Requests bigger rewards, new ninjas and belt or level changes for approval</li></ul></div>
     <div><b>View only</b>For the classroom TV. Add a person such as "Classroom TV" with the View only role and a PIN.<ul><li>Sees the Leaderboard, Dashboard, Reward Shop and news</li><li>Cannot change anything</li></ul></div></div>
     <p class="hint" style="margin:12px 0 0"><b>Locking:</b> tap Lock at the top when you step away. Dojo devices lock themselves after 10 minutes without use, except View only screens.</p>`;
@@ -1441,7 +1572,7 @@ function renderDrawer(){
 }
 
 /* ---------- events ---------- */
-const findItem = (kind,id) => (kind==='earn'?EARN:kind==='penalty'?PEN:TIERS.flatMap(t=>t.items)).find(x=>x.id===id);
+const findItem = (kind,id) => (kind==='earn'?EARN:kind==='penalty'?PEN:shopTiers().flatMap(t=>t.items)).find(x=>x.id===id);
 document.addEventListener('click', e=>{
   const fb=e.target.closest('[data-filter]'); if(fb){ S.filter=fb.dataset.filter; render(); return; }
   const mb=e.target.closest('[data-metric]'); if(mb){ S.metric=mb.dataset.metric; render(); return; }
@@ -1454,6 +1585,7 @@ document.addEventListener('click', e=>{
     case 'selNone': S.selected.clear(); render(); break;
     case 'give': give(t.dataset.kind, findItem(t.dataset.kind, t.dataset.item)); break;
     case 'toggleEdit': S.editing=!S.editing; render(); break;
+    case 'shopEdit': openShopEditor(); break;
     case 'shopper': S.shopper=id; S.confirm=null; render(); break;
     case 'askRedeem': S.confirm=t.dataset.item; render(); break;
     case 'cancelRedeem': S.confirm=null; render(); break;
