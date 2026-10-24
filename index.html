@@ -499,10 +499,9 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
           </div>
         </div>
         <div class="spread" style="margin-top:10px;align-items:flex-end">
-          <div class="seg filterSeg" role="group" aria-label="Group">
-            <button data-filter="all">Everyone</button>
-            <button data-filter="junior">JR (5–7)</button>
-            <button data-filter="ninja">Create (8+)</button>
+          <div class="seg" id="lbGroupSeg" role="group" aria-label="Group">
+            <button data-lbgroup="ninja">Create (8+)</button>
+            <button data-lbgroup="junior">JR (5–7)</button>
           </div>
           <div id="parentQr"></div>
         </div>
@@ -742,7 +741,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -1129,6 +1128,7 @@ function render(){
   document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
   document.querySelectorAll('.filterSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.filter===S.filter));
   document.querySelectorAll('#metricSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.metric===S.metric));
+  document.querySelectorAll('#lbGroupSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.lbgroup===S.lbGroup));
   if(S.view==='admin' && !isDir()) S.view='board';
   if(isParent()) S.view='board';
   document.querySelector('a[data-tab="dash"]').hidden = isParent();
@@ -1200,7 +1200,7 @@ function renderBoard(){
   renderParentRewards();
   const all=ninjaList();
   const board=document.getElementById('boardList');
-  const list=filtered().sort((a,b)=>(b[S.metric]||0)-(a[S.metric]||0));
+  const list=ninjaList().filter(n=>n.group===S.lbGroup).sort((a,b)=>(b[S.metric]||0)-(a[S.metric]||0));
   if(!all.length){ board.innerHTML=emptyDojo(); }
   else if(!list.length){ board.innerHTML='<div class="empty"><p>No ninjas in this group yet.</p></div>'; }
   else {
@@ -1661,6 +1661,7 @@ function renderDrawer(){
 const findItem = (kind,id) => (kind==='earn'?EARN:kind==='penalty'?PEN:shopTiers().flatMap(t=>t.items)).find(x=>x.id===id);
 document.addEventListener('click', e=>{
   const fb=e.target.closest('[data-filter]'); if(fb){ S.filter=fb.dataset.filter; render(); return; }
+  const gb=e.target.closest('[data-lbgroup]'); if(gb){ S.lbGroup=gb.dataset.lbgroup; render(); return; }
   const mb=e.target.closest('[data-metric]'); if(mb){ S.metric=mb.dataset.metric; render(); return; }
   const t=e.target.closest('[data-act]'); if(!t) return;
   const a=t.dataset.act, id=t.dataset.id;
