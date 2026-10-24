@@ -250,18 +250,28 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .pod.p1 .av{width:72px;height:72px}
 .lb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .lbt-wrap{overflow-x:auto}
-.pr-card{margin-top:20px;display:flex;flex-direction:column;gap:14px}
-.pr-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-@media (max-width:700px){ .pr-cols{grid-template-columns:1fr} }
-.pr-cols h3{margin:0 0 8px}
-.pr-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.pr-list li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
-.pr-list li:first-child{border-top:0}
-.pr-list .rk{font-family:var(--f-display);color:var(--muted);font-size:18px;width:20px;flex:none}
-.pr-list .pr-ic{width:44px;display:grid;place-items:center;flex:none}
-.pr-list b{flex:1;min-width:0;font-size:16px}
-.pr-n{font-family:var(--f-display);font-size:18px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap}
-.pr-n small{font-family:var(--f-body);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:3px}
+.pr-card{margin-top:20px;display:flex;flex-direction:column;gap:16px}
+.pr-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px}
+@media (max-width:800px){ .pr-grid{grid-template-columns:1fr} }
+.pr-hot,.pr-box{border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pr-hot{background:linear-gradient(160deg,var(--gold-soft),var(--surface));border:2px solid var(--gold);align-items:center;text-align:center}
+.pr-hot b{font-family:var(--f-display);font-size:24px;line-height:1.1}
+.pr-hot small,.pr-box small{color:var(--muted);font-weight:800}
+.pr-box{background:var(--sunk)}
+.pr-tag{font-weight:900;font-size:14px;align-self:flex-start;background:var(--surface);border-radius:999px;padding:4px 12px}
+.pr-hot .pr-tag{align-self:center}
+.pr-kid{display:flex;align-items:center;gap:10px}
+.pr-kid b{flex:1;min-width:0;font-size:17px}
+.pr-medal{font-size:24px}
+.pr-count{align-items:center;text-align:center}
+.pr-count .pr-tag{align-self:center}
+.pr-big{font-family:var(--f-display);font-size:64px;line-height:1;color:var(--gold-deep)}
+.pr-also{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pr-also span{position:relative;width:52px;height:52px;display:grid;place-items:center;background:var(--surface);border-radius:14px}
+.pr-also i{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;font-style:normal;font-weight:900;font-size:12px;border-radius:999px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px}
+.pr-empty{display:flex;align-items:center;gap:14px;background:var(--sunk);border-radius:18px;padding:18px}
+.pr-empty span{font-size:42px}
+.pr-empty p{margin:0;font-weight:800;font-size:17px}
 .parent-qr{display:flex;align-items:center;gap:12px;background:#fff;color:#1E1A3A;border:1px solid var(--line);border-radius:14px;padding:8px 14px 8px 8px;max-width:300px}
 .parent-qr svg{width:96px;height:96px;display:block;flex:none}
 .parent-qr b{display:block;font-family:var(--f-display);font-size:17px}
@@ -1401,16 +1411,20 @@ function renderParentRewards(){
     if(!byNinja.has(l.ninjaId)) byNinja.set(l.ninjaId, {name:l.name, count:0, bucks:0});
     const n=byNinja.get(l.ninjaId); n.count++; n.bucks+=l.amt||0;
   });
-  const items=[...byItem.values()].sort((a,b)=>b.count-a.count).slice(0,5);
-  const kids=[...byNinja.entries()].sort((a,b)=>b[1].count-a[1].count || b[1].bucks-a[1].bucks).slice(0,5);
-  const empty=`<p class="hint" style="margin:0">No rewards redeemed in ${m.name} yet.</p>`;
+  const items=[...byItem.values()].sort((a,b)=>b.count-a.count).slice(0,4);
+  const kids=[...byNinja.entries()].sort((a,b)=>b[1].count-a[1].count || b[1].bucks-a[1].bucks).slice(0,3);
+  const top=items[0], medals=['🥇','🥈','🥉'];
+  const toggle=`<div class="seg" role="group" aria-label="Month"><button data-rmonth="0" aria-pressed="${!S.rewardMonth}">This month</button><button data-rmonth="1" aria-pressed="${S.rewardMonth===1}">${last.name}</button></div>`;
   host.innerHTML = `<div class="card pr-card">
-    <div class="spread"><div><h2 style="margin:0">Rewards in ${m.name}</h2><p class="hint" style="margin:2px 0 0">${red.length ? `${red.length} reward${red.length===1?'':'s'} redeemed` : 'What ninjas are spending their bucks on'}</p></div>
-      <div class="seg" role="group" aria-label="Month"><button data-rmonth="0" aria-pressed="${!S.rewardMonth}">${cur.name}</button><button data-rmonth="1" aria-pressed="${S.rewardMonth===1}">${last.name}</button></div></div>
-    <div class="pr-cols">
-      <div><h3 class="eyebrow">Most popular rewards</h3>${items.length ? `<ol class="pr-list">${items.map((x,i)=>`<li><span class="rk">${i+1}</span><span class="pr-ic">${iconHTML(x.it,40)}</span><b>${esc(x.it.label)}</b><span class="pr-n">${x.count}×</span></li>`).join('')}</ol>` : empty}</div>
-      <div><h3 class="eyebrow">Top redeemers</h3>${kids.length ? `<ol class="pr-list">${kids.map(([id,x],i)=>`<li><span class="rk">${i+1}</span>${S.ninjas[id]?avatar(S.ninjas[id],40):''}<b>${esc(S.ninjas[id]?.name||x.name)}</b><span class="pr-n">${x.count} reward${x.count===1?'':'s'}<small>${coin(14)}${fmt(x.bucks)}</small></span></li>`).join('')}</ol>` : empty}</div>
-    </div></div>`;
+    <div class="spread"><h2 style="margin:0">🎉 Reward Buzz · ${m.name}</h2>${toggle}</div>
+    ${!red.length ? `<div class="pr-empty"><span>🛍️</span><p>No rewards yet in ${m.name}. Who will be first?</p></div>` : `
+    <div class="pr-grid">
+      <div class="pr-hot"><span class="pr-tag">🔥 Most loved reward</span>${iconHTML(top.it,96)}<b>${esc(top.it.label)}</b><small>picked ${top.count} time${top.count===1?'':'s'}</small></div>
+      <div class="pr-box"><span class="pr-tag">🛍️ Top shoppers</span>${kids.map(([id,x],i)=>`<div class="pr-kid"><span class="pr-medal">${medals[i]}</span>${S.ninjas[id]?avatar(S.ninjas[id],44):''}<b>${esc(S.ninjas[id]?.name||x.name)}</b><small>${x.count} reward${x.count===1?'':'s'}</small></div>`).join('')}</div>
+      <div class="pr-box pr-count"><span class="pr-tag">🎁 Rewards won</span><div class="pr-big">${red.length}</div>
+        ${items.length>1?`<div class="pr-also">${items.slice(1).map(x=>`<span title="${esc(x.it.label)}">${iconHTML(x.it,36)}<i>${x.count}</i></span>`).join('')}</div><small>Also popular</small>`:''}</div>
+    </div>`}
+  </div>`;
 }
 document.getElementById('parentRewards').addEventListener('click', e=>{ const b=e.target.closest('[data-rmonth]'); if(!b) return; S.rewardMonth=+b.dataset.rmonth; renderParentRewards(); });
 function iconHTML(o, size){
