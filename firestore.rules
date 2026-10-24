@@ -61,6 +61,7 @@ service cloud.firestore {
     match /news/{id} {
       allow read: if canSee();
       allow create: if isSensei() && request.resource.data.by == request.auth.uid;
+      allow update: if isDirector();
       allow delete: if isSensei();
     }
     match /requests/{id} {

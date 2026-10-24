@@ -231,6 +231,11 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .tpl:hover{border-color:var(--gold);background:var(--gold-soft)}
 #tplNinja{border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:6px 10px;font-weight:700}
 .news-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.tk-man{display:flex;flex-direction:column;gap:8px}
+.tk-prev{min-width:0}
+.tk-prev .badge{width:22px;height:22px;vertical-align:middle}
+.tk-edit{flex:1;min-width:0}
+.tk-edit input{width:100%;box-sizing:border-box;border:2px solid var(--gold);border-radius:10px;padding:8px 10px;font-weight:700;background:var(--surface);color:var(--ink)}
 .news-list li{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--sunk);border-radius:10px;padding:8px 12px;font-weight:700}
 @media (max-width:600px){ .tk-row{gap:8px} .tk-post{padding:6px 8px} }
 @media (max-width:600px){ .vault .hero-ninja{display:none} }
@@ -741,7 +746,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -801,6 +806,7 @@ function startDb(db){
   db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
+  db.doc('settings/ticker').onSnapshot(d => { S.tickerCfg = d.exists ? d.data() : {hidden:[], edits:[]}; render(); }, () => {});
   db.doc('settings/shop').onSnapshot(d => { S.shop = d.exists ? d.data() : null; render(); }, () => {});
   db.doc('settings/owner').onSnapshot(d => { S.ownerUid = d.exists ? d.data().uid : null; }, () => {});
   }
@@ -820,13 +826,13 @@ const LKEY='dojo-bucks-preview-v2';
 function startLocal(){
   S.mode='local'; S.role='director'; S.me='preview-director';
   let saved=null; try{ saved = JSON.parse(localStorage.getItem(LKEY)||'null'); }catch{}
-  if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; }
+  if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; S.tickerCfg=saved.tickerCfg||S.tickerCfg; }
   else { const s = makeSamples(); s.ninjas.forEach(n=>S.ninjas[n.id]=n); S.log = s.log.sort((a,b)=>b.at-a.at); S.news = s.news; }
-  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop})); }catch{} };
+  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg})); }catch{} };
   const col = c => c==='ninjas' ? 'ninjas' : c;
   api = {
-    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
-    update:async(c,id,d)=>{ if(c==='staff' && S.staff[id]) S.staff={...S.staff,[id]:{...S.staff[id],...d}}; if(c==='ninjas' && S.ninjas[id]) S.ninjas[id]={...S.ninjas[id],...d}; else if(c==='requests') S.requests=S.requests.map(r=>r.id===id?{...r,...d}:r); persist(); render(); },
+    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
+    update:async(c,id,d)=>{ if(c==='staff' && S.staff[id]) S.staff={...S.staff,[id]:{...S.staff[id],...d}}; if(c==='ninjas' && S.ninjas[id]) S.ninjas[id]={...S.ninjas[id],...d}; else if(c==='requests') S.requests=S.requests.map(r=>r.id===id?{...r,...d}:r); else if(c==='news') S.news=S.news.map(x=>x.id===id?{...x,...d}:x); persist(); render(); },
     del:async(c,id)=>{ if(c==='staff'){ const m={...S.staff}; delete m[id]; S.staff=m; } if(c==='ninjas') delete S.ninjas[id]; else if(c==='log') S.log=S.log.filter(x=>x.id!==id); else if(c==='news') S.news=S.news.filter(x=>x.id!==id); else if(c==='requests') S.requests=S.requests.filter(x=>x.id!==id); persist(); render(); },
   };
   S.loaded=true;
@@ -1241,14 +1247,15 @@ function renderFeed(){
 /* ---------- news ticker ---------- */
 // "Ava", "Ava and Leo", "Ava, Leo and Mia"
 const andList = names => { const n=names.map(x=>`<b>${esc(x)}</b>`); return n.length<2 ? n[0] : n.slice(0,-1).join(', ')+' and '+n[n.length-1]; };
-function tickerItems(){
-  const out=[], now=Date.now(), all=ninjaList();
-  S.news.slice(0,8).forEach(n=>out.push(`<span class="tk-tag">BREAKING</span> ${esc(n.text)}`));
+// Every ticker line has a key, so the Center Director can hide or reword it (settings/ticker).
+function tickerRaw(){
+  const out=[], now=Date.now(), all=ninjaList(), add=(key, html, news)=>out.push({key, html, news});
+  S.news.slice(0,8).forEach(n=>add('news:'+n.id, `<span class="tk-tag">BREAKING</span> ${esc(n.text)}`, n.id));
   // New ninjas: a personal welcome for 2 days, and a shout-out naming everyone who joined in the last 2 weeks.
   const fresh=all.filter(n=>n.createdAt && now-n.createdAt < 14*DAY).sort((a,b)=>b.createdAt-a.createdAt);
-  fresh.filter(n=>now-n.createdAt < 2*DAY).forEach(n=>out.push(`<span class="tk-tag">WELCOME</span> 👋 Welcome to the dojo, <b>${esc(n.name)}</b>! We're so happy you're here. Say hi to our newest ninja! 🥷`));
+  fresh.filter(n=>now-n.createdAt < 2*DAY).forEach(n=>add('welcome:'+n.id, `<span class="tk-tag">WELCOME</span> 👋 Welcome to the dojo, <b>${esc(n.name)}</b>! We're so happy you're here. Say hi to our newest ninja! 🥷`));
   if(fresh.some(n=>now-n.createdAt >= 2*DAY)){
-    out.push(`🎉 A big ninja welcome to ${fresh.length>1?'our new ninjas':'our new ninja'} ${andList(fresh.map(n=>n.name))}!`);
+    add('welcome-all', `🎉 A big ninja welcome to ${fresh.length>1?'our new ninjas':'our new ninja'} ${andList(fresh.map(n=>n.name))}!`);
   }
   const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
@@ -1273,16 +1280,33 @@ function tickerItems(){
     g.fresh = g.fresh || fresh;
   });
   groups.forEach((g, line)=>{
-    out.push((g.fresh?'<span class="tk-tag">JUST IN</span> ':'')+line.split(WHO).join(andList(g.names)));
+    add('act:'+hashStr(line), (g.fresh?'<span class="tk-tag">JUST IN</span> ':'')+line.split(WHO).join(andList(g.names)));
   });
   const ws=weekStart(now), wk=S.log.filter(l=>l.at>=ws);
   const sumBy=k=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; };
-  const te=sumBy('earn'); if(te && S.ninjas[te[0]]) out.push(`🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
-  const ts=sumBy('redeem'); if(ts && S.ninjas[ts[0]]) out.push(`💸 <b>${esc(S.ninjas[ts[0]].name)}</b> is the top spender this week: ${fmt(ts[1])} bucks!`);
-  const rich=[...all].sort((a,b)=>(b.balance||0)-(a.balance||0))[0]; if(rich && rich.balance) out.push(`💰 <b>${esc(rich.name)}</b> has the biggest balance in the dojo: ${fmt(rich.balance)} bucks!`);
-  const earnedWk=wk.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0); if(earnedWk) out.push(`🪙 The dojo has earned ${fmt(earnedWk)} Ninja Bucks this week. Keep it up, ninjas!`);
+  const te=sumBy('earn'); if(te && S.ninjas[te[0]]) add('top-earner:'+ws, `🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
+  const ts=sumBy('redeem'); if(ts && S.ninjas[ts[0]]) add('top-spender:'+ws, `💸 <b>${esc(S.ninjas[ts[0]].name)}</b> is the top spender this week: ${fmt(ts[1])} bucks!`);
+  const rich=[...all].sort((a,b)=>(b.balance||0)-(a.balance||0))[0]; if(rich && rich.balance) add('richest', `💰 <b>${esc(rich.name)}</b> has the biggest balance in the dojo: ${fmt(rich.balance)} bucks!`);
+  const earnedWk=wk.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0); if(earnedWk) add('dojo-week:'+ws, `🪙 The dojo has earned ${fmt(earnedWk)} Ninja Bucks this week. Keep it up, ninjas!`);
+  return out;
+}
+function hashStr(t){ let h=0; for(let i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))|0; return (h>>>0).toString(36); }
+const tkEdit = key => (S.tickerCfg.edits||[]).find(e=>e.key===key);
+function tickerShown(){
+  const hidden=new Set(S.tickerCfg.hidden||[]);
+  return tickerRaw().filter(x=>!hidden.has(x.key)).map(x=>{ const e=!x.news && tkEdit(x.key); return e ? {...x, html:esc(e.text), edited:true} : x; });
+}
+function tickerItems(){
+  const out=tickerShown().map(x=>x.html);
   if(!out.length) out.push('🥷 Welcome to the dojo! Be on time, stay on track and help each other to earn Ninja Bucks.');
   return out;
+}
+// Save hidden/reworded lines, dropping ones that are no longer on the ticker.
+async function saveTickerCfg(hidden, edits){
+  const live=new Set(tickerRaw().map(x=>x.key));
+  const cfg={hidden:[...new Set(hidden)].filter(k=>live.has(k)), edits:edits.filter(e=>live.has(e.key)), updatedAt:Date.now()};
+  try{ await api.set('settings', 'ticker', cfg); }catch{ return false; }
+  S.tickerCfg=cfg; render(); return true;
 }
 // The ticker is a conveyor belt: copies of the news strip keep rolling left. New content joins at the
 // right edge, so the strip never jumps back to the start while it is moving.
@@ -1332,7 +1356,7 @@ const NEWS_TEMPLATES = [
   "🔧 Ninjas take care of the dojo. Treat our equipment with care!",
   "📅 Heads up: the dojo is closed on ___. See you soon!",
 ];
-function renderNewsPanel(){
+function renderNewsPanel(focus){
   const host=document.getElementById('newsPanel'); document.getElementById('newsBtn').textContent = S.newsOpen ? 'Close' : 'Post news';
   if(!S.newsOpen){ host.innerHTML=''; return; }
   host.innerHTML = `<div class="news-panel"><div class="wrap">
@@ -1340,9 +1364,34 @@ function renderNewsPanel(){
       <select id="tplNinja" aria-label="Ninja for the template"><option value="">Pick a ninja (optional)</option>${ninjaList().map(n=>`<option>${esc(n.name)}</option>`).join('')}</select></div>
     <div class="tpls">${NEWS_TEMPLATES.map((t,k)=>`<button type="button" class="tpl" data-act="tpl" data-k="${k}">${esc(t.replace('{ninja}','[Ninja]'))}</button>`).join('')}</div>
     <form id="newsForm"><input id="newsText" maxlength="120" placeholder="Breaking news, e.g. Pizza party Friday for everyone on track!" autocomplete="off" aria-label="News to show on the ticker"><button class="btn primary" type="submit">Post to ticker</button></form>
-    ${S.news.length ? `<ul class="news-list">${S.news.map(n=>`<li><span><span class="tk-tag">BREAKING</span> ${esc(n.text)} <small class="hint">· ${ago(n.at)}</small></span><button class="btn ghost" data-act="delNews" data-id="${n.id}">Remove</button></li>`).join('')}</ul>` : '<p class="hint" style="margin:0">Posts show first on the ticker until you remove them. Achievements, rewards and bucks show up on their own.</p>'}
+    ${isDir() ? tickerManagerHTML() : S.news.length ? `<ul class="news-list">${S.news.map(n=>`<li><span><span class="tk-tag">BREAKING</span> ${esc(n.text)} <small class="hint">· ${ago(n.at)}</small></span><button class="btn ghost" data-act="delNews" data-id="${n.id}">Remove</button></li>`).join('')}</ul>` : '<p class="hint" style="margin:0">Posts show first on the ticker until you remove them. Achievements, rewards and bucks show up on their own.</p>'}
   </div></div>`;
-  document.getElementById('newsText').focus();
+  if(focus) document.getElementById('newsText').focus();
+}
+function tickerManagerHTML(){
+  const rows=tickerShown(), hiddenN=(S.tickerCfg.hidden||[]).filter(k=>tickerRaw().some(x=>x.key===k)).length;
+  const plain=h=>{ const d=document.createElement('div'); d.innerHTML=h; return d.textContent.replace(/\s+/g,' ').trim(); };
+  return `<div class="tk-man"><div class="spread"><span class="eyebrow">On the ticker now · Center Director</span>${hiddenN?`<button class="btn ghost sm" data-act="tkShowAll">Show ${hiddenN} hidden update${hiddenN===1?'':'s'} again</button>`:''}</div>
+    <ul class="news-list">${rows.map(x=>`<li>${S.tkEditing===x.key
+      ? `<span class="tk-edit"><input id="tkEditText" maxlength="140" value="${esc(S.tkEditText)}" aria-label="New text"></span><span class="row" style="gap:6px;flex:none"><button class="btn primary sm" data-act="tkSave" data-key="${esc(x.key)}">Save</button>${x.edited?`<button class="btn ghost sm" data-act="tkReset" data-key="${esc(x.key)}">Undo edit</button>`:''}<button class="btn ghost sm" data-act="tkCancel">Cancel</button></span>`
+      : `<span class="tk-prev">${x.html}${x.edited?' <small class="hint">· edited</small>':''}${x.news?'':' <small class="hint">· automatic</small>'}</span><span class="row" style="gap:6px;flex:none"><button class="btn ghost sm" data-act="tkEdit" data-key="${esc(x.key)}" data-text="${esc(plain(x.html))}">Edit</button><button class="btn ghost sm" data-act="tkHide" data-key="${esc(x.key)}">Remove</button></span>`}</li>`).join('') || '<li><span class="hint">Nothing on the ticker right now.</span></li>'}</ul></div>`;
+}
+async function tickerAction(a, key){
+  const item=tickerRaw().find(x=>x.key===key), cfg=S.tickerCfg, hidden=cfg.hidden||[], edits=cfg.edits||[];
+  if(a==='tkShowAll'){ if(await saveTickerCfg([], edits)) toast('Hidden updates are back on the ticker.'); }
+  else if(!item){ toast('That update has already left the ticker.'); }
+  else if(a==='tkHide'){
+    if(item.news){ try{ await api.del('news', item.news); }catch{ return; } toast('News removed from the ticker.'); }
+    else if(await saveTickerCfg([...hidden, key], edits)) toast('Removed from the ticker.');
+  }
+  else if(a==='tkSave'){
+    const text=S.tkEditText.trim(); if(!text){ toast('Type the new text first.'); return; }
+    if(item.news){ try{ await api.update('news', item.news, {text}); }catch{ return; } }
+    else if(!await saveTickerCfg(hidden, [...edits.filter(e=>e.key!==key), {key, text}])) return;
+    S.tkEditing=null; toast('Ticker updated.');
+  }
+  else if(a==='tkReset'){ if(await saveTickerCfg(hidden, edits.filter(e=>e.key!==key))){ S.tkEditing=null; toast('Back to the automatic text.'); } }
+  renderNewsPanel();
 }
 function renderChart(){
   const ws=weekStart(Date.now()); const weeks=[];
@@ -1707,8 +1756,11 @@ document.addEventListener('click', e=>{
     case 'removeStaff': removeStaff(id).then(renderTeam); break;
     case 'backup': downloadBackup(); break;
     case 'lock': lockNow(); break;
-    case 'toggleNews': S.newsOpen=!S.newsOpen; renderNewsPanel(); break;
-    case 'delNews': api.del('news', id).then(renderNewsPanel).catch(()=>{}); break;
+    case 'toggleNews': S.newsOpen=!S.newsOpen; S.tkEditing=null; renderNewsPanel(true); break;
+    case 'tkEdit': S.tkEditing=t.dataset.key; S.tkEditText=t.dataset.text; renderNewsPanel(); document.getElementById('tkEditText')?.focus(); break;
+    case 'tkCancel': S.tkEditing=null; renderNewsPanel(); break;
+    case 'tkHide': case 'tkSave': case 'tkReset': case 'tkShowAll': tickerAction(a, t.dataset.key); break;
+    case 'delNews': api.del('news', id).then(()=>renderNewsPanel()).catch(()=>{}); break;
     case 'clearSamples': clearSamples().catch(()=>{}); break;
   }
 });
@@ -1726,7 +1778,7 @@ document.addEventListener('change', e=>{
   if(el.id==='editLevel'){ api.update('ninjas',S.drawer,{level:+el.value}).catch(()=>{}); }
   if(el.id==='editGroup'){ const n=S.ninjas[S.drawer]; api.update('ninjas',S.drawer, el.value==='junior' ? {group:'junior', level:Math.min(beltFor(n).level, JR_BELT.levels)} : {group:'ninja', belt:n.belt|0, level:1}).catch(()=>{}); }
 });
-document.addEventListener('input', e=>{ if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='adjNote') S.adj.note=e.target.value; });
+document.addEventListener('input', e=>{ if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='adjNote') S.adj.note=e.target.value; if(e.target.id==='tkEditText') S.tkEditText=e.target.value; });
 { const vp=document.querySelector('.tk-viewport'); vp.addEventListener('mouseenter',()=>tk.paused=true); vp.addEventListener('mouseleave',()=>tk.paused=false); }
 window.addEventListener('resize', ()=>tkFill());
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.drawer){ S.drawer=null; render(); } if(e.key==='Enter' && e.target.matches && e.target.matches('tr[data-act="open"]')) e.target.click(); });
@@ -1740,7 +1792,7 @@ document.addEventListener('submit', e=>{
 document.addEventListener('submit', e=>{
   if(e.target.id!=='newsForm') return; e.preventDefault();
   const t=document.getElementById('newsText').value.trim(); if(!t) return;
-  api.set('news', uid(), {text:t, at:Date.now()}).then(()=>{ toast('Posted to the dojo news ticker.'); renderNewsPanel(); }).catch(()=>{});
+  api.set('news', uid(), {text:t, at:Date.now()}).then(()=>{ toast('Posted to the dojo news ticker.'); renderNewsPanel(true); }).catch(()=>{});
 });
 document.getElementById('addForm').addEventListener('submit', e=>{
   e.preventDefault(); const name=document.getElementById('newName').value.trim(); if(!name) return;
