@@ -229,6 +229,8 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .lb-av{border-radius:50%;background:#fff;display:inline-grid;place-items:center;overflow:hidden;flex:none;border:solid}
 .lb-av img{width:88%;height:88%;object-fit:contain}
 .lb-coin{display:inline-flex;vertical-align:-.12em}
+.lb-bigqr{background:#fff;border-radius:22px;padding:12px;flex:none}
+.lb-bigqr svg{width:220px;height:220px;display:block}
 .lb-qr{position:absolute;right:30px;bottom:14px;z-index:9;background:#fff;border-radius:20px;padding:10px 20px 10px 10px;display:flex;gap:12px;align-items:center;border:4px solid #F6B60A;box-shadow:0 12px 30px -10px rgba(0,0,0,.35)}
 .lb-qr svg{width:104px;height:104px;display:block}
 .fam-code{font-family:var(--f-display);font-size:40px;letter-spacing:.12em;background:var(--gold-soft);border:2px dashed var(--gold);border-radius:14px;text-align:center;padding:8px;margin:6px 0 10px}
@@ -2046,7 +2048,7 @@ const LB_SLIDES = [
   {id:'spot', name:'Ninja Spotlight', icon:'🌟', secs:8},
   {id:'path', name:'The Ninja Path', icon:'🗺️', secs:10},
   {id:'goal', name:'Dojo Goal', icon:'🎯', secs:8},
-  {id:'legend', name:'Legendary Rewards', icon:'👑', secs:10},
+  {id:'legend', name:'Legendary Rewards', icon:'👑', secs:15},
 ];
 const LB = {i:-1, timer:null, spot:0, on:false, paused:false, resume:null};
 const LB_RESUME_MS = 2*60*1000; // a paused lobby starts again by itself after 2 minutes
@@ -2092,16 +2094,15 @@ function lbSpotlights(){ const since=Date.now()-7*DAY, bonus=new Set(bonusItems(
   return S.log.filter(l=>l.at>=since && l.kind==='earn' && S.ninjas[l.ninjaId] && (l.item==='beltup' || l.item==='blackbelt' || (bonus.has(l.item) && l.amt>=250))).slice(0,6); }
 function lbLegendTier(){ const T=shopTiers(); return T.find(t=>t.parents) || T.find(t=>t.id==='legendary') || T[T.length-1]; }
 
+const lbQr = () => { if(!window.qrcode) return ''; const q=qrcode(0,'M'); q.addData(PARENT_URL); q.make(); return q.createSvgTag({cellSize:4, margin:1, scalable:true}); };
 function lbFrame(slide, list, body){
-  const qr = window.qrcode ? (()=>{ const q=qrcode(0,'M'); q.addData(PARENT_URL); q.make(); return q.createSvgTag({cellSize:4, margin:1, scalable:true}); })() : '';
   return `<div class="lb-top"><div class="lb-brand">${coin(52)}<div><div class="d" style="font-size:30px;line-height:1">Dojo Bucks</div><div style="font-weight:900;font-size:14px;letter-spacing:.1em;color:#69658E">LOBBY</div></div></div>
     <div class="lb-chip">${slide.icon} ${esc(slide.name)}</div><div class="lb-dots">${list.map(x=>`<i class="${x.id===slide.id?'on':''}"></i>`).join('')}</div>
     ${list.length>1?`<div class="lb-ctrl"><button data-act="lbPrev" aria-label="Previous slide">◀</button><button class="lb-play ${LB.paused?'paused':''}" data-act="lbPause" aria-label="${LB.paused?'Play':'Pause'}">${LB.paused?'▶ Play':'⏸ Pause'}</button><button data-act="lbNext" aria-label="Next slide">▶</button></div>`:''}
     ${S.role!=='viewer'?'<button class="lb-exit" data-act="lobbyExit">✕ Exit</button>':''}<div class="lb-cn"><img src="mascots/cn-logo.png" alt="Code Ninjas" style="height:38px;display:block"></div></div>
-    <div class="lb-slide">${body}</div>
-    <div class="lb-qr">${qr}<div><div class="d" style="font-size:26px;line-height:1.05">Parents: scan me!</div><div style="font-weight:800;font-size:16px;color:#69658E">Leaderboard · rewards</div></div></div>`;
+    <div class="lb-slide">${body}</div>`;
 }
-const P = 'top:128px;bottom:156px';
+const P = 'top:128px;bottom:36px';
 function lbBoard(group){
   const L=ninjaList().filter(n=>group==='junior' ? n.group==='junior' : n.group!=='junior').sort((a,b)=>(b.balance||0)-(a.balance||0));
   const jr=group==='junior', col=jr?'#C2255C':'#6C45D9', big=190;
@@ -2110,7 +2111,7 @@ function lbBoard(group){
       <div style="position:relative">${lbAv(n,size)}<img src="badges/${BADGE(b.i,b.level)}.webp" alt="" style="position:absolute;right:-16px;bottom:-6px;height:${size/2.2|0}px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))"></div>
       <div class="d" style="font-size:${i?36:44}px">${esc(n.name)}</div>
       <div style="width:${big*1.5|0}px;height:${[230,175,135][i]}px;border-radius:24px 24px 0 0;background:${['linear-gradient(#FFE07A,#F6B60A)','linear-gradient(#EEF1F7,#B8C1D3)','linear-gradient(#F6D0AE,#CD8E62)'][i]};display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 -8px 0 rgba(0,0,0,.08)"><div class="d" style="font-size:64px;line-height:1">${i+1}</div><div class="d" style="font-size:34px;display:flex;align-items:center;gap:6px">${lbCoin(30)} ${fmt(n.balance)}</div></div></div>`; }).join('');
-  const rows=L.slice(3,9).map((n,i)=>{ const b=beltFor(n); return `<div style="display:flex;align-items:center;gap:14px;padding:12px 18px;background:#F1EFFA;border-radius:18px"><span class="d" style="font-size:30px;color:#69658E;width:44px">${i+4}</span>${lbAv(n,58)}<div style="flex:1;min-width:0"><div style="font-size:28px;font-weight:900;line-height:1.1">${esc(n.name)}</div><div style="font-size:17px;font-weight:800;color:#69658E">${esc(b.name)} · ${esc(stepName(b.i,b.level))}</div></div><span class="d" style="font-size:32px;color:#A86F00;display:flex;align-items:center;gap:6px">${lbCoin(28)} ${fmt(n.balance)}</span></div>`; }).join('');
+  const rows=L.slice(3,10).map((n,i)=>{ const b=beltFor(n); return `<div style="display:flex;align-items:center;gap:14px;padding:12px 18px;background:#F1EFFA;border-radius:18px"><span class="d" style="font-size:30px;color:#69658E;width:44px">${i+4}</span>${lbAv(n,58)}<div style="flex:1;min-width:0"><div style="font-size:28px;font-weight:900;line-height:1.1">${esc(n.name)}</div><div style="font-size:17px;font-weight:800;color:#69658E">${esc(b.name)} · ${esc(stepName(b.i,b.level))}</div></div><span class="d" style="font-size:32px;color:#A86F00;display:flex;align-items:center;gap:6px">${lbCoin(28)} ${fmt(n.balance)}</span></div>`; }).join('');
   return `<div class="lb-panel" style="left:50px;${P};width:1040px;padding:30px 36px;display:flex;flex-direction:column;overflow:hidden">
       <div style="display:flex;align-items:center;justify-content:space-between"><div><div class="d" style="font-size:58px;line-height:1;color:${col}">${jr?'JR Leaderboard':'Leaderboard'}</div><div style="font-weight:800;font-size:24px;color:#69658E">${jr?'Ages 5–7':'Ages 8+'} · ranked by balance</div></div><span class="lb-pill" style="background:#DDF5EB;color:#16956A">● Live</span></div>
       <div style="display:flex;justify-content:center;align-items:flex-end;gap:30px;margin-top:auto">${pod}</div></div>
@@ -2120,7 +2121,7 @@ function lbAchieve(){
   const now=Date.now(), ws=weekStart(now), ms=monthStart(now), ds=dayStart(now);
   const col=(bg,title,sub,list)=>`<div class="lb-panel" style="position:relative;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:0">
     <div style="background:${bg};color:#fff;border-radius:22px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center"><span class="d" style="font-size:36px">${title}</span><span style="font-weight:900;font-size:20px;opacity:.9">${sub}</span></div>
-    ${list.slice(0,5).map(l=>{ const n=S.ninjas[l.ninjaId], a=achText(l); return `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:18px;background:#F7F5FD;flex:1;max-height:120px">${lbAv(n,62)}<div style="flex:1;min-width:0"><div style="font-weight:900;font-size:24px">${esc(n.name)}</div><div style="font-weight:800;font-size:18px;color:#69658E">${esc(a.t)}</div></div>${a.img?`<img src="badges/${a.img}.webp" alt="" style="height:62px">`:`<span style="font-size:44px">${esc(a.em)}</span>`}</div>`; }).join('') || '<p style="font-weight:800;color:#69658E;font-size:22px;margin:10px">Big wins will show up here.</p>'}</div>`;
+    ${list.slice(0,6).map(l=>{ const n=S.ninjas[l.ninjaId], a=achText(l); return `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:18px;background:#F7F5FD;flex:1;max-height:120px">${lbAv(n,62)}<div style="flex:1;min-width:0"><div style="font-weight:900;font-size:24px">${esc(n.name)}</div><div style="font-weight:800;font-size:18px;color:#69658E">${esc(a.t)}</div></div>${a.img?`<img src="badges/${a.img}.webp" alt="" style="height:62px">`:`<span style="font-size:44px">${esc(a.em)}</span>`}</div>`; }).join('') || '<p style="font-weight:800;color:#69658E;font-size:22px;margin:10px">Big wins will show up here.</p>'}</div>`;
   const md=new Date(now), wd=new Date(ws), we=new Date(ws+6*DAY), f=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   return `<div style="position:absolute;left:50px;right:50px;${P};display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px">
     ${col('linear-gradient(135deg,#16956A,#3CCB8E)','☀️ Today',md.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}),achievements(ds))}
@@ -2197,10 +2198,13 @@ function lbGoal(){
 function lbLegend(){
   const t=lbLegendTier(), ms=monthStart(Date.now()), items=t.items.slice(0,5);
   const cnt=id=>S.log.filter(l=>l.kind==='redeem' && l.item===id && l.at>=ms).length;
-  return `<div class="lb-panel" style="left:50px;right:50px;${P};padding:28px 40px;display:flex;flex-direction:column;gap:22px;justify-content:space-evenly">
-    <div><div class="d" style="font-size:68px;line-height:1;color:#7B2CBF">${esc(t.icon||'👑')} ${esc(t.name)}</div><div style="font-size:27px;font-weight:800;color:#69658E">Big dreams take big saving. Parents can request these from their phone!</div></div>
-    <div style="display:grid;grid-template-columns:repeat(${items.length},1fr);gap:20px">${items.map(it=>{ const c=cnt(it.id); return `<div style="background:linear-gradient(170deg,#fff,#F3E8FF);border-radius:26px;padding:22px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 0 3px #D8B4FE">${iconHTML(it,190)}<div class="d" style="font-size:30px;line-height:1.05">${esc(it.label)}</div><div class="d" style="font-size:32px;color:#A86F00;display:flex;align-items:center;gap:6px">${lbCoin(28)} ${fmt(amountOf('redeem',it))}</div><div style="font-weight:900;color:#7B2CBF;font-size:18px">${c?`${c} this month`:'Who will be first?'}</div></div>`; }).join('')}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;background:#221B4D;color:#fff;border-radius:26px;padding:20px 26px">${[['Scan the QR + family code','Code from the front desk, one per child'],['Pick a reward','See your ninja\'s balance and progress'],['Front desk confirms','Bucks are held until approved']].map(([a,b],i)=>`<div style="display:flex;gap:14px;align-items:center"><span class="d" style="background:#E5402B;border-radius:50%;width:56px;height:56px;display:grid;place-items:center;font-size:30px;flex:none">${i+1}</span><div><div class="d" style="font-size:29px">${a}</div><div style="font-weight:800;font-size:19px;color:#BDB6EA">${b}</div></div></div>`).join('')}</div></div>`;
+  return `<div class="lb-panel" style="left:50px;right:50px;${P};padding:24px 40px;display:flex;flex-direction:column;gap:18px;justify-content:space-between">
+    <div><div class="d" style="font-size:60px;line-height:1;color:#7B2CBF">${esc(t.icon||'👑')} ${esc(t.name)}</div><div style="font-size:27px;font-weight:800;color:#69658E">Big dreams take big saving. Parents can request these from their phone!</div></div>
+    <div style="display:grid;grid-template-columns:repeat(${items.length},1fr);gap:20px">${items.map(it=>{ const c=cnt(it.id); return `<div style="background:linear-gradient(170deg,#fff,#F3E8FF);border-radius:26px;padding:22px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 0 3px #D8B4FE">${iconHTML(it,150)}<div class="d" style="font-size:30px;line-height:1.05">${esc(it.label)}</div><div class="d" style="font-size:32px;color:#A86F00;display:flex;align-items:center;gap:6px">${lbCoin(28)} ${fmt(amountOf('redeem',it))}</div><div style="font-weight:900;color:#7B2CBF;font-size:18px">${c?`${c} this month`:'Who will be first?'}</div></div>`; }).join('')}</div>
+    <div style="display:flex;gap:30px;align-items:center;background:#221B4D;color:#fff;border-radius:30px;padding:22px 34px 22px 22px">
+      <div class="lb-bigqr">${lbQr()}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:16px"><div class="d" style="font-size:46px;line-height:1">📱 Parents: scan me!</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px">${[['Scan + family code','Code from the front desk, one per child'],['Pick a reward','See your ninja\'s balance and progress'],['Front desk confirms','Bucks are held until approved']].map(([a,b],i)=>`<div style="display:flex;gap:14px;align-items:center"><span class="d" style="background:#E5402B;border-radius:50%;width:52px;height:52px;display:grid;place-items:center;font-size:28px;flex:none">${i+1}</span><div><div class="d" style="font-size:27px">${a}</div><div style="font-weight:800;font-size:18px;color:#BDB6EA">${b}</div></div></div>`).join('')}</div></div></div></div>`;
 }
 const LB_RENDER = {create:()=>lbBoard('ninja'), jr:()=>lbBoard('junior'), achieve:lbAchieve, bday:lbBday, welcome:lbWelcome, spot:lbSpot, path:lbPath, goal:lbGoal, legend:lbLegend};
 function lbFit(){
