@@ -241,6 +241,25 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .lb-bigqr svg{width:220px;height:220px;display:block}
 .lb-qr{position:absolute;right:30px;bottom:14px;z-index:9;background:#fff;border-radius:20px;padding:10px 20px 10px 10px;display:flex;gap:12px;align-items:center;border:4px solid #F6B60A;box-shadow:0 12px 30px -10px rgba(0,0,0,.35)}
 .lb-qr svg{width:104px;height:104px;display:block}
+.pl-wrap{margin-bottom:18px}
+.pl-top{margin-bottom:8px}
+.pl-track{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pl-track::-webkit-scrollbar{display:none}
+.pl-card{flex:0 0 min(88%,380px);scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.pl-h{display:flex;align-items:center;gap:10px}.pl-h h3{margin:0;font-family:var(--f-display);font-weight:400;font-size:22px}.pl-ic{font-size:26px}
+.pl-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:14px;background:var(--sunk)}
+.pl-row.pl-hot{background:var(--gold-soft);box-shadow:0 0 0 2px var(--gold)}
+.pl-nm{flex:1;min-width:0;display:flex;flex-direction:column}.pl-nm b{font-weight:900;font-size:16px}.pl-nm small{color:var(--muted);font-weight:800;font-size:13px}
+.pl-em{font-size:28px}.pl-price{font-family:var(--f-display);color:var(--gold-deep);font-size:18px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.pl-note{margin:4px 0 0;font-weight:800;font-size:14px;color:var(--muted)}
+.pl-seg{align-self:flex-start;flex-wrap:wrap}
+.pl-spot{display:flex;align-items:center;gap:12px}.pl-spot > div{flex:1;display:flex;flex-direction:column;gap:2px}.pl-spot small{color:var(--muted);font-weight:800}
+.pl-big{font-family:var(--f-display);font-size:28px;line-height:1.05}
+.pl-bar{height:18px;border-radius:999px;background:var(--sunk);overflow:hidden}.pl-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#16956A,#3CCB8E)}
+.pl-belts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pl-belts span{display:flex;align-items:center;gap:2px;font-weight:900;font-size:14px;background:var(--sunk);border-radius:999px;padding:2px 8px 2px 2px}.pl-belts span.dim{opacity:.45}
+.pl-dots{display:flex;justify-content:center;gap:6px}.pl-dots button{width:9px;height:9px;border-radius:9px;border:0;padding:0;background:var(--line);cursor:pointer}.pl-dots button.on{width:26px;background:var(--accent)}
+.pl-phone{position:absolute;inset:0;overflow:auto;padding:16px 16px 70px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(241,239,250,.85))}
+.pl-phone .pl-card{flex-basis:86%}
 .fam-code{font-family:var(--f-display);font-size:40px;letter-spacing:.12em;background:var(--gold-soft);border:2px dashed var(--gold);border-radius:14px;text-align:center;padding:8px;margin:6px 0 10px}
 .fam-link{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .fam-link-text{flex:1;min-width:240px}
@@ -580,6 +599,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
   <!-- LEADERBOARD -->
   <section class="view lbview" id="v-board">
       <div id="familyCard"></div>
+      <div id="parentLobby"></div>
       <div class="card board">
         <div class="spread">
           <h2 class="lb-title">Dojo Leaderboard</h2>
@@ -744,7 +764,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
     <div id="siBody"></div>
   </div>
 </div>
-<div class="lobby" id="lobby" hidden><div class="lb-stage" id="lbStage"></div><button class="lb-lock" id="lbLock" data-act="lbLock" hidden aria-label="Lock this screen">🔒 Lock</button></div>
+<div class="lobby" id="lobby" hidden><div class="lb-stage" id="lbStage"></div><div class="pl-phone" id="lbPhone" hidden></div><button class="lb-lock" id="lbLock" data-act="lbLock" hidden aria-label="Lock this screen">🔒 Lock</button></div>
 <div id="drawerHost"></div>
 <div id="toastHost"></div>
 <div id="celebrateHost"></div>
@@ -1343,6 +1363,7 @@ function renderDash(){
 function renderBoard(){
   renderParentQr();
   renderFamilyCard();
+  renderParentLobby();
   renderParentRewards();
   const all=ninjaList();
   const board=document.getElementById('boardList');
@@ -1355,7 +1376,8 @@ function renderBoard(){
         ${avatar(n, cls[i]==='p1'?72:56)}<span class="name">${esc(n.name)}</span>${beltBadge(n, 34)}
         <div class="block"><span class="place">${place[i]}</span><span class="amt num">${coin(16)}${fmt(n[S.metric])}</span></div></button>` : '<div></div>').join('');
     const on = k => S.metric===k ? ' on' : '';
-    const rest = list.slice(3).map((n,i)=>`<tr data-act="open" data-id="${n.id}" tabindex="0">
+    const cut = isParent() && !S.lbAll ? 10 : list.length;
+    const rest = list.slice(3, cut).map((n,i)=>`<tr data-act="open" data-id="${n.id}" tabindex="0">
         <td class="rk">${i+4}</td>
         <td><span class="who">${avatar(n,40)}<span class="nm"><b>${esc(n.name)}</b><small>${rankText(n)}</small></span></span></td>
         <td class="bc">${beltBadge(n,34)}</td>
@@ -1363,7 +1385,7 @@ function renderBoard(){
         <td class="n hide-sm${on('spent')}">${fmt(n.spent)}</td>
         <td class="n bal${on('balance')}"><span>${coin(18)}${fmt(n.balance)}</span></td></tr>`).join('');
     board.innerHTML = `<div class="podium">${pod}</div>${rest?`<h3 class="eyebrow" style="margin:18px 0 6px">All other ninjas</h3>
-      <div class="lbt-wrap"><table class="lbt"><thead><tr><th>#</th><th>Ninja</th><th>Belt</th><th class="n hide-sm${on('earned')}">Earned</th><th class="n hide-sm${on('spent')}">Spent</th><th class="n${on('balance')}">Balance</th></tr></thead><tbody>${rest}</tbody></table></div>`:''}`;
+      <div class="lbt-wrap"><table class="lbt"><thead><tr><th>#</th><th>Ninja</th><th>Belt</th><th class="n hide-sm${on('earned')}">Earned</th><th class="n hide-sm${on('spent')}">Spent</th><th class="n${on('balance')}">Balance</th></tr></thead><tbody>${rest}</tbody></table></div>${list.length>cut?`<button class="btn ghost" data-act="lbAll" style="margin-top:10px;width:100%">Show all ${list.length} ninjas</button>`:''}`:''}`;
   }
 }
 // QR code on the leaderboard so parents can open the parent view on their phones.
@@ -2247,6 +2269,9 @@ function renderLobby(advance){
   if(!list.length){ document.getElementById('lbStage').innerHTML=lbFrame({icon:'🥷',name:'Dojo Bucks'}, [], `<div class="lb-panel" style="left:300px;right:300px;top:300px;padding:60px;text-align:center"><div class="d" style="font-size:60px">Welcome to the dojo! 🥷</div></div>`); LB.html=''; lbFit(); return; }
   const prev=LB.cur;
   if(advance || !LB.on || LB.i<0 || LB.i>=list.length){ LB.i = advance ? (LB.i+1)%list.length : Math.max(0, Math.min(LB.i, list.length-1)); if(advance && list[LB.i].id==='spot') LB.spot++; }
+  const phone=host.clientWidth<760, ph=document.getElementById('lbPhone');
+  ph.hidden=!phone; document.getElementById('lbStage').hidden=phone;
+  if(phone){ clearTimeout(LB.timer); LB.on=false; host.style.bottom=(document.querySelector('.tk-dock .ticker')?.offsetHeight||0)+'px'; plMount(ph, plHTML(false)); return; }
   const cur=list[LB.i]; LB.cur=cur.id;
   if(advance || !LB.on || cur.id!==prev || !LB.start) lbBegin();
   const html=lbFrame(cur, list, LB_RENDER[cur.id]());
@@ -2268,7 +2293,58 @@ function lbControl(a){
   if(LB.paused) lbAutoResume();
   LB.cur=list[LB.i].id; lbBegin(); LB.html=''; LB.on=true; renderLobby(false); lbSchedule();
 }
-addEventListener('resize', lbFit);
+addEventListener('resize', ()=>{ lbFit(); if(!document.getElementById('lobby').hidden) renderLobby(false); });
+
+
+/* ---------- lobby on a phone ---------- */
+// The same lobby content as swipeable cards, for parents on their phones (and the lobby login on a small screen).
+function plCard(icon, title, body, cls=''){ return `<section class="pl-card ${cls}"><div class="pl-h"><span class="pl-ic">${icon}</span><h3>${title}</h3></div>${body}</section>`; }
+const plRow = (n, right, sub) => `<div class="pl-row">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b>${sub?`<small>${sub}</small>`:''}</div>${right||''}</div>`;
+const plCards = {
+  create:()=>plBoard('ninja'), jr:()=>plBoard('junior'),
+  achieve:()=>{ const now=Date.now(), k=S.plAch||'week', from = k==='today'?dayStart(now):k==='week'?weekStart(now):monthStart(now), L=achievements(from).slice(0,5);
+    return plCard('⭐','Achievements', `<div class="seg pl-seg">${[['today','Today'],['week','This week'],['month','This month']].map(([v,t])=>`<button data-plach="${v}" aria-pressed="${k===v}">${t}</button>`).join('')}</div>
+      ${L.map(l=>{ const n=S.ninjas[l.ninjaId], a=achText(l); return plRow(n, a.img?badge(a.img,34):`<span class="pl-em">${esc(a.em)}</span>`, esc(a.t)); }).join('') || '<p class="hint">Big wins will show up here.</p>'}`); },
+  bday:()=>{ const now=new Date(), m=now.getMonth()+1, L=ninjaList().filter(n=>bdayOf(n)?.m===m).sort((a,b)=>bdayOf(a).d-bdayOf(b).d);
+    return plCard('🎂',`${MONTHS[m-1]} birthdays`, L.map(n=>{ const t=bdayOf(n).d===now.getDate(); return `<div class="pl-row ${t?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${t?'🎉 Today! Happy birthday!':`🎂 ${MONTHS[m-1].slice(0,3)} ${bdayOf(n).d}`}</small></div></div>`; }).join('')
+      + (S.lobbyCfg?.bdayNote?`<p class="pl-note">🎁 ${esc(S.lobbyCfg.bdayNote)}</p>`:''),'pl-bday'); },
+  welcome:()=>plCard('👋','Welcome, new ninjas!', lbNewNinjas().map(n=>{ const b=beltFor(n); return `<div class="pl-row ${Date.now()-n.createdAt<2*DAY?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${n.group==='junior'?'🌸 JR':'⚡ Create'} · ${esc(b.name)} · joined ${new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div></div>`; }).join('')+'<p class="pl-note">🙌 High-five a new ninja today!</p>','pl-welcome'),
+  spot:()=>{ const l=lbSpotlights()[0], n=S.ninjas[l.ninjaId], a=achText(l), b=beltFor(n);
+    return plCard('🌟','Ninja spotlight', `<div class="pl-spot">${avatar(n,84)}<div><span class="lb-pill" style="background:var(--gold-soft);color:var(--gold-deep);font-size:13px">${l.item==='beltup'||l.item==='blackbelt'?'🥋 NEW BELT!':'⭐ BIG WIN!'}</span><div class="pl-big">${esc(n.name)}</div><b>${esc(a.t)}!</b><small>${esc(b.name)} · ${ago(l.at)}</small></div>${a.img?badge(a.img,56):''}</div>`); },
+  path:()=>{ const create=ninjaList().filter(n=>n.group!=='junior'), leaders=[...create].sort((a,b)=>beltFor(b).i-beltFor(a).i || beltFor(b).level-beltFor(a).level || (b.earned||0)-(a.earned||0)).slice(0,3);
+    return plCard('🗺️','The Ninja Path', `<p class="hint" style="margin:0 0 8px">Leading the road to Black Belt</p>${leaders.map((n,i)=>{ const b=beltFor(n); return plRow(n, badge(BADGE(b.i,b.level),34), `${['🥇','🥈','🥉'][i]} ${b.i===BLACK?'Black Belt':`${esc(b.name)} Belt · ${esc(stepName(b.i,b.level))}`}`); }).join('')}
+      <div class="pl-belts">${MAIN_BELTS.map(k=>{ const c=create.filter(n=>beltFor(n).i===k).length; return `<span class="${c?'':'dim'}">${badge(DONE(k),26)}${c}</span>`; }).join('')}</div>`); },
+  goal:()=>{ const c=S.lobbyCfg||{}, target=c.goalTarget|0, now=new Date(), total=S.log.filter(l=>l.at>=monthStart(now.getTime()) && l.kind==='earn').reduce((a,l)=>a+(l.amt||0),0), pct=Math.min(100,target?total/target*100:0), left=new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()-now.getDate()+1;
+    return plCard(esc(c.goalIcon||'🎯'),`${MONTHS[now.getMonth()]} dojo goal`, `<div class="pl-big">${total>=target?'We did it! 🎉':`Earn ${fmt(target)} bucks together!`}</div>${c.goalPrize?`<p style="margin:4px 0 10px;font-weight:900;color:var(--accent)">Prize: ${esc(c.goalPrize)}</p>`:''}
+      <div class="pl-bar"><i style="width:${pct}%"></i></div><div class="spread" style="margin-top:6px;font-weight:900"><span>${coin(18)} ${fmt(total)}</span><span class="hint" style="margin:0">${left} day${left===1?'':'s'} left · goal ${fmt(target)}</span></div>`,'pl-goal'); },
+  legend:()=>{ const t=lbLegendTier();
+    return plCard(esc(t.icon||'👑'), esc(t.name), t.items.slice(0,5).map(it=>`<div class="pl-row">${iconHTML(it,40)}<div class="pl-nm"><b>${esc(it.label)}</b></div><span class="pl-price">${coin(16)} ${fmt(amountOf('redeem',it))}</span></div>`).join('')
+      + `<p class="pl-note">${isFamily()?'📱 Request these from <b>My Ninja</b> above.':'📱 Enter your family code above to request these for your ninja.'}</p>`,'pl-legend'); },
+};
+function plBoard(group){
+  const L=ninjaList().filter(n=>group==='junior'?n.group==='junior':n.group!=='junior').sort((a,b)=>(b.balance||0)-(a.balance||0)).slice(0,6);
+  return plCard(group==='junior'?'🌸':'🏆', group==='junior'?'JR Leaderboard':'Leaderboard', L.map((n,i)=>plRow(n, `<span class="pl-price">${coin(16)} ${fmt(n.balance)}</span>`, `${i<3?['🥇','🥈','🥉'][i]:`#${i+1}`} · ${esc(beltFor(n).name)}`)).join(''));
+}
+function plHTML(skipBoards){
+  const list=lbAvailable().filter(x=>!(skipBoards && (x.id==='create'||x.id==='jr')));
+  if(!list.length) return '';
+  return `<div class="pl-wrap"><div class="spread pl-top"><h2 style="margin:0">🥷 Dojo Lobby</h2><span class="hint" style="margin:0">Swipe for more →</span></div>
+    <div class="pl-track" id="plTrack">${list.map(x=>plCards[x.id]()).join('')}</div>
+    <div class="pl-dots">${list.map((x,i)=>`<button data-pldot="${i}" aria-label="${esc(x.name)}"></button>`).join('')}</div></div>`;
+}
+function plMount(host, html){
+  const old=host.querySelector('#plTrack'), x=old?old.scrollLeft:0;
+  if(host.dataset.html===html) return; host.dataset.html=html; host.innerHTML=html;
+  const tr=host.querySelector('#plTrack'); if(!tr) return; tr.scrollLeft=x; plDots(tr);
+  tr.addEventListener('scroll', ()=>plDots(tr), {passive:true});
+}
+function plDots(tr){ const cards=[...tr.children], i=Math.round(tr.scrollLeft/((cards[0]?.offsetWidth||1)+12));
+  tr.parentElement.querySelectorAll('[data-pldot]').forEach((d,k)=>d.classList.toggle('on', k===Math.min(i,cards.length-1))); }
+function renderParentLobby(){ const host=document.getElementById('parentLobby'); if(!isParent()){ host.innerHTML=''; host.dataset.html=''; return; } plMount(host, plHTML(true)); }
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-plach]'); if(a){ S.plAch=a.dataset.plach; document.querySelectorAll('#parentLobby,#lbPhone').forEach(h=>{ h.dataset.html=''; }); render(); return; }
+  const d=e.target.closest('[data-pldot]'); if(d){ const tr=d.closest('.pl-wrap').querySelector('#plTrack'); tr.scrollTo({left:+d.dataset.pldot*(tr.children[0].offsetWidth+12), behavior:'smooth'}); }
+});
 
 /* ---------- events ---------- */
 const findItem = (kind,id) => (kind==='earn'?[...earnList(), ...bonusItems()]:kind==='penalty'?penList():shopTiers().flatMap(t=>t.items)).find(x=>x.id===id);
@@ -2327,6 +2403,7 @@ document.addEventListener('click', e=>{
     case 'toggleNews': S.newsOpen=!S.newsOpen; S.tkEditing=null; S.tkSel.clear(); renderNewsPanel(true); break;
     case 'tkEdit': S.tkEditing=t.dataset.key; S.tkEditText=t.dataset.text; renderNewsPanel(); document.getElementById('tkEditText')?.focus(); break;
     case 'lobbyExit': location.hash='#board'; break;
+    case 'lbAll': S.lbAll=true; render(); break;
     case 'lbLock': {
       // Two taps, so a passer-by can't lock the lobby TV by accident.
       if(!t.classList.contains('confirm')){ t.classList.add('confirm'); t.textContent='Tap again to lock'; clearTimeout(LB.lockT); LB.lockT=setTimeout(()=>{ t.classList.remove('confirm'); t.textContent='🔒 Lock'; }, 4000); break; }
