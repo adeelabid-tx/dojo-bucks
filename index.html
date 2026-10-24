@@ -1766,7 +1766,7 @@ function renderFamilyCard(){
       ${rw.length?`<div class="fam-peek">${rw.map(it=>`<div>${iconHTML(it,46)}<b>${esc(it.label)}</b><span>${coin(14)} ${fmt(amountOf('redeem',it))}</span></div>`).join('')}</div>`:''}
       <form id="famForm" class="fam-form"><select id="famNinja" aria-label="Your ninja" required><option value="">Choose your ninja</option>${ninjaList().map(n=>`<option value="${esc(n.id)}">${esc(n.name)}</option>`).join('')}</select>
       <input id="famCodeIn" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="6-digit family code" aria-label="Family code" required><button class="btn primary" type="submit">See my ninja's rewards</button></form>
-      <p class="hint" style="margin:0">No code yet? Ask at the front desk.</p></div>`;
+      <p class="hint" style="margin:0">Get your Code from Front Desk</p></div>`;
     return;
   }
   const n=S.ninjas[S.famNinja]; if(!n){ host.innerHTML=''; return; }
