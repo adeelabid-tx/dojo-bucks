@@ -436,6 +436,15 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 
 /* award */
 .award-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
+@media (min-width:900px){ .award-grid > .card:last-child{position:sticky;top:calc(var(--hdr,120px) + 10px);max-height:calc(100vh - var(--hdr,120px) - 90px);overflow:auto} }
+.audit-ok{margin:0;font-weight:900;color:var(--good)}.audit-bad{margin:0 0 8px;font-weight:900;color:var(--bad)}
+.lbt.audit td.bad{color:var(--bad);font-family:var(--f-body);font-size:15px}.lbt.audit td{font-size:15px}.lbt.audit th small{font-weight:800;text-transform:none;letter-spacing:0}
+.pick-search{width:100%;box-sizing:border-box;margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:17px;font-weight:800;background:var(--surface);color:var(--ink)}
+.pick-search:focus{outline:none;border-color:var(--accent)}
+.sel-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px;min-height:40px;scroll-margin-top:calc(var(--hdr,120px) + 10px)}
+.sel-lbl{font-weight:900;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sel-chip{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--accent);background:var(--surface);border-radius:999px;padding:3px 10px 3px 3px;font-weight:900;font-size:15px;color:var(--ink);cursor:pointer}
+.sel-chip b{color:var(--accent);font-size:13px}
 @media (max-width:900px){ .award-grid{grid-template-columns:1fr} }
 .picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-top:14px}
 .chip{position:relative;border:3px solid transparent;background:var(--sunk);border-radius:18px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;transition:transform .12s}
@@ -676,22 +685,21 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
 
   <!-- AWARD -->
   <section class="view" id="v-award" hidden>
-    <div class="tip"><img src="mascots/sensei_ada.webp" alt=""><p>Sensei tip: tap several ninjas, then one button, to give everyone bucks at once. Made a mistake? Tap Undo.</p></div>
+    <div class="tip"><img src="mascots/sensei_ada.webp" alt=""><p>Sensei tip: search or tap a ninja, then tap what they did. Switch to <b>Several ninjas</b> to give a whole group bucks at once. Made a mistake? Tap Undo.</p></div>
     <div class="award-grid">
       <div class="card">
         <div class="spread">
           <h2>1. Pick ninjas</h2>
-          <div class="row">
-            <button class="btn" data-act="selAll">Select all</button>
-            <button class="btn ghost" data-act="selNone">Clear</button>
-          </div>
+          <div class="seg" id="pickMode" role="group" aria-label="How many ninjas"><button data-pickmode="one">One ninja</button><button data-pickmode="many">Several ninjas</button></div>
         </div>
+        <input id="pickSearch" class="pick-search" type="search" placeholder="🔍 Search a ninja by name" autocomplete="off" aria-label="Search ninjas">
         <div class="row" style="margin-top:10px">
           <div class="seg filterSeg" role="group" aria-label="Group">
             <button data-filter="all">Everyone</button>
             <button data-filter="junior">JR (5–7)</button>
             <button data-filter="ninja">Create (8+)</button>
           </div>
+          <span class="row" id="pickMany" style="margin-left:auto;gap:6px"><button class="btn sm" data-act="selAll">Select all shown</button><button class="btn ghost sm" data-act="selNone">Clear</button></span>
         </div>
         <div class="picker" id="picker"></div>
       </div>
@@ -700,7 +708,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
           <h2>2. Tap what they did</h2>
           <button class="btn ghost" data-act="actEdit" id="editAward">Edit options</button>
         </div>
-        <p class="hint" id="selHint">Pick one or more ninjas first.</p>
+        <div class="sel-bar" id="selBar"></div>
         <div id="actBar"></div>
         <h3 class="eyebrow" style="margin-top:16px;color:var(--good)">Earn bucks</h3>
         <div class="acts" id="earnGrid"></div>
@@ -762,6 +770,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
       <div id="teamList" style="margin-top:14px"></div></div>
     <div class="card"><div class="spread"><div><h2>Lobby TV</h2><p class="hint" style="margin:4px 0 0">The View only login (for example "Lobby") shows a slideshow for parents. Choose the slides and set this month's dojo goal.</p></div><a class="btn" href="#lobby" style="text-decoration:none">Preview lobby</a></div>
       <div id="lobbyAdmin" style="margin-top:12px"></div></div>
+    <div class="card"><div class="spread"><div><h2>Check bucks</h2><p class="hint" style="margin:4px 0 0">Adds up each ninja's full history (bucks given, penalties, rewards, starting bucks and your changes) and compares it with their balance and totals.</p></div><button class="btn" data-act="audit">Check now</button></div>
+      <div id="auditOut" style="margin-top:12px"></div></div>
     <div class="card"><div class="spread"><div><h2>Backup</h2><p class="hint" style="margin:4px 0 0">Download a copy of all ninjas, bucks, history, news and requests. Keep it somewhere safe, for example once a month.</p></div><button class="btn" data-act="backup">Download backup</button></div></div>
     <div class="card"><h2>Who can do what</h2><div id="rolesInfo" style="margin-top:10px"></div></div>
     <div class="card">
@@ -924,7 +934,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', lobbyCfg:{goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}, bonusTab:0, actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', pickMode:'one', pickQ:'', lobbyCfg:{goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}, bonusTab:0, actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -1063,6 +1073,11 @@ function makeSamples(){
   if(rich.balance>=g.cost){ rich.balance-=g.cost; rich.spent+=g.cost; L(rich,{kind:'redeem',item:g.id,icon:g.icon,label:g.label,amt:g.cost,at:now-2*DAY}); }
   const news=[{id:'samplenews1', text:'🍕 Pizza party Friday for every ninja who stays on track!', at:now-3600e3, sample:true},
               {id:'samplenews2', text:'🎮 Gaming Night is coming up! Save your Ninja Bucks for a pass.', at:now-7200e3, sample:true}];
+  // Give each sample ninja a "Starting bucks" line so their totals add up to their history (as real ninjas do).
+  const hist=bucksFromHistory(log);
+  ninjas.forEach(n=>{ const h=hist[n.id]||{balance:0,earned:0,spent:0,lost:0}, d=n.balance-h.balance;
+    n.spent=h.spent; n.lost=h.lost; n.earned=h.earned+Math.max(0,d);
+    if(d) log.push({id:'s0'+n.id, ninjaId:n.id, name:n.name, kind:'setup', item:'setup', icon:'🛠️', label:'Starting bucks', amt:Math.abs(d), delta:d, at:now-100*DAY}); });
   return {ninjas, log, news};
 }
 async function loadSamples(){
@@ -1186,74 +1201,138 @@ async function approveReq(r){
   if(r.type==='add') await addNinja(r.name, r.group, r.belt|0, r.level||1, r.start||0, r.head|0, r.welcome===true);
   else if(r.type==='rank'){ if(!S.ninjas[r.ninjaId]) note='Ninja was removed';
     else await api.update('ninjas', r.ninjaId, r.group==='junior' ? {group:'junior', level:r.level} : {group:'ninja', belt:r.belt|0, level:r.level}); }
-  else if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]); if(it && ids.length) await give('earn', it, ids); else note='Nothing to apply'; }
+  else if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]);
+    if(!it || !ids.length) note='Nothing to apply';
+    else if(!(await give('earn', it, ids, r.from||null))){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Already moved on since the request'}); return; } }
   else if(r.type==='redeem'){ const n=S.ninjas[r.ninjaId], it=findItem('redeem', r.item);
     if(!n || !it){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Ninja or reward no longer exists'}); toast('That ninja or reward no longer exists, so this was declined.'); return; }
     // Charge today's shop price; decline if the ninja can't cover it (the price may have changed since the request).
     else if((n.balance||0) < amountOf('redeem', it)){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Not enough bucks'}); toast(`${n.name} no longer has enough bucks, so this was declined.`); return; }
-    else await redeem(it, r.ninjaId, true); }
+    else if(!(await redeem(it, r.ninjaId, true))){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Not enough bucks'}); return; } }
   await api.update('requests', r.id, {status:'approved', decidedBy:S.me, decidedAt:Date.now(), ...(note?{note}:{})});
 }
 async function rejectReq(r){ if(!isDir()) return; await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now()}); toast('Request declined.'); }
 
 /* ---------- actions ---------- */
-async function give(kind, item, ids=[...S.selected]){
-  if(!ids.length){ toast('Pick at least one ninja first.'); return; }
-  if(item.step && !isDir()){ await sendRequest('step', {item:item.id, ninjaIds:ids}, `${item.label} sent to the Center Director for approval.`); return; }
-  const amt = amountOf(kind,item); const at=Date.now(); const undo=[]; const jobs=[]; const newBlack=[]; let skipped=0;
-  const blackItem = EARN.find(x=>x.step==='black');
-  for(const id of ids){
-    const n=S.ninjas[id]; if(!n) continue;
-    let d, patch;
-    const bf=beltFor(n), wi=bf.i;
-    const was={belt:n.belt|0, level:bf.level, group:n.group||'ninja'};
-    if(item.step && item.step!=='level' && (wi===BLACK || (item.step==='black' && wi===JR))){ skipped++; continue; }
-    const toBlack = item.step==='black' || (item.step==='belt' && wi+1===BLACK);
-    if(kind==='earn'){ d = toBlack ? amountOf('earn', blackItem) : amt; patch={balance:(n.balance||0)+d, earned:(n.earned||0)+d};
-      if(item.step==='level') patch.level=Math.min(levelsOf(wi), bf.level+1);
-      if(item.step==='belt'){ patch.belt=Math.min(BLACK, wi+1); patch.level=1; if(wi===JR) patch.group='ninja'; }
-      if(toBlack){ patch.belt=BLACK; patch.level=1; newBlack.push(n.name); } }
-    else { d=Math.min(amt, n.balance||0); patch={balance:(n.balance||0)-d, lost:(n.lost||0)+d}; }
-    const logId=uid()+id.slice(-3);
-    const label = toBlack ? 'Earned Black Belt!' : item.step==='belt' ? `Belt Up to ${BELTS[patch.belt].name}` : item.step==='level' ? (beltInfo(wi).projects ? `Finished ${stepName(wi, bf.level)}` : `Level Up to ${beltInfo(wi).name} ${stepName(wi, patch.level)}`) : item.label;
-    const ni = item.step ? beltFor({group:patch.group ?? n.group, belt:patch.belt ?? n.belt, level:patch.level ?? bf.level}) : null;
-    jobs.push(api.update('ninjas',id,patch), api.set('log',logId,{ninjaId:id,name:n.name,kind,item:toBlack?'blackbelt':item.id,icon:toBlack?blackItem.icon:item.icon,label,amt:d,at, ...(ni?{toBelt:ni.i, toLevel:ni.level}:{})}));
-    undo.push({id,kind,d,logId, was:item.step?was:null, wi, now:{belt:patch.belt ?? was.belt, level:patch.level ?? was.level, group:patch.group ?? was.group}}); popOn(id, kind, d);
+// Every balance change reads the ninja's latest numbers and saves the ninja and its history line together,
+// so two devices (or quick taps) can never overwrite each other's bucks. fn gets the ninja and returns
+// {patch, logs:[[id, data]], dels:[logId]} or null to skip.
+async function bump(id, fn){
+  if(S.mode==='db'){
+    const db=firebase.firestore(), ref=db.doc('ninjas/'+id);
+    // If another device saved this ninja at the same moment, Firebase can report the clash as "permission denied"; try again a few times.
+    for(let tries=0;;tries++) try{
+      return await db.runTransaction(async tx=>{
+        const snap=await tx.get(ref); if(!snap.exists) return null;
+        const r=fn({id, ...snap.data()}); if(!r) return null;
+        tx.update(ref, r.patch);
+        (r.logs||[]).forEach(([lid,d])=>tx.set(db.doc('log/'+lid), {...d, by:d.by||S.me}));
+        (r.dels||[]).forEach(lid=>tx.delete(db.doc('log/'+lid)));
+        return r;
+      });
+    }catch(e){
+      if(e && (e.code==='permission-denied' || e.code==='aborted') && tries<4){ await new Promise(r=>setTimeout(r, 150+Math.random()*350)); continue; }
+      console.warn(e); toast(e && e.code==='permission-denied' ? 'You do not have permission to do that.' : 'Could not save. Check your connection and try again.'); throw e; }
   }
-  if(!undo.length){ toast(skipped ? 'Already a Black Belt. There is no higher belt to give.' : 'Pick at least one ninja first.'); return; }
-  try{ await Promise.all(jobs); }catch{ return; }
+  const n=S.ninjas[id]; if(!n) return null;
+  const r=fn({...n}); if(!r) return null;
+  await api.update('ninjas', id, r.patch);
+  for(const [lid,d] of (r.logs||[])) await api.set('log', lid, d);
+  for(const lid of (r.dels||[])) await api.del('log', lid);
+  return r;
+}
+const rankKey = (i, lv) => (i+1)*100 + (lv||1);
+// A belt or level announcement only shows while it is still true, so a later correction hides it.
+function stillTrue(l){
+  if(!['beltup','levelup','blackbelt'].includes(l.item) || !Number.isInteger(l.toBelt)) return true;
+  const n=S.ninjas[l.ninjaId]; if(!n) return false;
+  const b=beltFor(n); return rankKey(b.i, b.level) >= rankKey(l.toBelt, l.toLevel);
+}
+async function give(kind, item, ids=[...S.selected], from=null){
+  if(!ids.length){ toast('Pick at least one ninja first.'); return 0; }
+  if(item.step && !isDir()){
+    const dup=pendingReqs().find(r=>r.type==='step' && r.item===item.id && (r.ninjaIds||[]).some(id=>ids.includes(id)));
+    if(dup){ toast(`${item.label} is already waiting for the Center Director for ${(dup.ninjaIds||[]).filter(id=>ids.includes(id)).map(id=>S.ninjas[id]?.name).join(', ')}.`); return 0; }
+    const at={}; ids.forEach(id=>{ const b=beltFor(S.ninjas[id]); at[id]={i:b.i, level:b.level}; });
+    await sendRequest('step', {item:item.id, ninjaIds:ids, from:at}, `${item.label} sent to the Center Director for approval.`); return 0; }
+  if(S.giving) return 0;
+  S.giving=true;
+  const at=Date.now(), undo=[], newBlack=[]; let skipped=0, stale=0;
+  const blackItem = EARN.find(x=>x.step==='black');
+  try{
+    for(const id of ids){
+      let why='';
+      let r=null;
+      try{ r=await bump(id, n=>{
+        why='';
+        const bf=beltFor(n), wi=bf.i, was={belt:n.belt|0, level:bf.level, group:n.group||'ninja'};
+        // An approved request only applies if the ninja is still where they were when it was sent.
+        if(from && from[id] && (from[id].i!==wi || from[id].level!==bf.level)){ why='stale'; return null; }
+        if(item.step && item.step!=='level' && (wi===BLACK || (item.step==='black' && wi===JR))){ why='black'; return null; }
+        const toBlack = item.step==='black' || (item.step==='belt' && wi+1===BLACK);
+        let d, patch;
+        if(kind==='earn'){ d = toBlack ? amountOf('earn', blackItem) : amountOf(kind,item); patch={balance:(n.balance||0)+d, earned:(n.earned||0)+d};
+          if(item.step==='level') patch.level=Math.min(levelsOf(wi), bf.level+1);
+          if(item.step==='belt'){ patch.belt=Math.min(BLACK, wi+1); patch.level=1; if(wi===JR) patch.group='ninja'; }
+          if(toBlack){ patch.belt=BLACK; patch.level=1; } }
+        else { d=Math.min(amountOf(kind,item), n.balance||0); patch={balance:(n.balance||0)-d, lost:(n.lost||0)+d}; }
+        const logId=uid()+id.slice(-3);
+        const label = toBlack ? 'Earned Black Belt!' : item.step==='belt' ? `Belt Up to ${BELTS[patch.belt].name}` : item.step==='level' ? (beltInfo(wi).projects ? `Finished ${stepName(wi, bf.level)}` : `Level Up to ${beltInfo(wi).name} ${stepName(wi, patch.level)}`) : item.label;
+        const ni = item.step ? beltFor({group:patch.group ?? n.group, belt:patch.belt ?? n.belt, level:patch.level ?? bf.level}) : null;
+        return {patch, logs:[[logId, {ninjaId:id,name:n.name,kind,item:toBlack?'blackbelt':item.id,icon:toBlack?blackItem.icon:item.icon,label,amt:d,at, ...(ni?{toBelt:ni.i, toLevel:ni.level}:{})}]],
+          u:{id,kind,d,logId, was:item.step?was:null, wi, now:{belt:patch.belt ?? was.belt, level:patch.level ?? was.level, group:patch.group ?? was.group}}, toBlack, name:n.name};
+      }); }catch{ continue; }
+      if(!r){ if(why==='stale') stale++; else skipped++; continue; }
+      undo.push(r.u); if(r.toBlack) newBlack.push(r.name); popOn(id, kind, r.u.d);
+    }
+  } finally { S.giving=false; }
+  if(!undo.length){ toast(stale ? 'Nothing changed: this ninja has already moved on since the request was sent.' : skipped ? 'Already a Black Belt. There is no higher belt to give.' : 'Nothing was saved. Try again.'); return 0; }
+  const amt=amountOf(kind,item);
   if(newBlack.length) celebrateBlack(newBlack, amountOf('earn', blackItem));
-  else if(item.step && undo.length){
+  else if(item.step){
     const b=beltFor(undo[0].now), names=undo.map(u=>S.ninjas[u.id]?.name).filter(Boolean), who=names.join(' & ');
     if(item.step==='belt' && b.i!==undo[0].wi) celebrateRank(names, DONE(undo[0].wi), `${beltInfo(undo[0].wi).name} belt complete`, `${who} earned ${b.name} Belt!`, `+${fmt(amt)} Ninja Bucks${names.length>1?' each':''}. Next up: ${stepName(b.i,1)}.`);
     else if(item.step==='level') celebrateRank(names, BADGE(b.i,b.level), 'Level up', `${who} reached ${b.name} ${stepName(b.i,b.level)}`, `+${fmt(amt)} Ninja Bucks${names.length>1?' each':''}.`);
   }
-  const who = undo.length===1 ? S.ninjas[undo[0].id]?.name : undo.length+' ninjas';
-  const shown = undo.length===1 ? undo[0].d : amt;
-  toast(newBlack.length && undo.length===1 ? `+${fmt(shown)} for ${who}: Earned Black Belt!` : kind==='earn' ? `+${fmt(shown)} for ${who}: ${item.label}` : `−${fmt(shown)} for ${who}: ${item.label}`, undo);
+  // The message shows what was really added or taken off (a penalty never takes a ninja below zero).
+  const sign = kind==='earn' ? '+' : '−', ds=undo.map(u=>u.d), same=ds.every(d=>d===ds[0]), total=ds.reduce((a,d)=>a+d,0);
+  const who = undo.length===1 ? S.ninjas[undo[0].id]?.name : `${undo.length} ninjas`;
+  const lbl = newBlack.length && undo.length===1 ? 'Earned Black Belt!' : item.label;
+  const short = kind==='penalty' ? undo.filter(u=>u.d<amt).map(u=>S.ninjas[u.id]?.name) : [];
+  toast(undo.length===1 || !same ? `${sign}${fmt(undo.length===1?ds[0]:total)}${undo.length>1?' in total':''} for ${who}: ${lbl}${short.length?` (${short.join(', ')} had fewer than ${amt} bucks)`:''}`
+    : `${sign}${fmt(ds[0])} each for ${who}: ${lbl}`, undo);
+  return undo.length;
 }
 // Senseis give Quick Perks straight away; bigger rewards wait for the Center Director.
 const canRedeemNow = item => isDir() || quickIds().includes(item.id);
 async function redeem(item, ninjaId=S.shopper, approved=false){
-  const n=S.ninjas[ninjaId]; if(!n) return; const cost=amountOf('redeem',item);
+  const n=S.ninjas[ninjaId]; if(!n) return false; const cost=amountOf('redeem',item);
   if(!isDir() && !approved && quickIds().includes(item.id) && (n.balance||0)-heldFor(n.id) < cost){ S.confirm=null; toast(`${n.name} needs more bucks for this.`); render(); return; }
   if(!canRedeemNow(item) && !approved){ S.confirm=null; if((n.balance||0)-heldFor(n.id) < cost){ toast(`${n.name} needs more bucks for this.`); render(); return; }
     await sendRequest('redeem', {ninjaId:n.id, item:item.id, cost}, `${n.name}'s ${item.label} is waiting for the Center Director.`); render(); return; }
-  if((n.balance||0) < cost){ toast(`${n.name} needs ${fmt(cost-n.balance)} more bucks.`); return; }
-  const logId=uid(); S.confirm=null;
-  try{ await Promise.all([api.update('ninjas',n.id,{balance:n.balance-cost, spent:(n.spent||0)+cost}), api.set('log',logId,{ninjaId:n.id,name:n.name,kind:'redeem',item:item.id,icon:item.icon,label:item.label,amt:cost,at:Date.now()})]); }catch{ return; }
+  if(S.giving) return false;
+  const logId=uid(); S.confirm=null; S.giving=true; let r=null, short=0;
+  try{ r=await bump(n.id, c=>{ short=0; if((c.balance||0) < cost){ short=cost-(c.balance||0); return null; }
+      return {patch:{balance:(c.balance||0)-cost, spent:(c.spent||0)+cost}, logs:[[logId,{ninjaId:n.id,name:c.name,kind:'redeem',item:item.id,icon:item.icon,label:item.label,amt:cost,at:Date.now()}]]}; }); }
+  catch{ return false; } finally { S.giving=false; }
+  if(!r){ toast(`${n.name} needs ${fmt(short)} more bucks.`); render(); return false; }
   celebrate(n, item, cost);
   toast(`${n.name} spent ${fmt(cost)} bucks on ${item.label}`, [{id:n.id,kind:'redeem',d:cost,logId}]);
+  return true;
 }
 async function undoAll(list){
-  const jobs=[];
-  for(const u of list){ const n=S.ninjas[u.id]; if(n){
-    const p = u.kind==='earn' ? {balance:Math.max(0,n.balance-u.d), earned:Math.max(0,n.earned-u.d), ...(u.was||{})}
-            : u.kind==='penalty' ? {balance:n.balance+u.d, lost:Math.max(0,(n.lost||0)-u.d)}
-            : {balance:n.balance+u.d, spent:Math.max(0,(n.spent||0)-u.d)};
-    jobs.push(api.update('ninjas',u.id,p)); }
-    jobs.push(api.del('log',u.logId)); }
-  try{ await Promise.all(jobs); toast('Undone.'); }catch{}
+  const blocked=[]; let done=0;
+  for(const u of list){
+    try{ const r=await bump(u.id, n=>{
+      // Undoing bucks that were already spent would push the balance below zero, so it is refused instead.
+      if(u.kind==='earn' && (n.balance||0) < u.d){ return null; }
+      const patch = u.kind==='earn' ? {balance:(n.balance||0)-u.d, earned:Math.max(0,(n.earned||0)-u.d), ...(u.was||{})}
+        : u.kind==='penalty' ? {balance:(n.balance||0)+u.d, lost:Math.max(0,(n.lost||0)-u.d)}
+        : {balance:(n.balance||0)+u.d, spent:Math.max(0,(n.spent||0)-u.d)};
+      return {patch, dels:[u.logId]}; });
+      if(r) done++; else blocked.push(S.ninjas[u.id]?.name); }catch{}
+  }
+  toast(blocked.length ? `Undone${done?' for the others':''}. ${blocked.join(', ')} already spent those bucks, so that can't be undone.` : 'Undone.');
 }
 async function addNinja(name, group, belt, level, start=0, head=S.head, welcome=false){
   const id=uid(); start=Math.max(0, Math.round(start||0));
@@ -1317,6 +1396,7 @@ function celebrate(n, item, cost){
 
 /* ---------- render ---------- */
 function render(){
+  document.documentElement.style.setProperty('--hdr', (document.querySelector('header.top')?.offsetHeight||110)+'px');
   document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
   document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
   document.querySelectorAll('.filterSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.filter===S.filter));
@@ -1451,7 +1531,7 @@ function tickerRaw(){
   }
   const td=new Date(now), mmdd=String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
   all.filter(n=>n.bday===mmdd).forEach(n=>add('bday:'+n.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy birthday, <b>${esc(n.name)}</b>! Have an awesome day! 🎉`));
-  const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup');
+  const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup' && stillTrue(l));
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
   const itemOf = id => [...earnList(), ...bonusItems(), ...shopTiers().flatMap(t=>t.items)].find(x=>x.id===id);
   let regular=0;
@@ -1627,12 +1707,17 @@ function chipHTML(n, pressed, act){
   return `<button class="chip" data-act="${act}" data-id="${n.id}" aria-pressed="${pressed}">${avatar(n,52)}<span class="nm">${esc(n.name)}</span><span class="bal num">${coin(14)}${fmt(n.balance)}</span></button>`;
 }
 function renderAward(){
-  const list=filtered(); const picker=document.getElementById('picker');
+  const q=(S.pickQ||'').trim().toLowerCase(), many=S.pickMode==='many';
+  const list=filtered().filter(n=>!q || n.name.toLowerCase().includes(q)); const picker=document.getElementById('picker');
   [...S.selected].forEach(id=>{ if(!S.ninjas[id]) S.selected.delete(id); });
-  picker.innerHTML = !ninjaList().length ? emptyDojo() : list.map(n=>chipHTML(n, S.selected.has(n.id), 'toggle')).join('') || '<p class="hint">No ninjas in this group.</p>';
+  if(!many && S.selected.size>1) S.selected=new Set([...S.selected].slice(-1));
+  document.querySelectorAll('#pickMode button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.pickmode===(many?'many':'one')));
+  document.getElementById('pickMany').hidden=!many;
+  picker.innerHTML = !ninjaList().length ? emptyDojo() : list.map(n=>chipHTML(n, S.selected.has(n.id), 'toggle')).join('') || `<p class="hint">${q?`No ninja called "${esc(S.pickQ)}".`:'No ninjas in this group.'}</p>`;
   picker.style.display = ninjaList().length ? '' : 'block';
   const k=S.selected.size; const none=!k || S.readOnly;
-  document.getElementById('selHint').textContent = k ? `${k} ninja${k>1?'s':''} selected: ${[...S.selected].map(id=>S.ninjas[id]?.name).join(', ')}` : 'Pick one or more ninjas first.';
+  document.getElementById('selBar').innerHTML = k ? `<span class="sel-lbl">Giving to</span>${[...S.selected].map(id=>`<button class="sel-chip" data-act="toggle" data-id="${esc(id)}" aria-label="Remove ${esc(S.ninjas[id]?.name)}">${avatar(S.ninjas[id],26)}${esc(S.ninjas[id]?.name)} <b>✕</b></button>`).join('')}`
+    : `<span class="hint" style="margin:0">${many?'Tap the ninjas who earned it.':'Tap a ninja on the left (or search) first.'}</span>`;
   if(S.actEdit) return renderActEditor();
   const tile=(kind,it)=>{ const a=amountOf(kind,it);
     return `<button class="act ${kind}" data-act="give" data-kind="${kind}" data-item="${esc(it.id)}" ${none?'disabled':''}><span class="em">${it.img?badge(it.img,40):esc(it.icon||'⭐')}</span><span class="lbl">${esc(it.label)}${it.note?`<small class="act-note">${esc(it.note)}</small>`:''}${it.step && !isDir()?'<span class="needs">Needs director approval</span>':''}</span><span class="amt num">${kind==='earn'?'+':'−'}${a}</span></button>`; };
@@ -1945,24 +2030,24 @@ function markSetup(){
 async function adjustBucks(id, sign){
   const n=S.ninjas[id], amt=Math.round(Number(S.adj.amt)); if(!n || !isDir()) return;
   if(!(amt>0)){ toast('Type how many bucks first.'); return; }
-  const delta = sign>0 ? amt : -Math.min(amt, n.balance||0);
+  const note=S.adj.note.trim(); let delta=0;
+  try{ await bump(id, c=>{ delta = sign>0 ? amt : -Math.min(amt, c.balance||0); if(!delta) return null;
+      const patch={balance:(c.balance||0)+delta}; if(delta>0) patch.earned=(c.earned||0)+delta;
+      const label = note || (delta>0 ? 'Bucks added by the Center Director' : 'Bucks removed by the Center Director');
+      return {patch, logs:[[uid(), {ninjaId:id, name:c.name, kind:'setup', item:'adjust', icon:delta>0?'➕':'➖', label, amt:Math.abs(delta), delta, at:Date.now()}]]}; }); }catch{ return; }
   if(!delta){ toast(`${n.name} has no bucks to remove.`); return; }
-  const note=S.adj.note.trim(), label = note || (delta>0 ? 'Bucks added by the Center Director' : 'Bucks removed by the Center Director');
-  const patch={balance:(n.balance||0)+delta}; if(delta>0) patch.earned=(n.earned||0)+delta;
-  try{ await Promise.all([api.update('ninjas', id, patch), api.set('log', uid(), {ninjaId:id, name:n.name, kind:'setup', item:'adjust', icon:delta>0?'➕':'➖', label, amt:Math.abs(delta), delta, at:Date.now()})]); }catch{ return; }
   S.adj={amt:'', note:''}; render();
   toast(delta>0 ? `Added ${fmt(delta)} bucks for ${n.name}.` : `Removed ${fmt(-delta)} bucks from ${n.name}.`);
 }
 async function saveSetup(){
   const ch=setupChanges(); if(!ch.length){ toast('Nothing to save yet.'); return; }
-  const jobs=[], at=Date.now();
+  const at=Date.now();
   for(const {n,bal,belt,lv} of ch){
-    const delta=bal-(n.balance||0), patch= belt===JR ? {group:'junior', level:lv} : {group:'ninja', belt, level:lv};
-    if(delta){ patch.balance=bal; if(delta>0) patch.earned=(n.earned||0)+delta;
-      jobs.push(api.set('log', uid(), {ninjaId:n.id, name:n.name, kind:'setup', item:'setup', icon:'🛠️', label:'Starting bucks', amt:Math.abs(delta), delta, at})); }
-    jobs.push(api.update('ninjas', n.id, patch));
+    try{ await bump(n.id, c=>{ const delta=bal-(c.balance||0), patch= belt===JR ? {group:'junior', level:lv} : {group:'ninja', belt, level:lv};
+      const logs=[]; if(delta){ patch.balance=bal; if(delta>0) patch.earned=(c.earned||0)+delta;
+        logs.push([uid(), {ninjaId:n.id, name:c.name, kind:'setup', item:'setup', icon:'🛠️', label:'Starting bucks', amt:Math.abs(delta), delta, at}]); }
+      return {patch, logs}; }); }catch{ return; }
   }
-  try{ await Promise.all(jobs); }catch{ return; }
   document.getElementById('setupHost').dataset.ready=''; render();
   toast(`Saved starting bucks for ${ch.length} ninja${ch.length>1?'s':''}.`);
 }
@@ -1985,6 +2070,43 @@ async function saveLobbyCfg(patch){
   const next={...(S.lobbyCfg||{}), ...patch}; S.lobbyCfg=next;
   try{ await api.set('settings', 'lobby', next); toast('Lobby TV updated.'); }catch{}
 }
+// Audit: what each ninja's numbers should be, worked out from every history line ever saved.
+function bucksFromHistory(logs){
+  const m={};
+  logs.forEach(l=>{ const x=m[l.ninjaId] ||= {balance:0, earned:0, spent:0, lost:0, lines:0}; x.lines++;
+    const a=l.amt||0;
+    if(l.kind==='earn'){ x.balance+=a; x.earned+=a; }
+    else if(l.kind==='penalty'){ x.balance-=a; x.lost+=a; }
+    else if(l.kind==='redeem'){ x.balance-=a; x.spent+=a; }
+    else if(l.kind==='setup'){ const d = Number.isFinite(l.delta) ? l.delta : a; x.balance+=d; if(d>0) x.earned+=d; } });
+  return m;
+}
+async function runAudit(){
+  const host=document.getElementById('auditOut'); host.innerHTML='<p class="hint" style="margin:0">Checking…</p>';
+  let logs;
+  try{ logs = S.mode==='db' ? (await firebase.firestore().collection('log').get()).docs.map(d=>d.data()) : S.log; }
+  catch(e){ console.warn(e); host.innerHTML='<p class="hint" style="margin:0">Could not read the history. Check the connection and try again.</p>'; return; }
+  const exp=bucksFromHistory(logs), keys=['balance','earned','spent','lost'];
+  S.audit = ninjaList().map(n=>{ const e=exp[n.id]||{balance:0,earned:0,spent:0,lost:0,lines:0};
+    const diff=keys.filter(k=>(n[k]||0)!==e[k]); return {id:n.id, e, diff}; }).filter(r=>r.diff.length);
+  S.auditAt=Date.now(); S.auditCount=ninjaList().length; S.auditLines=logs.length; renderAudit();
+}
+function renderAudit(){
+  const host=document.getElementById('auditOut'); if(!host || !S.auditAt) return;
+  const L=S.audit, keys=[['balance','Balance'],['earned','Earned'],['spent','Spent'],['lost','Lost']];
+  host.innerHTML = !L.length ? `<p class="audit-ok">✅ All ${S.auditCount} ninjas match their history (${fmt(S.auditLines)} history lines checked).</p>`
+    : `<p class="audit-bad">⚠️ ${L.length} of ${S.auditCount} ninjas don't match their history.</p>
+      <div class="lbt-wrap"><table class="lbt audit"><thead><tr><th>Ninja</th>${keys.map(([,t])=>`<th class="n">${t}<br><small>now → history</small></th>`).join('')}<th></th></tr></thead><tbody>
+      ${L.map(r=>{ const n=S.ninjas[r.id]; return `<tr><td><b>${esc(n?.name||'?')}</b></td>${keys.map(([k])=>`<td class="n ${r.diff.includes(k)?'bad':''}">${fmt(n?.[k]||0)}${r.diff.includes(k)?` → <b>${fmt(r.e[k])}</b>`:''}</td>`).join('')}
+        <td><button class="btn sm" data-act="auditFix" data-id="${esc(r.id)}">Use history</button></td></tr>`; }).join('')}</tbody></table></div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" data-act="auditFixAll">Use history for all ${L.length}</button><span class="hint" style="margin:0">Sets the four numbers to what the history adds up to.</span></div>`;
+}
+async function auditFix(ids){
+  if(!isDir()) return; let n=0;
+  for(const id of ids){ const r=S.audit.find(x=>x.id===id); if(!r) continue;
+    try{ await bump(id, ()=>({patch:{balance:Math.max(0,r.e.balance), earned:r.e.earned, spent:r.e.spent, lost:r.e.lost}})); n++; }catch{} }
+  toast(`Corrected ${n} ninja${n===1?'':'s'}.`); runAudit();
+}
 function renderAdmin(){
   const pend=pendingReqs();
   document.getElementById('approveAllBtn').hidden = pend.length<2;
@@ -2000,6 +2122,7 @@ function renderAdmin(){
     <p class="hint" style="margin:12px 0 0"><b>Locking:</b> tap Lock at the top when you step away. Dojo devices lock themselves after 10 minutes without use, except View only screens.</p>`;
   renderTeam();
   renderLobbyAdmin();
+  renderAudit();
   renderSetup();
   const hasSample = Object.values(S.ninjas).some(n=>n.sample);
   document.getElementById('sampleBar').innerHTML = S.mode!=='db' ? '' : hasSample ? `<div class="card spread"><span>Sample ninjas are in your dojo (marked Sample). Remove them when you're ready. Your real ninjas stay.</span><button class="btn" data-act="clearSamples">Remove sample ninjas</button></div>` : '';
@@ -2088,7 +2211,7 @@ function renderDrawer(){
         ${!isDir() ? (canWrite() ? `<div class="row">${pendingReqs().some(r=>r.type==='rank'&&r.ninjaId===n.id)?'<span class="status pending">Belt change waiting for approval</span>':''}<button class="btn" data-act="reqRank">Request belt or level change</button></div><p class="hint" style="margin:0">Belt, level and group changes are sent to the Center Director for approval.</p>` : '') : S.confirmRemove ? `<div class="confirm"><p>Remove ${esc(n.name)} from the dojo? Their balance of ${fmt(n.balance)} bucks goes with them.</p><div class="row"><button class="btn primary" data-act="remove">Yes, remove</button><button class="btn ghost" data-act="cancelRemove">Keep</button></div></div>`
           : `<button class="btn ghost" data-act="askRemove" style="justify-self:start">Remove ninja</button>`}
       </div></div>
-    <div><h3 style="font-size:18px">Recent history</h3><ul class="feed" style="max-height:none">${hist.map(l=>`<li><span class="ic">${l.icon}</span><span class="tx">${esc(l.label)}<small>${ago(l.at)}</small></span><span class="d ${l.kind} num">${(l.kind==='setup' ? ((l.delta??0)>=0?'+':'−') : l.kind==='earn'?'+':'−')}${fmt(l.amt)}</span></li>`).join('') || '<li><span></span><span class="tx hint">No activity in the last 8 weeks.</span><span></span></li>'}</ul></div>
+    <div><h3 style="font-size:18px">Recent history</h3><ul class="feed" style="max-height:none">${hist.map(l=>`<li><span class="ic">${l.icon}</span><span class="tx">${esc(l.label)}<small>${ago(l.at)}${l.by && personName(l.by) ? ` · by ${esc(personName(l.by))}` : ''}</small></span><span class="d ${l.kind} num">${(l.kind==='setup' ? ((l.delta??0)>=0?'+':'−') : l.kind==='earn'?'+':'−')}${fmt(l.amt)}</span></li>`).join('') || '<li><span></span><span class="tx hint">No activity in the last 8 weeks.</span><span></span></li>'}</ul></div>
   </aside></div>`;
   host.querySelector('.drawer').scrollTop = prevScroll; S.drawerShown = S.drawer;
   if(keep){ const el=document.getElementById(keep); el && el.focus({preventScroll:true}); }
@@ -2121,7 +2244,7 @@ const bdayOf = n => /^\d\d-\d\d$/.test(n.bday||'') ? {m:+n.bday.slice(0,2), d:+n
 // Big moments in the log: belts, levels, curriculum bonuses and finished projects.
 function achievements(from, to=Infinity){
   const bonusIds=new Set(bonusItems().map(x=>x.id)), seen=new Set(), out=[];
-  S.log.filter(l=>l.at>=from && l.at<to && l.kind==='earn' && S.ninjas[l.ninjaId] && (STEPS.some(x=>x.id===l.item) || bonusIds.has(l.item) || l.amt>=20)).forEach(l=>{
+  S.log.filter(l=>l.at>=from && l.at<to && l.kind==='earn' && S.ninjas[l.ninjaId] && stillTrue(l) && (STEPS.some(x=>x.id===l.item) || bonusIds.has(l.item) || l.amt>=20)).forEach(l=>{
     const k=l.ninjaId+'|'+l.item+'|'+(l.toBelt??'')+'|'+(l.toLevel??''); if(seen.has(k)) return; seen.add(k); out.push(l); });
   const rank = l => l.item==='blackbelt' ? 1e6 : l.item==='beltup' ? 5e5 : (l.amt||0);
   return out.sort((a,b)=>rank(b)-rank(a) || b.at-a.at);
@@ -2149,7 +2272,7 @@ function lbAvailable(){
   });
 }
 function lbSpotlights(){ const since=Date.now()-7*DAY, bonus=new Set(bonusItems().map(x=>x.id));
-  return S.log.filter(l=>l.at>=since && l.kind==='earn' && S.ninjas[l.ninjaId] && (l.item==='beltup' || l.item==='blackbelt' || (bonus.has(l.item) && l.amt>=250))).slice(0,6); }
+  return S.log.filter(l=>l.at>=since && l.kind==='earn' && S.ninjas[l.ninjaId] && stillTrue(l) && (l.item==='beltup' || l.item==='blackbelt' || (bonus.has(l.item) && l.amt>=250))).slice(0,6); }
 function lbLegendTier(){ const T=shopTiers(); return T.find(t=>t.parents) || T.find(t=>t.id==='legendary') || T[T.length-1]; }
 
 const lbQr = () => { if(!window.qrcode) return ''; const q=qrcode(0,'M'); q.addData(PARENT_URL); q.make(); return q.createSvgTag({cellSize:4, margin:1, scalable:true}); };
@@ -2240,7 +2363,7 @@ function lbPath(){
   const leaders=[...create].sort((a,b)=>beltFor(b).i-beltFor(a).i || beltFor(b).level-beltFor(a).level || (b.earned||0)-(a.earned||0)).slice(0,3);
   const card=(n,i)=>{ const b=beltFor(n); return `<div style="background:${i?'#fff':'linear-gradient(160deg,#FFF4C2,#fff)'};border-radius:28px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 0 3px ${i?'#DCD7EE':'#F6B60A'};position:relative;${i?'':'transform:translateY(-14px)'}"><span style="position:absolute;top:-24px;font-size:46px">${['🥇','🥈','🥉'][i]}</span>${lbAv(n,118)}<div class="d" style="font-size:38px;line-height:1">${esc(n.name)}</div><div style="display:flex;align-items:center;gap:6px;font-weight:900;font-size:21px"><img src="badges/${BADGE(b.i,b.level)}.webp" alt="" style="height:36px">${esc(b.name)} Belt</div><div style="font-weight:800;font-size:18px;color:#69658E">${esc(stepName(b.i,b.level))}</div></div>`; };
   const order=[1,0,2].filter(i=>leaders[i]).map(i=>card(leaders[i],i)).join('');
-  const recent=S.log.find(l=>l.item==='beltup' && Date.now()-l.at<7*DAY && S.ninjas[l.ninjaId] && S.ninjas[l.ninjaId].group!=='junior');
+  const recent=S.log.find(l=>l.item==='beltup' && Date.now()-l.at<7*DAY && S.ninjas[l.ninjaId] && stillTrue(l) && S.ninjas[l.ninjaId].group!=='junior');
   let callout=''; if(recent){ const k=beltFor(S.ninjas[recent.ninjaId]).i, pt=pts[k]; if(pt) callout=`<div style="position:absolute;left:${pt[0]-110}px;top:${pt[1]+52}px;width:220px;text-align:center;z-index:4">${lbAv(S.ninjas[recent.ninjaId],56)}<br><div class="lb-pill" style="background:#E5402B;color:#fff;margin-top:4px;white-space:nowrap">${esc(S.ninjas[recent.ninjaId].name)} just got here! 🎉</div></div>`; }
   const ms=monthStart(Date.now()), mlog=S.log.filter(l=>l.at>=ms);
   return `<svg width="1920" height="990" style="position:absolute;inset:0;z-index:2"><path d="${path}" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><path d="${path}" fill="none" stroke="#F6B60A" stroke-width="8" stroke-dasharray="2 22" stroke-linecap="round"/></svg>${st}${callout}
@@ -2399,13 +2522,21 @@ document.addEventListener('click', e=>{
   const pj=e.target.closest('[data-pjump]'); if(pj){ const el=document.getElementById(pj.dataset.pjump), top=document.querySelector('header.top').offsetHeight;
     if(el) scrollTo({top:el.getBoundingClientRect().top+scrollY-top-10, behavior:'smooth'}); return; }
   const bt=e.target.closest('[data-bonustab]'); if(bt){ S.bonusTab=+bt.dataset.bonustab; renderAward(); return; }
+  const pm=e.target.closest('[data-pickmode]'); if(pm){ S.pickMode=pm.dataset.pickmode; if(S.pickMode==='one' && S.selected.size>1) S.selected=new Set(); render(); return; }
   const mb=e.target.closest('[data-metric]'); if(mb){ S.metric=mb.dataset.metric; render(); return; }
   const t=e.target.closest('[data-act]'); if(!t) return;
   const a=t.dataset.act, id=t.dataset.id;
   if((a==='closeDrawer' || a==='closeCelebrate') && t!==e.target && e.target.closest('.drawer,.box') && !e.target.closest('button[data-act]')) return;
   switch(a){
-    case 'toggle': S.selected.has(id)?S.selected.delete(id):S.selected.add(id); render(); break;
-    case 'selAll': filtered().forEach(n=>S.selected.add(n.id)); render(); break;
+    case 'toggle': {
+      const fromBar=!!t.closest('#selBar');
+      if(S.pickMode==='many' || fromBar){ S.selected.has(id)?S.selected.delete(id):S.selected.add(id); }
+      else { S.selected = S.selected.has(id) && S.selected.size===1 ? new Set() : new Set([id]); }
+      render();
+      // On a phone the actions are below the list, so jump to them after picking one ninja.
+      if(!fromBar && S.pickMode!=='many' && S.selected.size && innerWidth<900) document.getElementById('selBar')?.scrollIntoView({behavior:'smooth', block:'start'});
+      break; }
+    case 'selAll': { const q=(S.pickQ||'').trim().toLowerCase(); filtered().filter(n=>!q || n.name.toLowerCase().includes(q)).forEach(n=>S.selected.add(n.id)); render(); break; }
     case 'selNone': S.selected.clear(); render(); break;
     case 'give': give(t.dataset.kind, findItem(t.dataset.kind, t.dataset.item)); break;
     case 'toggleEdit': S.editing=!S.editing; render(); break;
@@ -2451,6 +2582,9 @@ document.addEventListener('click', e=>{
     case 'tkEdit': S.tkEditing=t.dataset.key; S.tkEditText=t.dataset.text; renderNewsPanel(); document.getElementById('tkEditText')?.focus(); break;
     case 'lobbyExit': location.hash='#board'; break;
     case 'lbAll': S.lbAll=true; render(); break;
+    case 'audit': runAudit(); break;
+    case 'auditFix': auditFix([id]); break;
+    case 'auditFixAll': auditFix(S.audit.map(r=>r.id)); break;
     case 'lbLock': {
       // Two taps, so a passer-by can't lock the lobby TV by accident.
       if(!t.classList.contains('confirm')){ t.classList.add('confirm'); t.textContent='Tap again to lock'; clearTimeout(LB.lockT); LB.lockT=setTimeout(()=>{ t.classList.remove('confirm'); t.textContent='🔒 Lock'; }, 4000); break; }
@@ -2492,10 +2626,11 @@ document.addEventListener('change', e=>{ const el=e.target;
   if(el.dataset && el.dataset.tksel!=null){ el.checked ? S.tkSel.add(el.dataset.tksel) : S.tkSel.delete(el.dataset.tksel); renderNewsPanel(); }
   else if(el.id==='tkSelAll'){ tickerShown().forEach(x=>el.checked ? S.tkSel.add(x.key) : S.tkSel.delete(x.key)); renderNewsPanel(); }
 });
-document.addEventListener('input', e=>{ if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='adjNote') S.adj.note=e.target.value; if(e.target.id==='tkEditText') S.tkEditText=e.target.value; });
+document.addEventListener('input', e=>{ if(e.target.id==='pickSearch'){ S.pickQ=e.target.value; renderAward(); return; } if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='adjNote') S.adj.note=e.target.value; if(e.target.id==='tkEditText') S.tkEditText=e.target.value; });
 { const vp=document.querySelector('.tk-viewport'); vp.addEventListener('mouseenter',()=>tk.paused=true); vp.addEventListener('mouseleave',()=>tk.paused=false); }
 window.addEventListener('resize', ()=>tkFill());
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.drawer){ S.drawer=null; render(); } if(e.key==='Enter' && e.target.matches && e.target.matches('tr[data-act="open"]')) e.target.click(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.id==='pickSearch'){ const c=document.querySelector('#picker .chip'); if(c) c.click(); e.target.select(); return; }
+  if(e.key==='Escape' && S.drawer){ S.drawer=null; render(); } if(e.key==='Enter' && e.target.matches && e.target.matches('tr[data-act="open"]')) e.target.click(); });
 document.addEventListener('submit', e=>{
   if(e.target.id!=='teamForm') return; e.preventDefault();
   const name=document.getElementById('tmName').value.trim(), role=document.getElementById('tmRole').value, pin=document.getElementById('tmPin').value.trim();
