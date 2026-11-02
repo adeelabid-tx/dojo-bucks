@@ -2733,7 +2733,8 @@ function sbHistHTML(list, boss){
 }
 function sbShopHTML(me){
   const bal=me?sbBal(me).balance-sbHeld(me):0;
-  return `<div class="sb-shop">${sbCfg().shop.map(it=>{ const c=toNum(it.amt), ok=me && bal>=c, w=me && S.sreq.some(r=>r.status==='pending' && r.senseiId===me && r.item===it.id);
+  // Cheapest first, so senseis see what they can get soonest.
+  return `<div class="sb-shop">${[...sbCfg().shop].sort((a,b)=>toNum(a.amt)-toNum(b.amt) || a.label.localeCompare(b.label)).map(it=>{ const c=toNum(it.amt), ok=me && bal>=c, w=me && S.sreq.some(r=>r.status==='pending' && r.senseiId===me && r.item===it.id);
     return `<div class="sb-rw ${ok?'ok':''}"><span class="sb-em">${esc(it.icon)}</span><b>${esc(it.label)}</b><span class="sb-cost">${coin(16)} ${fmt(c)}</span>${!me?'':w?'<span class="status pending">Requested</span>':`<button class="btn ${ok?'gold':''} sm" data-act="sbReq" data-id="${esc(it.id)}" ${ok?'':'disabled'}>${ok?'Request':`${fmt(c-bal)} more`}</button>`}</div>`; }).join('')}</div>
     ${me?'<p class="hint" style="margin:8px 0 0">The Center Director approves every sensei reward.</p>':''}`;
 }
