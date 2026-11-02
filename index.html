@@ -455,6 +455,7 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .act.sb-bigwin{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 26%,var(--surface)),var(--surface))}.act.sb-bigwin .amt{color:var(--gold-deep)}
 .sb-emi{width:56px!important;flex:none!important;min-width:0!important;text-align:center;font-size:22px}
 .sb-feed li{grid-template-columns:32px 1fr auto auto}
+.bd-cell select{border:2px solid var(--line);border-radius:10px;padding:5px 6px;font-weight:800;background:var(--surface);color:var(--ink);margin-right:4px}
 .audit-ok{margin:0;font-weight:900;color:var(--good)}.audit-bad{margin:0 0 8px;font-weight:900;color:var(--bad)}
 .lbt.audit td.bad{color:var(--bad);font-family:var(--f-body);font-size:15px}.lbt.audit td{font-size:15px}.lbt.audit th small{font-weight:800;text-transform:none;letter-spacing:0}
 .pick-search{width:100%;box-sizing:border-box;margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:17px;font-weight:800;background:var(--surface);color:var(--ink)}
@@ -1013,7 +1014,7 @@ function startDb(db){
   const pm=new Date(); pm.setDate(1); pm.setHours(0,0,0,0); pm.setMonth(pm.getMonth()-1);
   const since = Math.min(weekStart(Date.now()) - 7*7*DAY, pm.getTime());
   let gotN=false, gotL=false;
-  const ready = () => { if(gotN && gotL){ S.loaded=true; } render(); };
+  const ready = () => { if(gotN && gotL){ S.loaded=true; setTimeout(checkBirthdayBonuses, 2500); } render(); };
   db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = cleanNinja({id:d.id, ...d.data()})); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
   db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
   // Everyone (staff, lobby, parents and families) needs the dojo's prices, goal, options and news.
@@ -1056,9 +1057,9 @@ function startLocal(){
   let saved=null; try{ saved = JSON.parse(localStorage.getItem(LKEY)||'null'); }catch{}
   if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; S.tickerCfg=saved.tickerCfg||S.tickerCfg; S.actions=saved.actions||null; S.lobbyCfg=saved.lobbyCfg||S.lobbyCfg; S.demoFam=saved.demoFam||{}; }
   else { const s = makeSamples(); s.ninjas.forEach(n=>S.ninjas[n.id]=n); S.log = s.log.sort((a,b)=>b.at-a.at); S.news = s.news; }
-  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions, lobbyCfg:S.lobbyCfg, demoFam:S.demoFam, sb:S.sb, slog:S.slog, sreq:S.sreq, scfg:S.scfg, sawards:S.sawards})); }catch{} };
+  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions, lobbyCfg:S.lobbyCfg, demoFam:S.demoFam, sb:S.sb, slog:S.slog, sreq:S.sreq, scfg:S.scfg, sawards:S.sawards, bdaypay:S.bdaypay})); }catch{} };
   S._persist=persist;
-  if(saved && saved.sb){ S.sb=saved.sb; S.slog=saved.slog||[]; S.sreq=saved.sreq||[]; S.scfg=saved.scfg||null; S.sawards=saved.sawards||{}; } else sbSamples();
+  if(saved && saved.sb){ S.sb=saved.sb; S.slog=saved.slog||[]; S.sreq=saved.sreq||[]; S.scfg=saved.scfg||null; S.sawards=saved.sawards||{}; S.bdaypay=saved.bdaypay||{}; } else sbSamples();
   const col = c => c==='ninjas' ? 'ninjas' : c;
   api = {
     set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else if(id==='actions') S.actions=d; else if(id==='lobby') S.lobbyCfg=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
@@ -1066,6 +1067,7 @@ function startLocal(){
     del:async(c,id)=>{ if(c==='staff'){ const m={...S.staff}; delete m[id]; S.staff=m; } if(c==='ninjas') delete S.ninjas[id]; else if(c==='log') S.log=S.log.filter(x=>x.id!==id); else if(c==='news') S.news=S.news.filter(x=>x.id!==id); else if(c==='requests') S.requests=S.requests.filter(x=>x.id!==id); persist(); render(); },
   };
   S.loaded=true;
+  setTimeout(checkBirthdayBonuses, 800);
   showBanner('Demo mode: made-up sample ninjas, saved only in this browser. Use the Director / Sensei / Parent / Family switch at the top to try each role. Open #lobby to see the lobby TV slideshow. Open the site without ?demo to use the real dojo.');
   render();
 }
@@ -1157,17 +1159,19 @@ const ROLE_NAMES = {director:'Center Director', sensei:'Sensei', viewer:'View on
 const personName = id => { const p=S.staff[id]; if(p) return p.role==='viewer' || p.role==='parent' ? p.name : `Sensei ${p.name}`; if(id && id===S.ownerUid) return 'Center Director'; if(id==='preview-director') return 'Center Director (demo)'; if(id==='preview-sensei') return 'Sensei (demo)'; return ''; };
 function renderTeam(){
   const host=document.getElementById('teamList'); if(!host) return;
+  if(document.activeElement?.dataset?.sbd && host.contains(document.activeElement)) return;
   const rows=[];
-  if(S.mode==='db') rows.push(`<tr><td><b>${S.isOwner?'You':'Center Director'}</b> <span class="hint">(owner, signs in with email)</span></td><td><b>Center Director</b></td><td></td><td></td></tr>`);
+  if(S.mode==='db') rows.push(`<tr><td><b>${S.isOwner?'You':'Center Director'}</b> <span class="hint">(owner, signs in with email)</span></td><td></td><td><b>Center Director</b></td><td></td><td></td></tr>`);
   Object.values(S.staff).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
     const editing = S.pinFor===p.id, removing = S.removeFor===p.id, self = p.id===S.me;
     rows.push(`<tr><td><b>${esc(personName(p.id))}</b>${self?' <span class="hint">(you)</span>':''}</td>
+      <td class="bd-cell">${p.role==='parent'||p.role==='viewer' ? '' : `<select data-sbd="${esc(p.id)}" data-f="m" aria-label="Birthday month"><option value="">Month</option>${MONTHS.map((m,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(p)?.m===k+1?'selected':''}>${m.slice(0,3)}</option>`).join('')}</select><select data-sbd="${esc(p.id)}" data-f="d" aria-label="Birthday day"><option value="">Day</option>${Array.from({length:31},(_,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(p)?.d===k+1?'selected':''}>${k+1}</option>`).join('')}</select><select data-sbd="${esc(p.id)}" data-f="y" aria-label="Birth year">${yearOpts(p.bdayY, new Date().getFullYear()-80, new Date().getFullYear()-14)}</select>${ageNow(p)!=null?` <small class="hint">${ageNow(p)}</small>`:''}`}</td>
       <td><select data-staffrole="${esc(p.id)}" id="sr-${esc(p.id)}" aria-label="Role" ${self?'disabled':''}>${Object.entries(ROLE_NAMES).map(([k,v])=>`<option value="${k}" ${k===p.role?'selected':''}>${v}</option>`).join('')}</select></td>
       <td>${editing ? `<span class="row" style="gap:6px"><input id="newPin-${esc(p.id)}" inputmode="numeric" maxlength="6" placeholder="New PIN" style="width:110px;border:2px solid var(--line);border-radius:10px;padding:6px 8px;font-weight:800;background:var(--surface);color:var(--ink)"><button class="btn primary" data-act="savePin" data-id="${esc(p.id)}" style="padding:6px 10px">Save</button><button class="btn ghost" data-act="cancelPin" style="padding:6px 10px">Cancel</button></span>` : `<button class="btn ghost" data-act="pinFor" data-id="${esc(p.id)}" style="padding:6px 10px">Change PIN</button>`}</td>
       <td>${self ? '' : removing ? `<span class="row" style="gap:6px"><button class="btn primary" data-act="removeStaff" data-id="${esc(p.id)}" style="padding:6px 10px">Yes, remove</button><button class="btn ghost" data-act="cancelRemoveStaff" style="padding:6px 10px">Keep</button></span>` : `<button class="btn ghost" data-act="askRemoveStaff" data-id="${esc(p.id)}" style="padding:6px 10px">Remove</button>`}</td></tr>`);
   });
-  host.innerHTML = rows.length>1 || S.mode!=='db' && rows.length ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`
-    : (rows.join('') ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div><p class="hint" style="margin:8px 0 0">No senseis yet. Add your first one above.</p>` : '<p class="hint" style="margin:0">No senseis yet. Add your first one above.</p>');
+  host.innerHTML = rows.length>1 || S.mode!=='db' && rows.length ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Birthday</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`
+    : (rows.join('') ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Birthday</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div><p class="hint" style="margin:8px 0 0">No senseis yet. Add your first one above.</p>` : '<p class="hint" style="margin:0">No senseis yet. Add your first one above.</p>');
 }
 const PIN_OK = pin => /^[0-9]{4,6}$/.test(pin);
 const pinPass = pin => `dojo-bucks-${pin}`;
@@ -1598,8 +1602,10 @@ function tickerRaw(){
     add('welcome-all', `🎉 A big ninja welcome to ${fresh.length>1?'our new ninjas':'our new ninja'} ${andList(fresh.map(n=>n.name))}!`);
   }
   const td=new Date(now), mmdd=String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
-  all.filter(n=>n.bday===mmdd).forEach(n=>add('bday:'+n.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy birthday, <b>${esc(n.name)}</b>! Have an awesome day! 🎉`));
-  const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup' && stillTrue(l));
+  all.filter(n=>n.bday===mmdd).forEach(n=>{ const t=turningAge(n); add('bday:'+n.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy ${t?ordinal(t)+' ':''}birthday, <b>${esc(n.name)}</b>! Have an awesome day! 🎉`); });
+  Object.values(S.staff||{}).filter(p=>(p.role==='sensei'||p.role==='director') && p.bday===mmdd).forEach(p=>add('sbday:'+p.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy birthday, <b>${esc(sbName(p.id))}</b>! Thank you for everything you do! 🎉`));
+  if([...all.filter(n=>n.bday===mmdd), ...Object.values(S.staff||{}).filter(p=>p.bday===mmdd)].length) add('bdaybucks:'+mmdd, `🎁 Birthday ninjas and senseis get ${fmt(BDAY_BONUS)} bonus bucks!`);
+  const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup' && l.item!=='bdaybonus' && stillTrue(l));
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
   const itemOf = id => [...earnList(), ...bonusItems(), ...shopTiers().flatMap(t=>t.items)].find(x=>x.id===id);
   let regular=0;
@@ -2269,9 +2275,11 @@ function renderDrawer(){
     <div class="card" style="padding:16px"><h3 style="font-size:18px">Edit</h3>
       <div style="display:grid;gap:10px;margin-top:10px">
         <label class="f">Name<input id="editName" value="${esc(n.name)}" maxlength="24" ${isDir()?'':'disabled'}></label>
-        <div class="f"><span>Birthday <span class="hint">(month and day, for the lobby birthday slide)</span></span><div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+        <div class="f"><span>Birthday <span class="hint">(birth year shows their age and "turning 9" on their birthday)</span></span><div style="display:grid;grid-template-columns:2fr 1fr 1.3fr;gap:8px">
           <select id="editBdayM" aria-label="Birthday month" ${isDir()?'':'disabled'}><option value="">Month</option>${MONTHS.map((m,k)=>{ const v=String(k+1).padStart(2,'0'); return `<option value="${v}" ${(bd ? bd.m===v : bdayOf(n)?.m===k+1)?'selected':''}>${m}</option>`; }).join('')}</select>
-          <select id="editBdayD" aria-label="Birthday day" ${isDir()?'':'disabled'}><option value="">Day</option>${Array.from({length:31},(_,k)=>{ const v=String(k+1).padStart(2,'0'); return `<option value="${v}" ${(bd ? bd.d===v : bdayOf(n)?.d===k+1)?'selected':''}>${k+1}</option>`; }).join('')}</select></div>
+          <select id="editBdayD" aria-label="Birthday day" ${isDir()?'':'disabled'}><option value="">Day</option>${Array.from({length:31},(_,k)=>{ const v=String(k+1).padStart(2,'0'); return `<option value="${v}" ${(bd ? bd.d===v : bdayOf(n)?.d===k+1)?'selected':''}>${k+1}</option>`; }).join('')}</select>
+          <select id="editBdayY" aria-label="Birth year" ${isDir()?'':'disabled'}>${yearOpts(n.bdayY, new Date().getFullYear()-20, new Date().getFullYear()-3)}</select></div>
+          ${ageNow(n)!=null?`<small class="hint">Age ${ageNow(n)}</small>`:''}
           ${''}${bd && !!bd.m!==!!bd.d ? `<small class="hint">Pick the ${bd.m?'day':'month'} too to save.</small>`:''}</div>
         <label class="f">Group<select id="editGroup"><option value="ninja" ${n.group==='ninja'?'selected':''}>Create (8+)</option><option value="junior" ${n.group==='junior'?'selected':''}>JR (5–7)</option></select></label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Belt<select id="editBelt">${beltOpts(b.i, ALL_BELTS)}</select></label>
@@ -2309,12 +2317,24 @@ const lbCoin = size => `<span class="lb-coin">${coin(size)}</span>`;
 const dayStart = ts => { const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); };
 const monthStart = ts => { const d=new Date(ts); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const bdayOf = n => /^\d\d-\d\d$/.test(n.bday||'') ? {m:+n.bday.slice(0,2), d:+n.bday.slice(3)} : null;
+const bdayOf = n => /^\d\d-\d\d$/.test(n?.bday||'') ? {m:+n.bday.slice(0,2), d:+n.bday.slice(3)} : null;
+const ordinal = n => n + (['th','st','nd','rd'][((n%100)-20)%10] || ['th','st','nd','rd'][n%100] || 'th');
+// Age they turn on this year's birthday, and their age today (needs the birth year).
+const turningAge = p => toNum(p?.bdayY) > 1900 ? new Date().getFullYear() - toNum(p.bdayY) : null;
+const ageNow = p => { const t=turningAge(p), b=bdayOf(p); if(t==null) return null; if(!b) return t; const now=new Date(); return (now.getMonth()+1 > b.m || (now.getMonth()+1===b.m && now.getDate()>=b.d)) ? t : t-1; };
+// Everyone with a birthday in month m: ninjas, plus senseis on staff screens (parents can't read the team list).
+// Sensei ages are only shown on staff pages, never on the lobby or the ticker.
+function birthdaysIn(m){
+  const ninjas=ninjaList().filter(n=>bdayOf(n)?.m===m).map(n=>({key:'n'+n.id, who:n, name:n.name, d:bdayOf(n).d, turning:turningAge(n), staff:false}));
+  const staff=Object.values(S.staff||{}).filter(p=>(p.role==='sensei'||p.role==='director') && bdayOf(p)?.m===m).map(p=>({key:'s'+p.id, who:p, name:sbName(p.id), d:bdayOf(p).d, turning:turningAge(p), staff:true}));
+  return [...ninjas, ...staff].sort((a,b)=>a.d-b.d || a.name.localeCompare(b.name));
+}
+const yearOpts = (sel, from, to) => `<option value="">Year</option>`+Array.from({length:to-from+1},(_,k)=>to-k).map(y=>`<option value="${y}" ${toNum(sel)===y?'selected':''}>${y}</option>`).join('');
 
 // Big moments in the log: belts, levels, curriculum bonuses and finished projects.
 function achievements(from, to=Infinity){
   const bonusIds=new Set(bonusItems().map(x=>x.id)), seen=new Set(), out=[];
-  S.log.filter(l=>l.at>=from && l.at<to && l.kind==='earn' && S.ninjas[l.ninjaId] && stillTrue(l) && (STEPS.some(x=>x.id===l.item) || bonusIds.has(l.item) || l.amt>=20)).forEach(l=>{
+  S.log.filter(l=>l.at>=from && l.at<to && l.kind==='earn' && l.item!=='bdaybonus' && S.ninjas[l.ninjaId] && stillTrue(l) && (STEPS.some(x=>x.id===l.item) || bonusIds.has(l.item) || l.amt>=20)).forEach(l=>{
     const k=l.ninjaId+'|'+l.item+'|'+(l.toBelt??'')+'|'+(l.toLevel??''); if(seen.has(k)) return; seen.add(k); out.push(l); });
   const rank = l => l.item==='blackbelt' ? 1e6 : l.item==='beltup' ? 5e5 : (l.amt||0);
   return out.sort((a,b)=>rank(b)-rank(a) || b.at-a.at);
@@ -2332,7 +2352,7 @@ function lbAvailable(){
     if(off.has(x.id)) return false;
     if(x.id==='create') return all.some(n=>n.group!=='junior');
     if(x.id==='jr') return all.some(n=>n.group==='junior');
-    if(x.id==='bday') return all.some(n=>bdayOf(n)?.m===m);
+    if(x.id==='bday') return birthdaysIn(m).length>0;
     if(x.id==='welcome') return lbNewNinjas().length>0;
     if(x.id==='spot') return lbSpotlights().length>0;
     if(x.id==='goal') return (cfg.goalTarget|0)>0;
@@ -2406,12 +2426,12 @@ function lbWelcome(){
 }
 function lbBday(){
   const now=new Date(), m=now.getMonth()+1, today=now.getDate();
-  const L=ninjaList().filter(n=>bdayOf(n)?.m===m).sort((a,b)=>bdayOf(a).d-bdayOf(b).d).slice(0,6);
-  const next=ninjaList().filter(n=>bdayOf(n)?.m===(m%12)+1).map(n=>n.name);
-  const cards=L.map((n,i)=>{ const t=bdayOf(n).d===today; return `<div style="background:${t?'linear-gradient(160deg,#FFE07A,#F6B60A)':'#fff'};border-radius:30px;padding:30px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 20px 40px -18px rgba(30,26,60,.5);transform:rotate(${[-3,2,0,-2,3,-1][i]}deg) ${t?'scale(1.08)':''};position:relative">${t?'<span class="lb-pill" style="position:absolute;top:-20px;background:#E5402B;color:#fff;font-size:22px">🎉 TODAY!</span>':''}${lbAv(n,150)}<div class="d" style="font-size:44px">${esc(n.name)}</div><div class="lb-pill" style="background:${t?'#fff':'#F1EFFA'};font-size:22px">🎂 ${MONTHS[m-1].slice(0,3)} ${bdayOf(n).d}</div></div>`; }).join('');
+  const all=birthdaysIn(m), L=all.slice(0,6), hasStaff=all.some(x=>x.staff);
+  const next=birthdaysIn((m%12)+1).map(x=>x.name);
+  const cards=L.map((x,i)=>{ const n=x.who, t=x.d===today; return `<div style="background:${t?'linear-gradient(160deg,#FFE07A,#F6B60A)':'#fff'};border-radius:30px;padding:30px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 20px 40px -18px rgba(30,26,60,.5);transform:rotate(${[-3,2,0,-2,3,-1][i]}deg) ${t?'scale(1.08)':''};position:relative">${t?'<span class="lb-pill" style="position:absolute;top:-20px;background:#E5402B;color:#fff;font-size:22px">🎉 TODAY!</span>':''}${lbAv(n,150)}<div class="d" style="font-size:${x.staff?36:44}px;text-align:center;line-height:1.05">${esc(x.name)}</div>${!x.staff && x.turning?`<div class="lb-pill" style="background:#221B4D;color:#fff;font-size:22px">${t?'🎉 Turning':'Turns'} ${x.turning}!</div>`:''}<div class="lb-pill" style="background:${t?'#fff':'#F1EFFA'};font-size:22px">🎂 ${MONTHS[m-1].slice(0,3)} ${x.d}</div></div>`; }).join('');
   return `<div class="lb-panel" style="left:90px;right:90px;${P};padding:30px 50px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;overflow:hidden">
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 8% 18%,#FFD43B44 0 60px,transparent 61px),radial-gradient(circle at 93% 14%,#E6498033 0 80px,transparent 81px),radial-gradient(circle at 90% 88%,#339AF033 0 70px,transparent 71px),radial-gradient(circle at 6% 86%,#40C05733 0 60px,transparent 61px)"></div>
-    <div style="position:relative;text-align:center"><div class="d" style="font-size:90px;line-height:1">🎂 ${MONTHS[m-1]} Birthdays 🎈</div><div style="font-size:30px;font-weight:800;color:#69658E;margin-top:6px">Happy birthday, ninjas! Give them a big dojo cheer</div></div>
+    <div style="position:relative;text-align:center"><div class="d" style="font-size:90px;line-height:1">🎂 ${MONTHS[m-1]} Birthdays 🎈</div><div style="font-size:30px;font-weight:800;color:#69658E;margin-top:6px">Happy birthday, ${hasStaff?'ninjas and senseis':'ninjas'}! Give them a big dojo cheer</div></div>
     <div style="position:relative;display:grid;grid-template-columns:repeat(${Math.max(L.length,3)},minmax(0,300px));justify-content:center;gap:30px;width:100%">${cards}</div>
     <div style="position:relative;display:flex;gap:20px">${S.lobbyCfg?.bdayNote?`<div class="lb-pill" style="font-size:26px;background:#FFF1C7;color:#A86F00;padding:14px 24px">🎁 ${esc(S.lobbyCfg.bdayNote)}</div>`:''}${next.length?`<div class="lb-pill" style="font-size:26px;background:#F1EFFA;padding:14px 24px">🎈 ${MONTHS[m%12]}: ${esc(next.slice(0,5).join(', '))}</div>`:''}</div></div>`;
 }
@@ -2530,8 +2550,8 @@ const plCards = {
   achieve:()=>{ const now=Date.now(), k=S.plAch||'week', from = k==='today'?dayStart(now):k==='week'?weekStart(now):monthStart(now), L=achievements(from).slice(0,5);
     return plCard('⭐','Big Wins', `<div class="seg pl-seg">${[['today','Today'],['week','This week'],['month','This month']].map(([v,t])=>`<button data-plach="${v}" aria-pressed="${k===v}">${t}</button>`).join('')}</div>
       ${L.map(l=>{ const n=S.ninjas[l.ninjaId], a=achText(l); return plRow(n, a.img?badge(a.img,34):`<span class="pl-em">${esc(a.em)}</span>`, esc(a.t)); }).join('') || '<p class="hint">Big wins will show up here.</p>'}`); },
-  bday:()=>{ const now=new Date(), m=now.getMonth()+1, L=ninjaList().filter(n=>bdayOf(n)?.m===m).sort((a,b)=>bdayOf(a).d-bdayOf(b).d);
-    return plCard('🎂',`${MONTHS[m-1]} Birthdays`, L.map(n=>{ const t=bdayOf(n).d===now.getDate(); return `<div class="pl-row ${t?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${t?'🎉 Celebrating Today':`🎂 ${MONTHS[m-1].slice(0,3)} ${bdayOf(n).d}`}</small></div></div>`; }).join('')
+  bday:()=>{ const now=new Date(), m=now.getMonth()+1, L=birthdaysIn(m);
+    return plCard('🎂',`${MONTHS[m-1]} Birthdays`, L.map(x=>{ const t=x.d===now.getDate(), age=!x.staff && x.turning ? ` · ${t?'turning':'turns'} ${x.turning}` : ''; return `<div class="pl-row ${t?'pl-hot':''}">${avatar(x.who,40)}<div class="pl-nm"><b>${esc(x.name)}</b><small>${t?`🎉 Celebrating Today${age}`:`🎂 ${MONTHS[m-1].slice(0,3)} ${x.d}${age}`}</small></div></div>`; }).join('')
       + (S.lobbyCfg?.bdayNote?`<p class="pl-note">🎁 ${esc(S.lobbyCfg.bdayNote)}</p>`:''),'pl-bday'); },
   welcome:()=>plCard('👋','Welcome, new ninjas!', lbNewNinjas().map(n=>{ const b=beltFor(n); return `<div class="pl-row ${Date.now()-n.createdAt<2*DAY?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${n.group==='junior'?'🌸 JR':'⚡ Create'} · ${esc(b.name)} · joined ${new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div></div>`; }).join('')+'<p class="pl-note">🙌 High-five a new ninja today!</p>','pl-welcome'),
   spot:()=>{ const l=lbSpotlights()[0], n=S.ninjas[l.ninjaId], a=achText(l), b=beltFor(n);
@@ -2624,7 +2644,7 @@ function sbScores(range){
   return sbPeople().map(p=>({p, v:m[p.id]})).sort((a,b)=>b.v-a.v || a.p.name.localeCompare(b.p.name));
 }
 // Award lines don't count toward later months' or years' scores.
-const SB_AWARD_IDS = ['s_sotm','s_soty'];
+const SB_AWARD_IDS = ['s_sotm','s_soty','s_bday'];
 const sbScoreLines = L => L.filter(l=>!SB_AWARD_IDS.includes(l.item));
 function sbPeriodScores(lines){
   const m={}; sbScoreLines(lines).forEach(l=>{ const a=toNum(l.amt); m[l.senseiId]=(m[l.senseiId]||0) + (l.kind==='earn'?a : l.kind==='penalty'?-a : l.kind==='fix'?toNum(l.delta):0); });
@@ -2655,6 +2675,44 @@ async function sbAward(key, kind, label, lines){
     S.sawards[key]={winners, score:best, at}; S._persist?.();
   }
   return paid;
+}
+// Birthday bucks: +10,000 on a ninja's or sensei's birthday (or the first time a staff device opens within a week after).
+// bdaypay/<n|s>-<id>-<year> makes sure each birthday pays once. Ninjas can be paid by any staff device; senseis only by the owner.
+const BDAY_BONUS = 10000, BDAY_GRACE_DAYS = 7;
+function birthdayDue(p){
+  const b=bdayOf(p); if(!b) return null; const now=new Date(), y=now.getFullYear(), day=new Date(y, b.m-1, b.d).getTime(), today=new Date(y, now.getMonth(), now.getDate()).getTime();
+  return day<=today && today-day < BDAY_GRACE_DAYS*DAY ? y : null;
+}
+async function payBirthday(kind, id){
+  const p = kind==='n' ? S.ninjas[id] : S.staff[id], y=birthdayDue(p); if(!y) return false;
+  const key=`${kind}-${id}-${y}`, t=turningAge(p), at=Date.now();
+  const label = kind==='n' ? `Happy ${t?ordinal(t)+' ':''}birthday! 🎂` : 'Happy birthday! 🎂';
+  const col = kind==='n' ? 'ninjas' : 'sensei', lcol = kind==='n' ? 'log' : 'slog';
+  const line = kind==='n' ? {ninjaId:id, name:p.name, kind:'earn', item:'bdaybonus', icon:'🎂', label, amt:BDAY_BONUS, at}
+                          : {senseiId:id, name:p.name, kind:'earn', item:'s_bday', icon:'🎂', label, amt:BDAY_BONUS, at};
+  if(S.mode==='db'){
+    const db=firebase.firestore();
+    try{ return await db.runTransaction(async tx=>{
+      const kref=db.doc('bdaypay/'+key); if((await tx.get(kref)).exists) return false;
+      const ref=db.doc(col+'/'+id), snap=await tx.get(ref); if(kind==='n' && !snap.exists) return false;
+      const c=cleanNinja({balance:0,earned:0,spent:0,lost:0, ...(snap.exists?snap.data():{})});
+      if(kind==='n') tx.update(ref, {balance:c.balance+BDAY_BONUS, earned:c.earned+BDAY_BONUS});
+      else tx.set(ref, {balance:c.balance+BDAY_BONUS, earned:c.earned+BDAY_BONUS, spent:c.spent, lost:c.lost}, {merge:true});
+      tx.set(db.doc(lcol+'/bd-'+key), {...line, by:S.me});
+      tx.set(kref, {at, by:S.me}); return true; }); }
+    catch(e){ console.warn(e); return false; }
+  }
+  S.bdaypay=S.bdaypay||{}; if(S.bdaypay[key]) return false; S.bdaypay[key]=at;
+  if(kind==='n'){ const n=S.ninjas[id]; S.ninjas[id]={...n, balance:toNum(n.balance)+BDAY_BONUS, earned:toNum(n.earned)+BDAY_BONUS}; S.log=[{id:'bd-'+key, ...line, by:S.me}, ...S.log]; }
+  else { const c={balance:0,earned:0,spent:0,lost:0, ...(S.sb[id]||{})}; S.sb[id]={...c, balance:c.balance+BDAY_BONUS, earned:c.earned+BDAY_BONUS}; S.slog=[{id:'bd-'+key, ...line, by:S.me}, ...S.slog]; }
+  S._persist?.(); return true;
+}
+async function checkBirthdayBonuses(){
+  if(S.bdayChecked || !S.loaded || !(S.role==='director' || S.role==='sensei')) return; S.bdayChecked=true;
+  const paid=[];
+  for(const n of ninjaList()) if(birthdayDue(n) && await payBirthday('n', n.id)) paid.push(n.name);
+  if(sbBoss()) for(const p of sbPeople()) if(birthdayDue(p) && await payBirthday('s', p.id)) paid.push(sbName(p.id));
+  if(paid.length){ toast(`🎂 Birthday bucks (+${fmt(BDAY_BONUS)}): ${paid.join(', ')}`); render(); }
 }
 async function checkSbAwards(){
   if(!sbBoss() || S.sbAwardsChecked || !sbPeople().length) return; S.sbAwardsChecked=true;
@@ -2779,6 +2837,12 @@ function sbBoardHTML(showAmt=true){
     <div class="sb-rows">${L.map((x,i)=>`<div class="sb-row"><b class="sb-rk">${i<3?['🥇','🥈','🥉'][i]:i+1}</b>${avatar(x.p,40)}<b class="sb-nm">${esc(sbName(x.p.id))}</b>${showAmt?`<span class="sb-amt">${coin(16)} ${fmt(x.v)}</span>`:`<span class="sb-bar"><i style="width:${Math.max(4,x.v/max*100)}%"></i></span>`}</div>`).join('') || '<p class="hint">Add senseis in Admin → Team to start.</p>'}</div>
     <p class="hint" style="margin:8px 0 0">${S.sbRange==='month'?'Bucks earned minus penalties this month.':'All bucks earned minus penalties.'}</p></div>`;
 }
+function sbBdaysHTML(){
+  const now=new Date(), today=new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const L=sbPeople().filter(p=>bdayOf(p)).map(p=>{ const b=bdayOf(p); let next=new Date(now.getFullYear(), b.m-1, b.d).getTime(); if(next<today) next=new Date(now.getFullYear()+1, b.m-1, b.d).getTime();
+    const turns = toNum(p.bdayY)>1900 ? new Date(next).getFullYear()-toNum(p.bdayY) : null; return {p, next, turns, days:Math.round((next-today)/DAY)}; }).sort((a,b)=>a.next-b.next);
+  return `<div class="card"><h2 style="margin:0 0 6px">🎂 Sensei birthdays</h2>${L.slice(0,6).map(x=>`<div class="sb-row">${avatar(x.p,36)}<b class="sb-nm">${esc(sbName(x.p.id))}</b><span class="hint" style="margin:0">${x.days===0?'🎉 Today!':new Date(x.next).toLocaleDateString('en-US',{month:'short',day:'numeric'})}${x.turns?` · turns ${x.turns}`:''}</span></div>`).join('') || '<p class="hint" style="margin:0">Add birthdays in Admin → Team.</p>'}</div>`;
+}
 function sbHistHTML(list, boss){
   return `<ul class="feed sb-feed" style="max-height:none">${list.map(l=>`<li><span class="ic">${esc(l.icon||'•')}</span><span class="tx">${boss?`<b>${esc(sbName(l.senseiId))}</b> `:''}${esc(l.label)}<small>${ago(l.at)}${l.by && personName(l.by) ? ` · by ${esc(personName(l.by))}`:''}</small></span><span class="d ${l.kind==='fix'?'setup':l.kind} num">${l.kind==='earn'||(l.kind==='fix'&&toNum(l.delta)>0)?'+':'−'}${fmt(l.amt)}</span>${boss?(S.sbRm===l.id?`<span class="rm-ask"><button class="btn sm danger" data-act="sbRmGo" data-id="${esc(l.id)}">Cancel entry</button><button class="btn ghost sm" data-act="sbRmNo">Keep</button></span>`:`<button class="rm-x" data-act="sbRm" data-id="${esc(l.id)}" title="Cancel this entry" aria-label="Cancel this entry">✕</button>`):''}</li>`).join('') || '<li><span></span><span class="tx hint">Nothing yet.</span><span></span></li>'}</ul>`;
 }
@@ -2797,7 +2861,7 @@ function renderSensei(){
     const mScore=sbScores('month').find(x=>x.p.id===me)?.v||0, mine=S.sreq.filter(r=>r.senseiId===me).slice(0,5);
     host.innerHTML = !S.staff[me] ? '<div class="card"><p class="hint" style="margin:0">Sensei Bucks are for people on the Team list.</p></div>' : `<div class="sb-grid">
       <div class="sb-col"><div class="card sb-me">${avatar(S.staff[me],72)}<div><div class="eyebrow" style="color:#fff;opacity:.8">My sensei bucks</div><div class="sb-big">${coin(30)} ${fmt(b.balance)}</div><div style="font-weight:800;opacity:.9">${rank?`#${rank} this month · `:''}${mScore>=0?'+':''}${fmt(mScore)} this month</div></div></div>
-        ${sbBoardHTML(true)}</div>
+        ${sbBoardHTML(true)}${sbBdaysHTML()}</div>
       <div class="sb-col"><div class="card"><h2 style="margin:0 0 8px">🎁 Sensei rewards</h2>${sbShopHTML(me)}
         ${mine.length?`<div class="fam-reqs" style="margin-top:10px">${mine.map(r=>`<div><span>${esc(r.icon)} ${esc(r.label)} · ${fmt(r.cost)}</span><span class="status ${r.status}">${r.status==='pending'?'Waiting':r.status==='approved'?'Approved 🎉':'Declined'}</span></div>`).join('')}</div>`:''}</div>
         <div class="card"><h2 style="margin:0">📜 My history</h2>${sbHistHTML(S.slog.filter(l=>l.senseiId===me).slice(0,30), false)}</div></div></div>`;
@@ -2820,7 +2884,7 @@ function renderSensei(){
   if(tab==='reqs') body=`<div class="card"><h2 style="margin:0 0 10px">Sensei reward requests</h2>${pend.map(r=>`<div class="req"><div class="ic2">${esc(r.icon)}</div><div><div class="what"><b>${esc(sbName(r.senseiId))}</b> wants <b>${esc(r.label)}</b> for ${fmt(r.cost)} bucks</div><div class="meta">${ago(r.at)} · has ${fmt(sbBal(r.senseiId).balance)} bucks</div></div><div class="acts2"><button class="btn primary" data-act="sbApprove" data-id="${esc(r.id)}">Approve</button><button class="btn ghost" data-act="sbDecline" data-id="${esc(r.id)}">Decline</button></div></div>`).join('') || '<p class="hint" style="margin:0">All caught up. No requests waiting.</p>'}
     ${S.sreq.filter(r=>r.status!=='pending').slice(0,15).length?`<h3 class="eyebrow" style="margin-top:16px">Recent decisions</h3>${S.sreq.filter(r=>r.status!=='pending').slice(0,15).map(r=>`<div class="req"><div class="ic2">${esc(r.icon)}</div><div><div class="what">${esc(sbName(r.senseiId))} · ${esc(r.label)} · ${fmt(r.cost)}</div><div class="meta"><span class="status ${r.status}">${r.status}</span>${r.note?` · ${esc(r.note)}`:''}</div></div></div>`).join('')}`:''}</div>
     <div class="card"><h2 style="margin:0 0 8px">🎁 Sensei rewards</h2>${sbShopHTML(null)}</div>`;
-  if(tab==='board') body=sbBoardHTML(true);
+  if(tab==='board') body=`<div class="sb-grid"><div>${sbBoardHTML(true)}</div><div>${sbBdaysHTML()}</div></div>`;
   if(tab==='hist') body=`<div class="card"><h2 style="margin:0">📜 Sensei history</h2>${sbHistHTML(S.slog.slice(0,80), true)}</div>`;
   if(tab==='edit'){
     if(!S.sbEdit) S.sbEdit=JSON.parse(JSON.stringify(sbCfg()));
@@ -2965,6 +3029,12 @@ document.addEventListener('change', e=>{
   if(el.id==='lbGoalP'){ saveLobbyCfg({goalPrize:el.value.trim()}); return; }
   if(el.id==='lbBday'){ saveLobbyCfg({bdayNote:el.value.trim()}); return; }
   if(el.id==='editWelcome'){ if(isDir()) api.update('ninjas', S.drawer, {welcome:el.checked}).then(()=>toast(el.checked?'Shown on the lobby Welcome screen.':'Hidden from the lobby Welcome screen.')).catch(()=>{}); return; }
+  if(el.dataset && el.dataset.sbd){ const id=el.dataset.sbd, row=el.closest('td'), v=f=>row.querySelector(`[data-f="${f}"]`).value, m=v('m'), d=v('d'), y=v('y');
+    if(!isDir()) return;
+    if(el.dataset.f==='y'){ api.update('staff', id, {bdayY: y ? +y : null}).then(()=>toast('Saved.')).catch(()=>{}); return; }
+    if(!!m===!!d) api.update('staff', id, {bday: m ? `${m}-${d}` : ''}).then(()=>toast(m?'Birthday saved.':'Birthday removed.')).catch(()=>{}); else toast(`Pick the ${m?'day':'month'} too.`);
+    return; }
+  if(el.id==='editBdayY'){ if(isDir()) api.update('ninjas', S.drawer, {bdayY: el.value ? +el.value : null}).then(()=>toast(el.value?'Birth year saved.':'Birth year removed.')).catch(()=>{}); return; }
   if(el.id==='editBdayM' || el.id==='editBdayD'){
     // Save only once both month and day are picked (or both cleared); keep a half-picked date on screen meanwhile.
     const m=document.getElementById('editBdayM').value, d=document.getElementById('editBdayD').value;

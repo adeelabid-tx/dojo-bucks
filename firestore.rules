@@ -106,6 +106,12 @@ service cloud.firestore {
       allow read: if canView();
       allow write: if isOwner();
     }
+    // Birthday bucks paid this year (one record per birthday, so it pays once).
+    match /bdaypay/{key} {
+      allow read: if canView();
+      allow create: if isSensei();
+      allow update, delete: if isDirector();
+    }
     match /sawards/{period} {
       allow read: if canView();
       allow write: if isOwner();
