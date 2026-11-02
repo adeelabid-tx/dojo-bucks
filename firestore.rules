@@ -14,7 +14,9 @@ service cloud.firestore {
     function canSee() { return canView() || (isStaff() && staffDoc().role == 'parent') || isFamily(); }
     // A family signs in with its own code and can only request rewards for its own ninja.
     function isFamily() { return signedIn() && exists(/databases/$(database)/documents/families/$(request.auth.uid)); }
-    function famNinja() { return get(/databases/$(database)/documents/families/$(request.auth.uid)).data.ninjaId; }
+    function famDoc() { return get(/databases/$(database)/documents/families/$(request.auth.uid)).data; }
+    // A family code can cover brothers and sisters (ninjaIds); older codes only have ninjaId.
+    function famNinjas() { return famDoc().get('ninjaIds', [famDoc().ninjaId]); }
     // Rewards parents can request: the categories marked for it in the Reward Shop, or Legendary until the shop is first saved.
     function parentItems() {
       let shop = /databases/$(database)/documents/settings/shop;
@@ -74,7 +76,7 @@ service cloud.firestore {
       // Staff and the lobby see everything. Parents never see penalties, except a family seeing its own ninja's.
       allow read: if canView()
         || (canSee() && resource.data.kind in ['earn', 'redeem', 'fix', 'setup'])
-        || (isFamily() && resource.data.ninjaId == famNinja());
+        || (isFamily() && resource.data.ninjaId in famNinjas());
       allow create: if isDirector() || (isSensei()
         && request.resource.data.by == request.auth.uid
         && ((request.resource.data.kind in ['earn', 'penalty']
@@ -95,7 +97,7 @@ service cloud.firestore {
       allow read: if canView() || (isFamily() && resource.data.by == request.auth.uid);
       allow create: if request.resource.data.by == request.auth.uid && request.resource.data.status == 'pending'
         && (isSensei()
-          || (isFamily() && request.resource.data.type == 'redeem' && request.resource.data.ninjaId == famNinja()
+          || (isFamily() && request.resource.data.type == 'redeem' && request.resource.data.ninjaId in famNinjas()
               && request.resource.data.item in parentItems()));
       allow update: if isDirector();
       allow delete: if isDirector() || ((isSensei() || isFamily()) && resource.data.by == request.auth.uid && resource.data.status == 'pending');

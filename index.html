@@ -288,6 +288,11 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .fam-form input{letter-spacing:.15em}
 .fam-card2{margin-bottom:18px;display:flex;flex-direction:column;gap:12px}
 .fam-card2 .fam-head{flex-wrap:nowrap;padding:12px 14px;gap:10px}.fam-card2 .fam-head > div:nth-child(2){min-width:0}.fam-card2 .fam-head > div:last-child{width:auto!important;text-align:right!important}.fam-card2 .fam-head h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fam-card2 .fam-head .bal{font-size:30px}
+.fp-kids{display:flex;gap:8px;overflow-x:auto;padding:2px}.fp-kids button{display:flex;align-items:center;gap:8px;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 14px 4px 4px;font:inherit;cursor:pointer;flex:none}
+.fp-kids button b{font-size:16px}.fp-kids button[aria-pressed="true"]{background:var(--hero);border-color:var(--hero);color:#fff}
+.fam-sibs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.fam-sibs span{display:flex;align-items:center;gap:6px;background:var(--sunk);border-radius:999px;padding:3px 6px 3px 3px;font-weight:800}
+.fam-sibs button{border:0;background:none;color:var(--muted);font-weight:900;cursor:pointer;padding:2px 6px}
+.fam-add{display:flex;gap:8px;margin-top:10px}.fam-add select{flex:1;min-width:0;border:2px solid var(--line);border-radius:12px;padding:10px;font-weight:800;background:var(--surface);color:var(--ink)}
 .fp-seg{display:flex;width:100%}.fp-seg button{flex:1;padding:11px 4px;font-size:15px}
 .fp-box{margin:0;padding:14px}.fp-empty{text-align:center;font-weight:800;color:var(--muted)}
 .fp-hero{background:linear-gradient(135deg,var(--senior),#221B4D);color:#fff;border-radius:18px;padding:14px 16px}.fp-hero .eyebrow{color:#fff;opacity:.85}
@@ -1058,7 +1063,7 @@ function startDb(db){
     // Uses the kind+at index; until that index exists, fall back to the same entries without the date filter.
     const unsub = db.collection('log').where('kind','in',PUB).where('at','>=',since).orderBy('at','desc').onSnapshot(onPub, e => {
       if(e && e.code==='failed-precondition'){ try{ unsub(); }catch{} db.collection('log').where('kind','in',PUB).onSnapshot(onPub, e2 => dbErr(e2)); } else dbErr(e); });
-    if(isFamily()) db.collection('log').where('ninjaId','==',S.famNinja).onSnapshot(s => { mine = s.docs.map(d => cleanLog({id:d.id, ...d.data()})).filter(l=>l.at>=since); gotM=true; merge(); }, e => dbErr(e));
+    if(isFamily()) db.collection('log').where('ninjaId','in',S.famNinjas.slice(0,30)).onSnapshot(s => { mine = s.docs.map(d => cleanLog({id:d.id, ...d.data()})).filter(l=>l.at>=since); gotM=true; merge(); }, e => dbErr(e));
   }
   // Everyone (staff, lobby, parents and families) needs the dojo's prices, goal, options and news.
   db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
@@ -1068,7 +1073,8 @@ function startDb(db){
   db.doc('settings/ticker').onSnapshot(d => { S.tickerCfg = d.exists ? d.data() : {hidden:[], edits:[]}; render(); }, () => {});
   db.doc('settings/shop').onSnapshot(d => { S.shop = d.exists ? d.data() : null; render(); }, () => {});
   if(isFamily()){
-    db.doc('families/'+S.me).onSnapshot(d => { if(!d.exists) lockNow('That family code has changed. Please contact the front desk for the new one.'); }, () => {});
+    db.doc('families/'+S.me).onSnapshot(d => { if(!d.exists) return lockNow('That family code has changed. Please contact the front desk for the new one.');
+      const ids=famIdsOf(d.data()); if(ids.join()!==S.famNinjas.join()) location.reload(); }, () => {});
     db.collection('requests').where('by','==',S.me).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b)=>b.at-a.at); render(); }, () => {});
   } else if(isParent()){
     db.doc('staff/'+S.me).onSnapshot(d => { if(!d.exists) lockNow('The parent access code has changed. Please contact the front desk for the new one.'); }, () => {});
@@ -1534,7 +1540,7 @@ function render(){
   const chip=document.getElementById('roleChip');
   chip.className='role-chip'+(isDir()?' dir':'');
   chip.innerHTML = S.mode==='local' ? `Preview as <button data-act="asRole" data-role="director" aria-pressed="${isDir()}">Director</button><button data-act="asRole" data-role="sensei" aria-pressed="${S.role==='sensei'}">Sensei</button><button data-act="asRole" data-role="parent" aria-pressed="${S.role==='parent'}">Parent</button><button data-act="asRole" data-role="family" aria-pressed="${isFamily()}">Family</button>`
-    : (S.isOwner ? 'Center Director' : isFamily() ? `${esc(S.ninjas[S.famNinja]?.name||'')} · Family` : isParent() ? 'Parent view' : (personName(S.me) ? esc(personName(S.me))+' · ' : '') + ROLE_NAMES[S.role]);
+    : (S.isOwner ? 'Center Director' : isFamily() ? `${andList(famKids().map(n=>n.name))} · Family` : isParent() ? 'Parent view' : (personName(S.me) ? esc(personName(S.me))+' · ' : '') + ROLE_NAMES[S.role]);
   document.getElementById('lockBtn').hidden = S.mode!=='db';
   document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
   document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
@@ -1988,6 +1994,7 @@ function renderFamilyCard(){
       <p class="hint" style="margin:0">Get your Code from Front Desk</p></div>`;
     return;
   }
+  if(!S.ninjas[S.famNinja]) S.famNinja=famKids()[0]?.id;
   const n=S.ninjas[S.famNinja]; if(!n){ host.innerHTML=''; return; }
   const b=beltFor(n), held=heldFor(n.id), avail=(n.balance||0)-held;
   const mine=S.requests.filter(r=>r.ninjaId===n.id).slice(0,5), waiting=id=>mine.some(r=>r.status==='pending' && r.item===id);
@@ -1998,6 +2005,7 @@ function renderFamilyCard(){
   host.innerHTML = `<div class="fam-card2">
     <div class="fam-head">${avatar(n,60)}<div style="flex:1;min-width:0"><h2 style="margin:0;color:#fff">${esc(n.name)}</h2><div style="font-weight:800;opacity:.9">${b.i===BLACK?'Black Belt':`${esc(b.name)} belt · ${esc(stepName(b.i,b.level))}`}</div></div>
       <div style="text-align:right"><div class="bal num">${coin(28)}${fmt(avail)}</div><small style="font-weight:800;opacity:.9">${held?`${fmt(held)} on hold`:'bucks'}</small></div></div>
+    ${famKids().length>1?`<div class="fp-kids" role="group" aria-label="Your ninjas">${famKids().map(k=>`<button data-act="famKid" data-id="${esc(k.id)}" aria-pressed="${k.id===n.id}">${avatar(k,30)}<b>${esc(k.name)}</b></button>`).join('')}</div>`:''}
     <div class="seg fp-seg" role="group" aria-label="Show">${tabs.map(([k,t])=>`<button data-act="famRange" data-r="${k}" aria-pressed="${R===k}">${esc(t)}</button>`).join('')}</div>
     ${body}
     <div class="card fp-box"><h3 class="fam-rh">🎁 Rewards ${esc(n.name)} can get</h3><div class="fam-rewards">${rewards.map(it=>{ const c=amountOf('redeem',it), ok=avail>=c, w=waiting(it.id), pct=Math.min(100, c? avail/c*100 : 100);
@@ -2079,7 +2087,7 @@ async function linkFamily(id, code){
   if(!n){ toast('Pick your ninja first.'); return; }
   if(!/^\d{6}$/.test(code)){ toast('The family code is 6 digits.'); return; }
   if(!n.famKey){ toast(`${n.name} has no family code yet. Please ask the front desk.`); return; }
-  if(S.mode!=='db'){ if((S.demoFam||{})[id]!==code){ toast('That code does not match. Please check with the front desk.'); return; } S.role='family'; S.famNinja=id; render(); return; }
+  if(S.mode!=='db'){ const df=S.demoFam||{}; if(df[id]!==code){ toast('That code does not match. Please check with the front desk.'); return; } S.role='family'; S.famNinjas=Object.keys(df).filter(k=>df[k]===code && S.ninjas[k]); S.famNinja=id; render(); return; }
   try{ await firebase.auth().signInWithEmailAndPassword(famEmail(n.famKey), pinPass(code)); location.reload(); }
   catch(e){ toast(e.code==='auth/too-many-requests' ? 'Too many tries. Wait a minute and try again.' : 'That code does not match. Please check with the front desk.'); }
 }
@@ -2333,26 +2341,71 @@ function renderRoster(){
 function familyCodeHTML(n){
   if(S.bdayDraft && S.bdayDraft.id!==S.drawer) S.bdayDraft=null;
   const shown = S.famShow?.id===n.id ? S.famShow.code : null;
+  const fam = n.famKey ? ninjaList().filter(x=>x.famKey===n.famKey) : [n];
+  const others = ninjaList().filter(x=>!fam.some(f=>f.id===x.id));
+  const withCode = others.filter(x=>x.famKey);
+  const addRow = n.famKey
+    ? (others.length ? `<div class="fam-add"><select id="famAddSel" aria-label="Brother or sister"><option value="">Add a brother or sister…</option>${others.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}${x.famKey?' (has own code)':''}</option>`).join('')}</select><button class="btn ghost" data-act="famLink" ${S.famBusy?'disabled':''}>Add</button></div>` : '')
+    : (withCode.length ? `<div class="fam-add"><select id="famAddSel" aria-label="Brother or sister"><option value="">Or join a brother's or sister's family…</option>${withCode.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><button class="btn ghost" data-act="famLink" data-base="1" ${S.famBusy?'disabled':''}>Join</button></div>` : '');
   return `<div class="card fam-card" style="padding:16px"><div class="spread"><h3 style="font-size:18px;margin:0">👨‍👩‍👧 Family code</h3>${n.famKey?'<span class="status approved">Set</span>':''}</div>
-    ${shown ? `<p style="margin:8px 0 4px;font-weight:800">Give this code to ${esc(n.name)}'s family. It is shown only once.</p><div class="fam-code">${shown.split('').join(' ')}</div>`
+    ${fam.length>1 ? `<p class="hint" style="margin:6px 0 0">One code for all of them. Parents pick any of these ninjas and enter the same code.</p><div class="fam-sibs">${fam.map(x=>`<span>${avatar(x,26)}${esc(x.name)}<button data-act="famUnlink" data-id="${esc(x.id)}" ${S.famBusy?'disabled':''} aria-label="Remove ${esc(x.name)} from this family" title="Remove from this family">✕</button></span>`).join('')}</div>` : ''}
+    ${shown ? `<p style="margin:8px 0 4px;font-weight:800">Give this code to ${andList(fam.map(x=>x.name))}'s family. It is shown only once.</p><div class="fam-code">${shown.split('').join(' ')}</div>`
       : `<p class="hint" style="margin:6px 0 10px">${n.famKey ? 'A family code is set. Making a new one signs the family out until they enter the new code.' : `Parents use this code on their phone to see ${esc(n.name)}'s progress and request rewards.`}</p>`}
-    <button class="btn ${n.famKey?'ghost':'primary'}" data-act="famCode" ${S.famBusy?'disabled':''}>${n.famKey?'Make a new code':'Create family code'}</button></div>`;
+    <button class="btn ${n.famKey?'ghost':'primary'}" data-act="famCode" ${S.famBusy?'disabled':''}>${n.famKey?'Make a new code':'Create family code'}</button>${addRow}</div>`;
+}
+const famIdsOf = d => (Array.isArray(d?.ninjaIds) && d.ninjaIds.length ? d.ninjaIds : [d?.ninjaId]).filter(Boolean);
+const famKids = () => (S.famNinjas && S.famNinjas.length ? S.famNinjas : [S.famNinja]).map(id=>S.ninjas[id]).filter(Boolean);
+// The family login docs that include this ninja (new ones list ninjaIds, older ones only ninjaId).
+async function famDocsFor(id){
+  const db=firebase.firestore(), [a,b]=await Promise.all([db.collection('families').where('ninjaIds','array-contains',id).get(), db.collection('families').where('ninjaId','==',id).get()]);
+  const m=new Map(); [...a.docs, ...b.docs].forEach(d=>m.set(d.id,d)); return [...m.values()];
+}
+// Take a ninja out of whatever family code it is in (the rest of that family keeps the code).
+async function famDetach(id){
+  for(const d of await famDocsFor(id)){ const left=famIdsOf(d.data()).filter(x=>x!==id);
+    if(left.length) await d.ref.update({ninjaIds:left, ninjaId:left[0]}); else await d.ref.delete(); }
+}
+async function linkSibling(addId, baseId){
+  const add=S.ninjas[addId], base=S.ninjas[baseId]; if(!add || !base || !isDir() || addId===baseId) return;
+  if(!base.famKey){ toast(`${base.name} needs a family code first.`); return; }
+  S.famBusy=true; renderDrawer();
+  try{
+    if(S.mode==='db'){
+      const docs=await famDocsFor(baseId); if(!docs.length) throw new Error('no family login for '+baseId);
+      if(add.famKey) await famDetach(addId);
+      const d=docs[0], ids=famIdsOf(d.data()); if(!ids.includes(addId)) await d.ref.update({ninjaIds:[...ids, addId], ninjaId:ids[0]});
+    } else { S.demoFam={...(S.demoFam||{}), [addId]:(S.demoFam||{})[baseId]}; }
+    await api.update('ninjas', addId, {famKey:base.famKey});
+    toast(`${add.name} and ${base.name} now share one family code.`);
+  }catch(e){ console.warn(e); toast('Could not link them. Check the connection and try again.'); }
+  S.famBusy=false; renderDrawer();
+}
+async function unlinkSibling(id){
+  const n=S.ninjas[id]; if(!n || !isDir()) return;
+  S.famBusy=true; renderDrawer();
+  try{
+    if(S.mode==='db') await famDetach(id); else { const df={...(S.demoFam||{})}; delete df[id]; S.demoFam=df; }
+    await api.update('ninjas', id, {famKey:''});
+    toast(`${n.name} was taken out of the family. Make ${n.name} a new code if they need one.`);
+  }catch(e){ console.warn(e); toast('Could not change the family. Check the connection and try again.'); }
+  S.famBusy=false; renderDrawer();
 }
 const famEmail = key => `fam-${key}@staff.${window.FIREBASE_CONFIG?.authDomain||'demo'}`;
 async function createFamilyCode(id){
   const n=S.ninjas[id]; if(!n || !isDir()) return;
-  const code=String(Math.floor(100000+Math.random()*900000)), key=uid();
+  const code=String(Math.floor(100000+Math.random()*900000)), key=uid(); let fam=[id];
   S.famBusy=true; renderDrawer();
   try{
     if(S.mode==='db'){
       if(!secondary) secondary = firebase.initializeApp(window.FIREBASE_CONFIG, 'staff-admin');
       const cred = await secondary.auth().createUserWithEmailAndPassword(famEmail(key), pinPass(code));
       await secondary.auth().signOut();
-      const db=firebase.firestore(), old=await db.collection('families').where('ninjaId','==',id).get();
-      await Promise.all(old.docs.map(d=>d.ref.delete()));
-      await db.doc('families/'+cred.user.uid).set({ninjaId:id, createdAt:Date.now()});
-    } else { S.demoFam={...(S.demoFam||{}), [id]:code}; }
-    await api.update('ninjas', id, {famKey:key});
+      const db=firebase.firestore(), old=await famDocsFor(id), ids=[...new Set([id, ...old.flatMap(d=>famIdsOf(d.data()))])].filter(x=>S.ninjas[x]);
+      await Promise.all(old.map(d=>d.ref.delete()));
+      await db.doc('families/'+cred.user.uid).set({ninjaId:id, ninjaIds:ids, createdAt:Date.now()});
+      fam=ids;
+    } else { const df=S.demoFam||{}, c=df[id]; fam=c ? Object.keys(df).filter(k=>df[k]===c) : [id]; S.demoFam={...df, ...Object.fromEntries(fam.map(k=>[k,code]))}; }
+    await Promise.all(fam.map(k=>api.update('ninjas', k, {famKey:key})));
     S.famShow={id, code}; toast(`Family code ready for ${n.name}.`);
   }catch(e){ console.warn(e); toast('Could not make a family code. Check the connection and try again.'); }
   S.famBusy=false; renderDrawer();
@@ -3098,6 +3151,9 @@ document.addEventListener('click', e=>{
     case 'adjust': adjustBucks(S.drawer, Number(t.dataset.sign)); break;
     case 'famCode': createFamilyCode(S.drawer); break;
     case 'famReq': familyRequest(t.dataset.item); break;
+    case 'famKid': S.famNinja=t.dataset.id; S.famDay=null; try{ localStorage.setItem('fam-kid', S.famNinja); }catch{} render(); window.scrollTo({top:0}); break;
+    case 'famLink': { const sel=document.getElementById('famAddSel'); if(sel?.value) linkSibling(t.dataset.base==='1' ? S.drawer : sel.value, t.dataset.base==='1' ? sel.value : S.drawer); break; }
+    case 'famUnlink': unlinkSibling(t.dataset.id); break;
     case 'famRange': S.famRange=t.dataset.r; S.famDay=null; render(); break;
     case 'famDay': S.famDay = S.famDay===+t.dataset.d ? null : +t.dataset.d; render(); break;
     case 'famFold': { const o=S.famOpen||(S.famOpen=new Set()), k=t.dataset.k; o.has(k)?o.delete(k):o.add(k); render(); break; }
@@ -3113,7 +3169,7 @@ document.addEventListener('click', e=>{
     case 'setupSave': saveSetup(); break;
     case 'setupReset': document.getElementById('setupHost').dataset.ready=''; render(); break;
     case 'tpl': { const nm=document.getElementById('tplNinja').value; const txt=NEWS_TEMPLATES[+t.dataset.k].replace('{ninja}', nm || '___'); const inp=document.getElementById('newsText'); inp.value=txt; inp.focus(); if(txt.includes('___')){ const i=txt.indexOf('___'); inp.setSelectionRange(i,i+3); } break; }
-    case 'asRole': S.role=t.dataset.role; S.me = 'preview-'+S.role; S.drawer=null; if(S.role==='family') S.famNinja = S.famNinja && S.ninjas[S.famNinja] ? S.famNinja : ninjaList()[0]?.id; render(); break;
+    case 'asRole': S.role=t.dataset.role; S.me = 'preview-'+S.role; S.drawer=null; if(S.role==='family') S.famNinja = S.famNinja && S.ninjas[S.famNinja] ? S.famNinja : ninjaList()[0]?.id; if(S.role==='family'){ const df=S.demoFam||{}, c=df[S.famNinja]; S.famNinjas = c ? Object.keys(df).filter(k=>df[k]===c && S.ninjas[k]) : [S.famNinja]; } render(); break;
     case 'approve': { const r=S.requests.find(x=>x.id===id); if(r) approveReq(r).then(()=>toast('Approved.')).catch(()=>{}); break; }
     case 'reject': { const r=S.requests.find(x=>x.id===id); if(r) rejectReq(r).catch(()=>{}); break; }
     case 'approveAll': (async()=>{ const list=pendingReqs().slice().reverse(); for(const r of list){ try{ await approveReq(r); }catch{} } toast(`Approved ${list.length} request${list.length===1?'':'s'}.`); })(); break;
@@ -3302,7 +3358,7 @@ function bumpIdle(){ clearTimeout(idleT); if(S.mode==='db' && S.viaPin && S.role
     if(!S.isOwner){
       let d=null; try{ d=await firebase.firestore().doc('staff/'+user.uid).get(); }catch(e){}
       let fam=null; if(!d || !d.exists){ try{ fam=await firebase.firestore().doc('families/'+user.uid).get(); }catch(e){} }
-      if(fam && fam.exists){ S.role='family'; S.famNinja=fam.data().ninjaId; S.viaPin=true; }
+      if(fam && fam.exists){ S.role='family'; S.famNinjas=famIdsOf(fam.data()); let last=''; try{ last=localStorage.getItem('fam-kid')||''; }catch{} S.famNinja=S.famNinjas.includes(last)?last:S.famNinjas[0]; S.viaPin=true; }
       else if(!d || !d.exists){ await firebase.auth().signOut(); showSignin(PARENT_LINK ? 'That family code has changed. Please contact the front desk.' : 'That login is no longer on the team. Ask your Center Director.'); return; }
       else { S.role=d.data().role; S.viaPin = !!(user.email||'').includes('@staff.'); }
     } else S.role='director';
