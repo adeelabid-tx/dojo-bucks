@@ -124,11 +124,25 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .si-logo{width:144px;min-width:0;max-width:40%;height:auto;aspect-ratio:196/41;object-fit:contain;margin-left:auto}
 @media (max-width:600px){ .si-card{padding:20px} .si-top{gap:10px} .si-top h1{font-size:23px} .si-top small{font-size:11px} .si-logo{width:clamp(96px,30vw,132px)} }
 .si-h{font-family:var(--f-display);font-size:22px;margin:0}
-.si-qr{display:flex;align-items:center;gap:14px;border:2px solid var(--gold);background:var(--gold-soft);border-radius:16px;padding:12px 14px}
-.si-qr-code{width:104px;height:104px;flex:none;background:#fff;border-radius:10px;padding:6px}.si-qr-code svg{width:100%;height:100%;display:block}
-.si-qr b{font-family:var(--f-display);font-weight:400;font-size:20px}.si-qr p{margin:2px 0 6px;font-weight:800;color:var(--ink);font-size:14px}
+.si-card.si-wide{width:min(600px,100%)}
+.si-eb{display:block;color:var(--muted);font-weight:900;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.si-split{display:grid;gap:18px}
+.si-team{display:flex;flex-direction:column;gap:12px;min-width:0}.si-team .si-err:empty{display:none}.si-team .si-link{align-self:flex-start}
+.si-par{background:linear-gradient(160deg,#6C45D9,#221B4D);color:#fff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.si-par .si-eb{color:#C5BEF2}.si-par .si-h{color:#fff}
+.si-par-row{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.1);border-radius:16px;padding:12px}
+.si-qr-code{width:118px;height:118px;flex:none;background:#fff;border-radius:12px;padding:7px}.si-qr-code svg{width:100%;height:100%;display:block}
+.si-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}.si-steps li{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+.si-steps b{width:26px;height:26px;border-radius:50%;background:#F6B60A;color:#2b1d00;display:grid;place-items:center;font-size:14px;flex:none}
+.si-par-btn{background:rgba(255,255,255,.14);color:#fff;border:2px solid rgba(255,255,255,.35);font-size:15px}
+.si-par-btn:hover{background:rgba(255,255,255,.24)}.si-phone-only{display:none}
+.si-ini{width:38px;height:38px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--f-display);font-size:18px;flex:none}
+@media (max-width:760px){ .si-par-row{display:none} .si-par{padding:16px;gap:8px} .si-par .si-h{font-size:19px}
+  .si-par-btn{background:#F6B60A;color:#2b1d00;border:0;font-size:18px;padding:14px;box-shadow:0 4px 0 #b07f00} .si-qr-only{display:none} .si-phone-only{display:inline} }
 .si-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-.si-person{border:2px solid var(--line);background:var(--sunk);border-radius:16px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.si-person{border:2px solid var(--line);background:var(--sunk);border-radius:16px;padding:12px;text-align:left;display:flex;align-items:center;gap:10px;color:var(--ink);cursor:pointer;min-width:0}
+.si-person b,.si-person small{display:block;overflow-wrap:anywhere;line-height:1.15}
+.si-card.si-wide .si-people{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .si-person b{font-family:var(--f-display);font-weight:400;font-size:20px}
 .si-person small{color:var(--muted);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
 .si-person:hover{border-color:var(--gold);background:var(--gold-soft)}
@@ -3440,6 +3454,7 @@ const SI = {step:'pick', who:null, pin:'', err:'', people:[], parent:null};
 const PARENT_LINK = /[?&]parent\b/.test(location.search);
 function renderSignin(){
   const host=document.getElementById('siBody');
+  document.querySelector('.si-card').classList.toggle('si-wide', SI.step==='pick' && !!SI.parent && !!window.qrcode);
   if(SI.step==='parent'){
     host.innerHTML = SI.parent ? `<h2 class="si-h" style="text-align:center">Dojo Leaderboard for parents</h2>
       <form class="si-form" id="siParent"><p class="hint" style="margin:0;text-align:center">Please contact the front desk to get the parent access code.</p>
@@ -3449,11 +3464,15 @@ function renderSignin(){
       : `<h2 class="si-h">Dojo Leaderboard for parents</h2><p class="hint">The parent view is not switched on yet. Ask the dojo.</p>`;
     host.insertAdjacentHTML('beforeend', `<button class="si-link" data-si="cancel">Dojo staff sign-in</button>`);
   } else if(SI.step==='pick'){
-    host.innerHTML = `<h2 class="si-h">Who is using Dojo Bucks?</h2>
-      ${SI.people.length ? `<div class="si-people">${SI.people.map((p,k)=>`<button class="si-person" data-si="who" data-k="${k}"><b>${esc(p.role==='viewer'?p.name:'Sensei '+p.name)}</b><small>${ROLE_NAMES[p.role]||''}</small></button>`).join('')}</div>` : '<p class="hint" style="margin:0">No senseis added yet. The Center Director signs in below and adds them in Admin.</p>'}
-      ${SI.parent && window.qrcode ? `<div class="si-qr"><div class="si-qr-code">${lbQr()}</div><div style="min-width:0"><b>👨‍👩‍👧 Parents</b><p>Scan with your phone camera to see your ninja's bucks and rewards.</p><button class="si-link" data-si="parent" style="margin:0;padding:0;text-align:left;display:block">Parent sign-in on this device</button></div></div>` : ''}
+    const par = SI.parent && window.qrcode;
+    host.innerHTML = `<div class="si-split${par?' two':''}"><div class="si-team"><span class="si-eb">Dojo team</span><h2 class="si-h">Who is using Dojo Bucks?</h2>
+      ${SI.people.length ? `<div class="si-people">${SI.people.map((p,k)=>`<button class="si-person" data-si="who" data-k="${k}"><span class="si-ini">${p.role==='viewer'?'📺':esc(p.name.slice(0,1).toUpperCase())}</span><span style="min-width:0"><b>${esc(p.role==='viewer'?p.name:'Sensei '+p.name)}</b><small>${ROLE_NAMES[p.role]||''}</small></span></button>`).join('')}</div>` : '<p class="hint" style="margin:0">No senseis added yet. The Center Director signs in below and adds them in Admin.</p>'}
       <p class="si-err">${esc(SI.err)}</p>
-      <button class="si-link" data-si="email">Center Director sign-in</button>`;
+      <button class="si-link" data-si="email">Center Director sign-in</button></div>
+      ${par ? `<div class="si-par"><span class="si-eb">Parents &amp; families</span><h2 class="si-h">See your ninja's bucks 👨‍👩‍👧</h2>
+        <div class="si-par-row"><div class="si-qr-code">${lbQr()}</div>
+        <ol class="si-steps"><li><b>1</b>Scan the code with your phone camera</li><li><b>2</b>Enter the code from the front desk</li><li><b>3</b>See your ninja's bucks, progress and rewards</li></ol></div>
+        <button class="btn si-par-btn" data-si="parent"><span class="si-qr-only">Sign in on this device instead</span><span class="si-phone-only">👨‍👩‍👧 I'm a parent</span></button></div>` : ''}</div>`;
   } else if(SI.step==='pin'){
     const p=SI.people[SI.who], len=p.pinLen||4;
     host.innerHTML = `<h2 class="si-h" style="text-align:center">Hi ${esc(p.role==='viewer'?p.name:'Sensei '+p.name)}! Enter your PIN</h2>
