@@ -500,6 +500,20 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .act.sb-bigwin{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 26%,var(--surface)),var(--surface))}.act.sb-bigwin .amt{color:var(--gold-deep)}
 .sb-emi{width:56px!important;flex:none!important;min-width:0!important;text-align:center;font-size:22px}
 .sb-feed li{grid-template-columns:32px 1fr auto auto}
+.tm-list{display:grid;gap:8px}
+.tm-head,.tm-row{display:grid;grid-template-columns:minmax(170px,1.2fr) minmax(250px,1.3fr) minmax(150px,.8fr) minmax(220px,auto);gap:12px;align-items:center}
+.tm-head{padding:0 14px;color:var(--muted);font-weight:900;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.tm-row{border:2px solid var(--line);border-radius:16px;padding:10px 14px;background:var(--surface)}.tm-row.tm-warn{border-color:var(--bad);background:var(--bad-soft)}
+.tm-name{display:flex;align-items:center;gap:10px;min-width:0}.tm-name b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tm-name small{display:block;color:var(--muted);font-weight:800;font-size:13px}
+.tm-name small.tm-you{display:inline;background:var(--sunk);border-radius:999px;padding:1px 8px;font-size:11px}
+.tm-av{width:38px;height:38px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-family:var(--f-display);font-size:18px;flex:none}
+.tm-bdsel{display:flex;gap:6px}.tm-row select,.tm-pin{border:2px solid var(--line);border-radius:10px;padding:8px 8px;font:inherit;font-weight:800;background:var(--surface);color:var(--ink);min-width:0;width:auto}
+.tm-bdsel .tm-m{flex:1.2}.tm-bdsel .tm-d{flex:.9}.tm-bdsel .tm-y{flex:1.2}.tm-role select{width:100%}.tm-pin{width:110px}
+.tm-acts .btn{padding:8px 12px;font-size:14px}
+.tm-acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;align-items:center}.tm-rm{color:var(--bad)}.tm-ask{font-weight:900;color:var(--bad)}
+.tm-cap{display:none;color:var(--muted);font-weight:900;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+@media (max-width:900px){.tm-head{display:none}.tm-row{grid-template-columns:1fr 1fr;row-gap:10px}.tm-name,.tm-bd{grid-column:1/-1}.tm-cap{display:block}.tm-acts{justify-content:flex-start;align-self:end}}
+@media (max-width:520px){.tm-row{grid-template-columns:1fr}.tm-acts .btn{flex:1}}
 .bd-cell select{border:2px solid var(--line);border-radius:10px;padding:5px 6px;font-weight:800;background:var(--surface);color:var(--ink);margin-right:4px}
 .audit-ok{margin:0;font-weight:900;color:var(--good)}.audit-bad{margin:0 0 8px;font-weight:900;color:var(--bad)}
 .lbt.audit td.bad{color:var(--bad);font-family:var(--f-body);font-size:15px}.lbt.audit td{font-size:15px}.lbt.audit th small{font-weight:800;text-transform:none;letter-spacing:0}
@@ -1224,18 +1238,22 @@ const personName = id => { const p=S.staff[id]; if(p) return p.role==='viewer' |
 function renderTeam(){
   const host=document.getElementById('teamList'); if(!host) return;
   if(document.activeElement?.dataset?.sbd && host.contains(document.activeElement)) return;
-  const rows=[];
-  if(S.mode==='db') rows.push(`<tr><td><b>${S.isOwner?'You':'Center Director'}</b> <span class="hint">(owner, signs in with email)</span></td><td></td><td><b>Center Director</b></td><td></td><td></td></tr>`);
+  const rows=[], cap=t=>`<span class="tm-cap">${t}</span>`;
+  if(S.mode==='db') rows.push(`<div class="tm-row"><div class="tm-name"><span class="tm-av">👑</span><div><b>${S.isOwner?'You':'Center Director'}</b><small>Owner · signs in with email</small></div></div><div></div><div class="tm-role"><b>Center Director</b></div><div></div></div>`);
   Object.values(S.staff).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
-    const editing = S.pinFor===p.id, removing = S.removeFor===p.id, self = p.id===S.me;
-    rows.push(`<tr><td><b>${esc(personName(p.id))}</b>${self?' <span class="hint">(you)</span>':''}</td>
-      <td class="bd-cell">${p.role==='parent'||p.role==='viewer' ? '' : `<select data-sbd="${esc(p.id)}" data-f="m" aria-label="Birthday month"><option value="">Month</option>${MONTHS.map((m,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(p)?.m===k+1?'selected':''}>${m.slice(0,3)}</option>`).join('')}</select><select data-sbd="${esc(p.id)}" data-f="d" aria-label="Birthday day"><option value="">Day</option>${Array.from({length:31},(_,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bdayOf(p)?.d===k+1?'selected':''}>${k+1}</option>`).join('')}</select><select data-sbd="${esc(p.id)}" data-f="y" aria-label="Birth year">${yearOpts(p.bdayY, new Date().getFullYear()-80, new Date().getFullYear()-14)}</select>${ageNow(p)!=null?` <small class="hint">${ageNow(p)}</small>`:''}`}</td>
-      <td><select data-staffrole="${esc(p.id)}" id="sr-${esc(p.id)}" aria-label="Role" ${self?'disabled':''}>${Object.entries(ROLE_NAMES).map(([k,v])=>`<option value="${k}" ${k===p.role?'selected':''}>${v}</option>`).join('')}</select></td>
-      <td>${editing ? `<span class="row" style="gap:6px"><input id="newPin-${esc(p.id)}" inputmode="numeric" maxlength="6" placeholder="New PIN" style="width:110px;border:2px solid var(--line);border-radius:10px;padding:6px 8px;font-weight:800;background:var(--surface);color:var(--ink)"><button class="btn primary" data-act="savePin" data-id="${esc(p.id)}" style="padding:6px 10px">Save</button><button class="btn ghost" data-act="cancelPin" style="padding:6px 10px">Cancel</button></span>` : `<button class="btn ghost" data-act="pinFor" data-id="${esc(p.id)}" style="padding:6px 10px">Change PIN</button>`}</td>
-      <td>${self ? '' : removing ? `<span class="row" style="gap:6px"><button class="btn primary" data-act="removeStaff" data-id="${esc(p.id)}" style="padding:6px 10px">Yes, remove</button><button class="btn ghost" data-act="cancelRemoveStaff" style="padding:6px 10px">Keep</button></span>` : `<button class="btn ghost" data-act="askRemoveStaff" data-id="${esc(p.id)}" style="padding:6px 10px">Remove</button>`}</td></tr>`);
+    const editing = S.pinFor===p.id, removing = S.removeFor===p.id, self = p.id===S.me, bd=bdayOf(p), age=ageNow(p), noBd=p.role==='parent'||p.role==='viewer';
+    const sel=(f,label,opts)=>`<select class="tm-${f}" data-sbd="${esc(p.id)}" data-f="${f}" aria-label="${label}">${opts}</select>`;
+    rows.push(`<div class="tm-row${removing?' tm-warn':''}">
+      <div class="tm-name"><span class="tm-av">${esc((personName(p.id)||'?').replace(/^Sensei\s+/i,'').slice(0,1).toUpperCase())}</span><div><b>${esc(personName(p.id))}</b>${self?' <small class="tm-you">you</small>':''}<small>${noBd?'No birthday needed':bd?`🎂 ${MONTHS[bd.m-1].slice(0,3)} ${bd.d}${age!=null?` · ${age} years old`:''}`:'Birthday not set'}</small></div></div>
+      <div class="tm-bd">${noBd ? '' : `${cap('Birthday')}<div class="tm-bdsel">${sel('m','Birthday month',`<option value="">Month</option>${MONTHS.map((m,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bd?.m===k+1?'selected':''}>${m.slice(0,3)}</option>`).join('')}`)}${sel('d','Birthday day',`<option value="">Day</option>${Array.from({length:31},(_,k)=>`<option value="${String(k+1).padStart(2,'0')}" ${bd?.d===k+1?'selected':''}>${k+1}</option>`).join('')}`)}${sel('y','Birth year',yearOpts(p.bdayY, new Date().getFullYear()-80, new Date().getFullYear()-14))}</div>`}</div>
+      <div class="tm-role">${cap('Role')}<select data-staffrole="${esc(p.id)}" id="sr-${esc(p.id)}" aria-label="Role" ${self?'disabled':''}>${Object.entries(ROLE_NAMES).map(([k,v])=>`<option value="${k}" ${k===p.role?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="tm-acts">${editing ? `<input id="newPin-${esc(p.id)}" class="tm-pin" inputmode="numeric" maxlength="6" placeholder="New PIN" aria-label="New PIN"><button class="btn primary sm" data-act="savePin" data-id="${esc(p.id)}">Save</button><button class="btn ghost sm" data-act="cancelPin">Cancel</button>`
+        : removing ? `<span class="tm-ask">Remove ${esc(personName(p.id))}?</span><button class="btn primary sm" data-act="removeStaff" data-id="${esc(p.id)}">Yes, remove</button><button class="btn ghost sm" data-act="cancelRemoveStaff">Keep</button>`
+        : `<button class="btn ghost sm" data-act="pinFor" data-id="${esc(p.id)}">🔑 Change PIN</button>${self?'':`<button class="btn ghost sm tm-rm" data-act="askRemoveStaff" data-id="${esc(p.id)}" aria-label="Remove ${esc(personName(p.id))}" title="Remove">Remove</button>`}`}</div></div>`);
   });
-  host.innerHTML = rows.length>1 || S.mode!=='db' && rows.length ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Birthday</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`
-    : (rows.join('') ? `<div class="setup"><table style="min-width:620px"><thead><tr><th>Name</th><th>Birthday</th><th>Role</th><th>PIN</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div><p class="hint" style="margin:8px 0 0">No senseis yet. Add your first one above.</p>` : '<p class="hint" style="margin:0">No senseis yet. Add your first one above.</p>');
+  const none = !Object.keys(S.staff).length;
+  host.innerHTML = (rows.length ? `<div class="tm-list"><div class="tm-head"><span>Name</span><span>Birthday</span><span>Role</span><span></span></div>${rows.join('')}</div>` : '')
+    + (none ? `<p class="hint" style="margin:${rows.length?'8px 0 0':'0'}">No senseis yet. Add your first one above.</p>` : '');
 }
 const PIN_OK = pin => /^[0-9]{4,6}$/.test(pin);
 const pinPass = pin => `dojo-bucks-${pin}`;
@@ -2736,7 +2754,7 @@ function renderGoalAdmin(){
   const tog=(k,t)=>`<button class="gl-tog" data-act="goalTog" data-k="${k}" aria-pressed="${!!D[k]}"><span class="gl-sw"></span>${t}</button>`;
   const hist=(c.goalHist||[]);
   host.innerHTML = `<div class="gl-grid"><div style="display:grid;gap:14px;align-content:start">
-    <div class="gl-box">${g.target>0 ? `<div class="spread" style="align-items:flex-start;gap:8px"><div style="min-width:0"><span class="eyebrow">${esc(nm)} goal</span><div class="gl-prize">${esc(g.icon)} ${esc(g.prize||'Dojo goal')}</div></div>
+    <div class="gl-box">${g.target>0 ? `<div class="spread" style="align-items:flex-start;gap:8px"><div style="min-width:0"><span class="eyebrow">${esc(nm)} goal</span><div class="gl-prize">${(g.prize||'').startsWith(g.icon)?'':esc(g.icon)+' '}${esc(g.prize||'Dojo goal')}</div></div>
         <span class="status ${g.done?'approved':g.onTrack?'pending':'rejected'}">${g.done?'🏆 Reached':g.onTrack?'🔥 On track':'🐢 Behind'}</span></div>
       <div class="gl-bar"><i style="width:${pct}%"></i></div>
       <div class="spread" style="font-weight:900;margin-top:6px"><span>${fmt(g.total)} of ${fmt(g.target)} bucks · ${Math.floor(pct)}%</span><span class="hint" style="margin:0">${g.done?`Reached ${esc(goalDate(g.wonAt))}`:`${g.left} day${g.left===1?'':'s'} left`}</span></div>
@@ -3351,7 +3369,7 @@ document.addEventListener('change', e=>{
   if(el.dataset && el.dataset.lbslide){ const off=new Set(S.lobbyCfg?.off||[]); el.checked ? off.delete(el.dataset.lbslide) : off.add(el.dataset.lbslide); saveLobbyCfg({off:[...off]}); return; }
   if(el.id==='lbBday'){ saveLobbyCfg({bdayNote:el.value.trim()}); return; }
   if(el.id==='editWelcome'){ if(isDir()) api.update('ninjas', S.drawer, {welcome:el.checked}).then(()=>toast(el.checked?'Shown on the lobby Welcome screen.':'Hidden from the lobby Welcome screen.')).catch(()=>{}); return; }
-  if(el.dataset && el.dataset.sbd){ const id=el.dataset.sbd, row=el.closest('td'), v=f=>row.querySelector(`[data-f="${f}"]`).value, m=v('m'), d=v('d'), y=v('y');
+  if(el.dataset && el.dataset.sbd){ const id=el.dataset.sbd, row=el.closest('.tm-row'), v=f=>row.querySelector(`[data-f="${f}"]`).value, m=v('m'), d=v('d'), y=v('y');
     if(!isDir()) return;
     if(el.dataset.f==='y'){ api.update('staff', id, {bdayY: y ? +y : null}).then(()=>toast('Saved.')).catch(()=>{}); return; }
     if(!!m===!!d) api.update('staff', id, {bday: m ? `${m}-${d}` : ''}).then(()=>toast(m?'Birthday saved.':'Birthday removed.')).catch(()=>{}); else toast(`Pick the ${m?'day':'month'} too.`);
