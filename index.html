@@ -1602,9 +1602,13 @@ function tickerRaw(){
     add('welcome-all', `🎉 A big ninja welcome to ${fresh.length>1?'our new ninjas':'our new ninja'} ${andList(fresh.map(n=>n.name))}!`);
   }
   const td=new Date(now), mmdd=String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
-  all.filter(n=>n.bday===mmdd).forEach(n=>{ const t=turningAge(n); add('bday:'+n.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy ${t?ordinal(t)+' ':''}birthday, <b>${esc(n.name)}</b>! Have an awesome day! 🎉`); });
-  Object.values(S.staff||{}).filter(p=>(p.role==='sensei'||p.role==='director') && p.bday===mmdd).forEach(p=>add('sbday:'+p.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy birthday, <b>${esc(sbName(p.id))}</b>! Thank you for everything you do! 🎉`));
-  if([...all.filter(n=>n.bday===mmdd), ...Object.values(S.staff||{}).filter(p=>p.bday===mmdd)].length) add('bdaybucks:'+mmdd, `🎁 Birthday ninjas and senseis get ${fmt(BDAY_BONUS)} bonus bucks!`);
+  // Birthday day: a personal line each (and the birthday bucks line). The next 5 days: one short line for everyone.
+  const bdAgo = p => daysSinceBirthday(p), isStaffB = p => p.role==='sensei' || p.role==='director', staffL=Object.values(S.staff||{}).filter(isStaffB);
+  all.filter(n=>bdAgo(n)===0).forEach(n=>{ const t=turningAge(n); add('bday:'+n.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy ${t?ordinal(t)+' ':''}birthday, <b>${esc(n.name)}</b>! Have an awesome day! 🎉`); });
+  staffL.filter(p=>bdAgo(p)===0).forEach(p=>add('sbday:'+p.id+':'+td.getFullYear(), `<span class="tk-tag">BIRTHDAY</span> 🎂 Happy birthday, <b>${esc(sbName(p.id))}</b>! Thank you for everything you do! 🎉`));
+  if([...all, ...staffL].some(p=>bdAgo(p)===0)) add('bdaybucks:'+mmdd, `🎁 Birthday ninjas and senseis get ${fmt(BDAY_BONUS)} bonus bucks!`);
+  const late=[...all.filter(n=>{ const d=bdAgo(n); return d>0 && d<BDAY_SHOW_DAYS; }).map(n=>n.name), ...staffL.filter(p=>{ const d=bdAgo(p); return d>0 && d<BDAY_SHOW_DAYS; }).map(p=>sbName(p.id))];
+  if(late.length) add('bdaylate:'+mmdd, `🎉 Belated birthday wishes to ${andList(late)}!`);
   const recent=S.log.filter(l=>now-l.at < 3*DAY && l.kind!=='penalty' && l.kind!=='setup' && l.item!=='bdaybonus' && stillTrue(l));
   const imgOf = id => EARN.find(x=>x.id===id)?.img;
   const itemOf = id => [...earnList(), ...bonusItems(), ...shopTiers().flatMap(t=>t.items)].find(x=>x.id===id);
@@ -2325,9 +2329,26 @@ const ageNow = p => { const t=turningAge(p), b=bdayOf(p); if(t==null) return nul
 // Everyone with a birthday in month m: ninjas, plus senseis on staff screens (parents can't read the team list).
 // Sensei ages are only shown on staff pages, never on the lobby or the ticker.
 function birthdaysIn(m){
-  const ninjas=ninjaList().filter(n=>bdayOf(n)?.m===m).map(n=>({key:'n'+n.id, who:n, name:n.name, d:bdayOf(n).d, turning:turningAge(n), staff:false}));
-  const staff=Object.values(S.staff||{}).filter(p=>(p.role==='sensei'||p.role==='director') && bdayOf(p)?.m===m).map(p=>({key:'s'+p.id, who:p, name:sbName(p.id), d:bdayOf(p).d, turning:turningAge(p), staff:true}));
+  const ninjas=ninjaList().filter(n=>bdayOf(n)?.m===m).map(n=>({key:'n'+n.id, who:n, name:n.name, m, d:bdayOf(n).d, turning:turningAge(n), staff:false}));
+  const staff=Object.values(S.staff||{}).filter(p=>(p.role==='sensei'||p.role==='director') && bdayOf(p)?.m===m).map(p=>({key:'s'+p.id, who:p, name:sbName(p.id), m, d:bdayOf(p).d, turning:turningAge(p), staff:true}));
   return [...ninjas, ...staff].sort((a,b)=>a.d-b.d || a.name.localeCompare(b.name));
+}
+// Birthdays stay up for 6 days (the day itself plus 5), then come down.
+const BDAY_SHOW_DAYS = 6;
+function daysSinceBirthday(p){
+  const b=bdayOf(p); if(!b) return null; const now=new Date(), today=new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  let d=Math.round((today - new Date(now.getFullYear(), b.m-1, b.d).getTime())/DAY);
+  if(d < -300) d += 365; if(d > 300) d -= 365;   // around New Year
+  return d;
+}
+// What the lobby and parent cards show: birthdays of the last 6 days, plus ones still to come this month.
+function birthdaysNow(){
+  const m=new Date().getMonth()+1, keep=x=>{ const d=daysSinceBirthday(x.who); return d!=null && ((d>=0 && d<BDAY_SHOW_DAYS) || (d<0 && x.m===m)); };
+  const all=[...birthdaysIn(m), ...birthdaysIn(m===1?12:m-1)].filter(keep);
+  all.forEach(x=>x.ago=daysSinceBirthday(x.who));
+  // Today first, then the last few days, then birthdays still to come.
+  const rank = x => x.ago>=0 ? x.ago : 100-x.ago;
+  return all.sort((a,b)=>rank(a)-rank(b) || a.name.localeCompare(b.name));
 }
 const yearOpts = (sel, from, to) => `<option value="">Year</option>`+Array.from({length:to-from+1},(_,k)=>to-k).map(y=>`<option value="${y}" ${toNum(sel)===y?'selected':''}>${y}</option>`).join('');
 
@@ -2352,7 +2373,7 @@ function lbAvailable(){
     if(off.has(x.id)) return false;
     if(x.id==='create') return all.some(n=>n.group!=='junior');
     if(x.id==='jr') return all.some(n=>n.group==='junior');
-    if(x.id==='bday') return birthdaysIn(m).length>0;
+    if(x.id==='bday'){ const L=birthdaysNow(); return L.length>0 && (L.some(b=>b.ago===0) || (LB.loop||0)%3===0); }
     if(x.id==='welcome') return lbNewNinjas().length>0;
     if(x.id==='spot') return lbSpotlights().length>0;
     if(x.id==='goal') return (cfg.goalTarget|0)>0;
@@ -2426,9 +2447,9 @@ function lbWelcome(){
 }
 function lbBday(){
   const now=new Date(), m=now.getMonth()+1, today=now.getDate();
-  const all=birthdaysIn(m), L=all.slice(0,6), hasStaff=all.some(x=>x.staff);
+  const all=birthdaysNow(), L=all.slice(0,6), hasStaff=all.some(x=>x.staff);
   const next=birthdaysIn((m%12)+1).map(x=>x.name);
-  const cards=L.map((x,i)=>{ const n=x.who, t=x.d===today; return `<div style="background:${t?'linear-gradient(160deg,#FFE07A,#F6B60A)':'#fff'};border-radius:30px;padding:30px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 20px 40px -18px rgba(30,26,60,.5);transform:rotate(${[-3,2,0,-2,3,-1][i]}deg) ${t?'scale(1.08)':''};position:relative">${t?'<span class="lb-pill" style="position:absolute;top:-20px;background:#E5402B;color:#fff;font-size:22px">🎉 TODAY!</span>':''}${lbAv(n,150)}<div class="d" style="font-size:${x.staff?36:44}px;text-align:center;line-height:1.05">${esc(x.name)}</div>${!x.staff && x.turning?`<div class="lb-pill" style="background:#221B4D;color:#fff;font-size:22px">${t?'🎉 Turning':'Turns'} ${x.turning}!</div>`:''}<div class="lb-pill" style="background:${t?'#fff':'#F1EFFA'};font-size:22px">🎂 ${MONTHS[m-1].slice(0,3)} ${x.d}</div></div>`; }).join('');
+  const cards=L.map((x,i)=>{ const n=x.who, t=x.ago===0, recent=x.ago>0; return `<div style="background:${t?'linear-gradient(160deg,#FFE07A,#F6B60A)':'#fff'};border-radius:30px;padding:30px 16px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 20px 40px -18px rgba(30,26,60,.5);transform:rotate(${[-3,2,0,-2,3,-1][i]}deg) ${t?'scale(1.08)':''};position:relative">${t?'<span class="lb-pill" style="position:absolute;top:-20px;background:#E5402B;color:#fff;font-size:22px">🎉 TODAY!</span>':''}${lbAv(n,150)}<div class="d" style="font-size:${x.staff?36:44}px;text-align:center;line-height:1.05">${esc(x.name)}</div>${!x.staff && x.turning?`<div class="lb-pill" style="background:#221B4D;color:#fff;font-size:22px">${t?'🎉 Turning':recent?'Just turned':'Turns'} ${x.turning}!</div>`:''}<div class="lb-pill" style="background:${t?'#fff':'#F1EFFA'};font-size:22px">${recent?'🎉 ':'🎂 '}${MONTHS[x.m-1].slice(0,3)} ${x.d}</div></div>`; }).join('');
   return `<div class="lb-panel" style="left:90px;right:90px;${P};padding:30px 50px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;overflow:hidden">
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 8% 18%,#FFD43B44 0 60px,transparent 61px),radial-gradient(circle at 93% 14%,#E6498033 0 80px,transparent 81px),radial-gradient(circle at 90% 88%,#339AF033 0 70px,transparent 71px),radial-gradient(circle at 6% 86%,#40C05733 0 60px,transparent 61px)"></div>
     <div style="position:relative;text-align:center"><div class="d" style="font-size:90px;line-height:1">🎂 ${MONTHS[m-1]} Birthdays 🎈</div><div style="font-size:30px;font-weight:800;color:#69658E;margin-top:6px">Happy birthday, ${hasStaff?'ninjas and senseis':'ninjas'}! Give them a big dojo cheer</div></div>
@@ -2513,7 +2534,7 @@ function renderLobby(advance){
   const list=lbAvailable();
   if(!list.length){ document.getElementById('lbStage').innerHTML=lbFrame({icon:'🥷',name:'Dojo Bucks'}, [], `<div class="lb-panel" style="left:300px;right:300px;top:300px;padding:60px;text-align:center"><div class="d" style="font-size:60px">Welcome to the dojo! 🥷</div></div>`); LB.html=''; lbFit(); return; }
   const prev=LB.cur;
-  if(advance || !LB.on || LB.i<0 || LB.i>=list.length){ LB.i = advance ? (LB.i+1)%list.length : Math.max(0, Math.min(LB.i, list.length-1)); if(advance && list[LB.i].id==='spot') LB.spot++; }
+  if(advance || !LB.on || LB.i<0 || LB.i>=list.length){ LB.i = advance ? (LB.i+1)%list.length : Math.max(0, Math.min(LB.i, list.length-1)); if(advance && LB.i===0) LB.loop=(LB.loop||0)+1; if(advance && list[LB.i].id==='spot') LB.spot++; }
   const phone=host.clientWidth<760, ph=document.getElementById('lbPhone');
   ph.hidden=!phone; document.getElementById('lbStage').hidden=phone;
   if(phone){ clearTimeout(LB.timer); LB.on=false; host.style.bottom=(document.querySelector('.tk-dock .ticker')?.offsetHeight||0)+'px'; plMount(ph, plHTML(false)); return; }
@@ -2550,8 +2571,8 @@ const plCards = {
   achieve:()=>{ const now=Date.now(), k=S.plAch||'week', from = k==='today'?dayStart(now):k==='week'?weekStart(now):monthStart(now), L=achievements(from).slice(0,5);
     return plCard('⭐','Big Wins', `<div class="seg pl-seg">${[['today','Today'],['week','This week'],['month','This month']].map(([v,t])=>`<button data-plach="${v}" aria-pressed="${k===v}">${t}</button>`).join('')}</div>
       ${L.map(l=>{ const n=S.ninjas[l.ninjaId], a=achText(l); return plRow(n, a.img?badge(a.img,34):`<span class="pl-em">${esc(a.em)}</span>`, esc(a.t)); }).join('') || '<p class="hint">Big wins will show up here.</p>'}`); },
-  bday:()=>{ const now=new Date(), m=now.getMonth()+1, L=birthdaysIn(m);
-    return plCard('🎂',`${MONTHS[m-1]} Birthdays`, L.map(x=>{ const t=x.d===now.getDate(), age=!x.staff && x.turning ? ` · ${t?'turning':'turns'} ${x.turning}` : ''; return `<div class="pl-row ${t?'pl-hot':''}">${avatar(x.who,40)}<div class="pl-nm"><b>${esc(x.name)}</b><small>${t?`🎉 Celebrating Today${age}`:`🎂 ${MONTHS[m-1].slice(0,3)} ${x.d}${age}`}</small></div></div>`; }).join('')
+  bday:()=>{ const now=new Date(), m=now.getMonth()+1, L=birthdaysNow();
+    return plCard('🎂',`${MONTHS[m-1]} Birthdays`, L.map(x=>{ const t=x.ago===0, age=!x.staff && x.turning ? ` · ${t?'turning':x.ago>0?'just turned':'turns'} ${x.turning}` : ''; return `<div class="pl-row ${x.ago>=0?'pl-hot':''}">${avatar(x.who,40)}<div class="pl-nm"><b>${esc(x.name)}</b><small>${t?`🎉 Celebrating Today${age}`:`${x.ago>0?'🎉':'🎂'} ${MONTHS[x.m-1].slice(0,3)} ${x.d}${age}`}</small></div></div>`; }).join('')
       + (S.lobbyCfg?.bdayNote?`<p class="pl-note">🎁 ${esc(S.lobbyCfg.bdayNote)}</p>`:''),'pl-bday'); },
   welcome:()=>plCard('👋','Welcome, new ninjas!', lbNewNinjas().map(n=>{ const b=beltFor(n); return `<div class="pl-row ${Date.now()-n.createdAt<2*DAY?'pl-hot':''}">${avatar(n,40)}<div class="pl-nm"><b>${esc(n.name)}</b><small>${n.group==='junior'?'🌸 JR':'⚡ Create'} · ${esc(b.name)} · joined ${new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div></div>`; }).join('')+'<p class="pl-note">🙌 High-five a new ninja today!</p>','pl-welcome'),
   spot:()=>{ const l=lbSpotlights()[0], n=S.ninjas[l.ninjaId], a=achText(l), b=beltFor(n);
