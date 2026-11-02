@@ -71,7 +71,10 @@ service cloud.firestore {
             && request.resource.data.balance >= 0)));
     }
     match /log/{id} {
-      allow read: if canSee();
+      // Staff and the lobby see everything. Parents never see penalties, except a family seeing its own ninja's.
+      allow read: if canView()
+        || (canSee() && resource.data.kind in ['earn', 'redeem', 'fix', 'setup'])
+        || (isFamily() && resource.data.ninjaId == famNinja());
       allow create: if isDirector() || (isSensei()
         && request.resource.data.by == request.auth.uid
         && ((request.resource.data.kind in ['earn', 'penalty']

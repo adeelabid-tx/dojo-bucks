@@ -286,7 +286,35 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .fam-form select,.fam-form input{border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:800;background:var(--surface);color:var(--ink)}
 .fam-form select,.fam-form input{font-size:17px;padding:12px 14px;min-width:0}
 .fam-form input{letter-spacing:.15em}
-.fam-card2{margin-bottom:18px;display:flex;flex-direction:column;gap:14px}
+.fam-card2{margin-bottom:18px;display:flex;flex-direction:column;gap:12px}
+.fam-card2 .fam-head{flex-wrap:nowrap;padding:12px 14px;gap:10px}.fam-card2 .fam-head > div:nth-child(2){min-width:0}.fam-card2 .fam-head > div:last-child{width:auto!important;text-align:right!important}.fam-card2 .fam-head h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fam-card2 .fam-head .bal{font-size:30px}
+.fp-seg{display:flex;width:100%}.fp-seg button{flex:1;padding:11px 4px;font-size:15px}
+.fp-box{margin:0;padding:14px}.fp-empty{text-align:center;font-weight:800;color:var(--muted)}
+.fp-hero{background:linear-gradient(135deg,var(--senior),#221B4D);color:#fff;border-radius:18px;padding:14px 16px}.fp-hero .eyebrow{color:#fff;opacity:.85}
+.fp-big{display:flex;align-items:flex-end;gap:8px;margin-top:2px}.fp-big b{font-family:var(--f-display);font-size:44px;line-height:1}.fp-big span{font-weight:800;padding-bottom:6px;opacity:.9}
+.fp-big.dark b{font-size:34px}.fp-big.dark span{color:var(--muted);padding-bottom:3px}
+.fp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.fp-chips span{background:rgba(255,255,255,.16);border-radius:999px;padding:5px 11px;font-weight:900;font-size:14px}
+.fp-list{display:flex;flex-direction:column}.fp-line{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.fp-list > .fp-line:first-child,.fp-list > .eyebrow + .fp-line,.fp-list > .fp-h + .fp-line{border-top:0}
+.fp-line b{display:block;font-size:16px;line-height:1.2}.fp-line small{color:var(--muted);font-weight:800}
+.fp-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:21px;flex:none;background:var(--good-soft)}
+.fp-line.bad .fp-ic{background:var(--bad-soft)}.fp-line.step .fp-ic{background:color-mix(in srgb,var(--legend) 16%,transparent)}.fp-line.spend .fp-ic{background:var(--gold-soft)}
+.fp-amt{font-family:var(--f-display);font-size:20px;color:var(--good)}.fp-line.bad .fp-amt{color:var(--bad)}.fp-line.step .fp-amt{color:var(--legend)}.fp-line.spend .fp-amt{color:var(--gold-deep)}
+.fp-cmp{font-weight:900;font-size:13px;border-radius:999px;padding:4px 10px;background:var(--sunk);color:var(--muted)}.fp-cmp.up{background:var(--good-soft);color:var(--good)}.fp-cmp.down{background:var(--bad-soft);color:var(--bad)}
+.fp-bars{display:flex;gap:4px;margin-top:12px}
+.fp-bar{flex:1;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:4px 0;border-radius:10px;cursor:pointer;color:var(--muted);font:inherit}
+.fp-bar:disabled{cursor:default}.fp-bar.on{background:var(--sunk)}
+.fp-bar .up,.fp-bar .dn{width:24px;display:flex}.fp-bar .up{height:80px;align-items:flex-end}.fp-bar .dn{height:30px;align-items:flex-start}
+.fp-bar i{display:block;width:100%;min-height:0}.fp-bar .up i{background:var(--good);border-radius:6px 6px 2px 2px}.fp-bar .dn i{background:#F08C6B;border-radius:2px 2px 6px 6px}
+.fp-bar:disabled .up i{background:var(--sunk);height:4px!important}.fp-bar small{font-weight:900;font-size:12px;margin-top:2px}
+.fp-h{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0 0 8px}.fp-h.good{color:var(--good)}.fp-h.bad{color:var(--bad);margin-top:14px}
+.fp-tags{display:flex;flex-wrap:wrap;gap:6px}.fp-tags span{border-radius:999px;padding:6px 12px;font-weight:800;font-size:15px}
+.fp-tags.good span{background:var(--good-soft)}.fp-tags.bad span{background:var(--bad-soft)}
+.fp-stats{display:flex;justify-content:space-around;text-align:center;gap:4px}.fp-stats b{font-family:var(--f-display);font-size:24px;display:block}.fp-stats small{color:var(--muted);font-weight:800}
+.fp-row{display:flex;align-items:center;gap:8px;margin-top:9px}.fp-row > span:first-child{width:24px;font-size:18px;text-align:center}.fp-row > b:nth-child(2){flex:1;font-size:15px;min-width:0}
+.fp-meter{width:100px;height:9px;border-radius:9px;background:var(--sunk);overflow:hidden}.fp-meter i{display:block;height:100%;border-radius:9px;background:var(--good)}
+.fp-row.bad .fp-meter i{background:#F08C6B}.fp-row.step .fp-meter i{background:var(--legend)}.fp-row > b:last-child{width:26px;text-align:right}
+.fold-row{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 12px;padding:14px 16px;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.fold-row b{font-family:var(--f-display);font-weight:400;font-size:20px;flex:1}.fold-row small{color:var(--muted);font-weight:800}.fr-ic{font-size:22px}.fr-ch{font-weight:900;color:var(--muted)}
 .fam-head{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--senior),#221B4D);color:#fff;border-radius:18px;padding:14px 18px;flex-wrap:wrap}
 .fam-head > div:nth-child(2){min-width:140px}
 @media (max-width:600px){ .fam-head > div:last-child{width:100%;text-align:left!important} }
@@ -652,9 +680,11 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
   <!-- LEADERBOARD -->
   <section class="view lbview" id="v-board">
       <div id="familyCard"></div>
+      <button class="card fold-row" id="foldLobby" data-act="famFold" data-k="lobby" hidden></button>
       <div id="parentLobby"></div>
+      <button class="card fold-row" id="foldBoard" data-act="famFold" data-k="board" hidden></button>
       <div id="boardTop"></div>
-      <div class="card board">
+      <div class="card board" id="boardCard">
         <div class="spread">
           <h2 class="lb-title" id="lbTitle">Dojo Leaderboard</h2>
           <div class="row">
@@ -674,6 +704,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
         </div>
         <div id="boardList"></div>
       </div>
+      <button class="card fold-row" id="foldPop" data-act="famFold" data-k="pop" hidden></button>
       <div id="parentRewards"></div>
   </section>
 
@@ -1016,7 +1047,19 @@ function startDb(db){
   let gotN=false, gotL=false;
   const ready = () => { if(gotN && gotL){ S.loaded=true; setTimeout(checkBirthdayBonuses, 2500); } render(); };
   db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = cleanNinja({id:d.id, ...d.data()})); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
-  db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
+  if(!isParent()) db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
+  else {
+    // Parents never download penalties, except a family's own ninja (the rules enforce this too).
+    let pub=[], mine=[]; const famOk = !isFamily();
+    let gotP=false, gotM=famOk;
+    const merge = () => { const m=new Map(); [...pub, ...mine].forEach(l=>m.set(l.id,l)); S.log=[...m.values()].sort((a,b)=>b.at-a.at); if(gotP && gotM){ gotL=true; ready(); } else render(); };
+    const PUB=['earn','redeem','fix','setup'];
+    const onPub = s => { pub = s.docs.map(d => cleanLog({id:d.id, ...d.data()})).filter(l=>l.at>=since); gotP=true; merge(); };
+    // Uses the kind+at index; until that index exists, fall back to the same entries without the date filter.
+    const unsub = db.collection('log').where('kind','in',PUB).where('at','>=',since).orderBy('at','desc').onSnapshot(onPub, e => {
+      if(e && e.code==='failed-precondition'){ try{ unsub(); }catch{} db.collection('log').where('kind','in',PUB).onSnapshot(onPub, e2 => dbErr(e2)); } else dbErr(e); });
+    if(isFamily()) db.collection('log').where('ninjaId','==',S.famNinja).onSnapshot(s => { mine = s.docs.map(d => cleanLog({id:d.id, ...d.data()})).filter(l=>l.at>=since); gotM=true; merge(); }, e => dbErr(e));
+  }
   // Everyone (staff, lobby, parents and families) needs the dojo's prices, goal, options and news.
   db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
@@ -1476,7 +1519,7 @@ function render(){
   { const n=sbBoss() ? S.sreq.filter(r=>r.status==='pending').length : 0, c=document.getElementById('sbCount'); c.hidden=!n; c.textContent=n; }
   if(isParent()) S.view='board';
   document.querySelector('a[data-tab="dash"]').hidden = isParent();
-  document.getElementById('pnav').hidden = !isParent(); document.getElementById('mainNav').hidden = isParent();
+  document.getElementById('pnav').hidden = !isParent() || isFamily(); document.getElementById('mainNav').hidden = isParent();
   document.querySelector('a[data-tab="shop"]').hidden = isParent();
   if((S.view==='award' || S.view==='roster') && !canWrite()) S.view='board';
   if(!isDir()){ S.editing=false; S.shopEdit=null; S.actEdit=null; }
@@ -1547,6 +1590,7 @@ function renderBoard(){
   renderFamilyCard();
   renderParentLobby();
   renderParentRewards();
+  renderFamFolds();
   const all=ninjaList();
   const board=document.getElementById('boardList');
   const list=ninjaList().filter(n=>n.group===S.lbGroup).sort((a,b)=>metricOf(b,S.metric)-metricOf(a,S.metric) || toNum(b.balance)-toNum(a.balance) || a.name.localeCompare(b.name));
@@ -1636,7 +1680,7 @@ function tickerRaw(){
   });
   const ws=weekStart(now), wk=S.log.filter(l=>l.at>=ws);
   const sumBy=k=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; };
-  const te=(()=>{ const m={}; wk.forEach(l=>{ if(l.kind==='earn') m[l.ninjaId]=(m[l.ninjaId]||0)+toNum(l.amt); if(l.kind==='penalty') m[l.ninjaId]=(m[l.ninjaId]||0)-toNum(l.amt); }); return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])[0]; })(); if(te && S.ninjas[te[0]]) add('top-earner:'+ws, `🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
+  const te=isParent() ? null : (()=>{ const m={}; wk.forEach(l=>{ if(l.kind==='earn') m[l.ninjaId]=(m[l.ninjaId]||0)+toNum(l.amt); if(l.kind==='penalty') m[l.ninjaId]=(m[l.ninjaId]||0)-toNum(l.amt); }); return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])[0]; })(); if(te && S.ninjas[te[0]]) add('top-earner:'+ws, `🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
   const ts=sumBy('redeem'); if(ts && S.ninjas[ts[0]]) add('top-spender:'+ws, `💸 <b>${esc(S.ninjas[ts[0]].name)}</b> is the top spender this week: ${fmt(ts[1])} bucks!`);
   const rich=[...all].sort((a,b)=>(b.balance||0)-(a.balance||0))[0]; if(rich && rich.balance) add('richest', `💰 <b>${esc(rich.name)}</b> has the biggest balance in the dojo: ${fmt(rich.balance)} bucks!`);
   const earnedWk=wk.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0); if(earnedWk) add('dojo-week:'+ws, `🪙 The dojo has earned ${fmt(earnedWk)} Ninja Bucks this week. Keep it up, ninjas!`);
@@ -1945,22 +1989,84 @@ function renderFamilyCard(){
     return;
   }
   const n=S.ninjas[S.famNinja]; if(!n){ host.innerHTML=''; return; }
-  const b=beltFor(n), held=heldFor(n.id), avail=(n.balance||0)-held, ms=monthStart(Date.now());
-  const wins=achievements(ms).filter(l=>l.ninjaId===n.id).slice(0,4), earned=S.log.filter(l=>l.ninjaId===n.id && l.kind==='earn' && l.at>=ms).reduce((a,l)=>a+(l.amt||0),0);
+  const b=beltFor(n), held=heldFor(n.id), avail=(n.balance||0)-held;
   const mine=S.requests.filter(r=>r.ninjaId===n.id).slice(0,5), waiting=id=>mine.some(r=>r.status==='pending' && r.item===id);
   const rewards=parentTiers().flatMap(t=>t.items);
-  host.innerHTML = `<div class="card fam-card2">
-    <div class="fam-head">${avatar(n,72)}<div style="flex:1;min-width:0"><div class="eyebrow" style="color:#fff;opacity:.85">My ninja</div><h2 style="margin:0;color:#fff">${esc(n.name)}</h2><div style="font-weight:800;opacity:.9">${b.i===BLACK?'Black Belt':`${esc(b.name)} belt · ${esc(stepName(b.i,b.level))}`}</div></div>
-      <div style="text-align:right"><div class="bal num">${coin(30)}${fmt(avail)}</div>${held?`<small style="font-weight:800;opacity:.9">${fmt(held)} on hold</small>`:''}</div></div>
-    <div class="fam-grid">
-      <div><span class="eyebrow">Belt progress</span><div class="medals" style="margin-top:6px">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),36,k+1===b.level?'cur':k+1>b.level?'dim':'')).join('')}</div>
-        <span class="eyebrow" style="margin-top:12px;display:block">This month · ${fmt(earned)} bucks earned</span>
-        <ul class="fam-wins">${wins.map(l=>{ const a=achText(l); return `<li>${a.img?badge(a.img,26):`<span>${esc(a.em)}</span>`}${esc(a.t)}</li>`; }).join('') || '<li class="hint">Big wins this month will show here.</li>'}</ul></div>
-      <div><h3 class="fam-rh">🎁 Request a reward</h3><div class="fam-rewards">${rewards.map(it=>{ const c=amountOf('redeem',it), ok=avail>=c, w=waiting(it.id), pct=Math.min(100, c? avail/c*100 : 100);
+  const feed=famFeed(n.id, 0), latest=feed[0] ? dayStart(feed[0].at) : null;
+  const R=S.famRange||'today', tabs=[['today', latest ? daysAgoLabel(latest) : 'Today'],['week','This week'],['month','This month']];
+  const body = R==='week' ? famWeek(n) : R==='month' ? famMonth(n, b) : famToday(n, latest);
+  host.innerHTML = `<div class="fam-card2">
+    <div class="fam-head">${avatar(n,60)}<div style="flex:1;min-width:0"><h2 style="margin:0;color:#fff">${esc(n.name)}</h2><div style="font-weight:800;opacity:.9">${b.i===BLACK?'Black Belt':`${esc(b.name)} belt · ${esc(stepName(b.i,b.level))}`}</div></div>
+      <div style="text-align:right"><div class="bal num">${coin(28)}${fmt(avail)}</div><small style="font-weight:800;opacity:.9">${held?`${fmt(held)} on hold`:'bucks'}</small></div></div>
+    <div class="seg fp-seg" role="group" aria-label="Show">${tabs.map(([k,t])=>`<button data-act="famRange" data-r="${k}" aria-pressed="${R===k}">${esc(t)}</button>`).join('')}</div>
+    ${body}
+    <div class="card fp-box"><h3 class="fam-rh">🎁 Rewards ${esc(n.name)} can get</h3><div class="fam-rewards">${rewards.map(it=>{ const c=amountOf('redeem',it), ok=avail>=c, w=waiting(it.id), pct=Math.min(100, c? avail/c*100 : 100);
         return `<div class="fam-rw ${ok?'ok':''}">${iconHTML(it,44)}<div style="flex:1;min-width:0"><b>${esc(it.label)}</b><div class="num" style="font-weight:900;color:var(--gold-deep)">${coin(16)} ${fmt(c)}</div><div class="meter"><i style="width:${pct}%"></i></div></div>
-          ${w ? '<span class="status pending">Requested</span>' : ok ? `<button class="btn gold" data-act="famReq" data-item="${esc(it.id)}">Request</button>` : `<small class="hint">${fmt(c-avail)} to go</small>`}</div>`; }).join('') || '<p class="hint">No rewards to request right now.</p>'}</div></div></div>
-    ${mine.length?`<div><span class="eyebrow">My requests</span><div class="fam-reqs">${mine.map(r=>{ const it=findItem('redeem', r.item); return `<div><span>${esc(it?.label||'Reward')} · ${fmt(r.cost)} bucks</span><span class="status ${r.status}">${r.status==='pending'?'Waiting for the front desk':r.status==='approved'?'Confirmed! 🎉':'Declined'}</span></div>`; }).join('')}</div></div>`:''}
+          ${w ? '<span class="status pending">Requested</span>' : ok ? `<button class="btn gold" data-act="famReq" data-item="${esc(it.id)}">Request</button>` : `<small class="hint">${fmt(c-avail)} to go</small>`}</div>`; }).join('') || '<p class="hint">No rewards to request right now.</p>'}</div>
+    ${mine.length?`<span class="eyebrow" style="margin-top:12px;display:block">My requests</span><div class="fam-reqs">${mine.map(r=>{ const it=findItem('redeem', r.item); return `<div><span>${esc(it?.label||'Reward')} · ${fmt(r.cost)} bucks</span><span class="status ${r.status}">${r.status==='pending'?'Waiting for the front desk':r.status==='approved'?'Confirmed! 🎉':'Declined'}</span></div>`; }).join('')}</div>`:''}</div>
   </div>`;
+}
+// Family progress: what their own ninja did in class. Awards, bucks lost and rewards; never who gave them.
+const FEED_KINDS=['earn','penalty','redeem'], STEP_IDS=['levelup','beltup','blackbelt'];
+const famFeed = (id, from, to=Infinity) => S.log.filter(l=>l.ninjaId===id && FEED_KINDS.includes(l.kind) && l.at>=from && l.at<to).sort((a,b)=>b.at-a.at);
+function daysAgoLabel(ts){ const d=Math.round((dayStart(Date.now())-dayStart(ts))/DAY); return d<=0?'Today':d===1?'Yesterday':d<14?`${d} days ago`:new Date(ts).toLocaleDateString([], {month:'short', day:'numeric'}); }
+const fpTime = ts => new Date(ts).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+const fpDay = ts => new Date(ts).toLocaleDateString([], {weekday:'long', month:'short', day:'numeric'});
+function fpSum(lines){ let up=0, down=0; lines.forEach(l=>{ const a=toNum(l.amt); if(l.kind==='earn') up+=a; else if(l.kind==='penalty') down+=a; }); return {up, down, net:up-down}; }
+const fpSigned = v => (v<0?'−':'+')+fmt(Math.abs(v));
+function fpLine(l){
+  const a=toNum(l.amt), step=STEP_IDS.includes(l.item), at=step?achText(l):null;
+  const cls = l.kind==='penalty'?'bad' : l.kind==='redeem'?'spend' : step?'step':'good';
+  const ic = at?.img ? badge(at.img,30) : `<span>${esc(l.icon || (l.kind==='redeem'?'🎁':'⭐'))}</span>`;
+  const title = step ? at.t : l.kind==='redeem' ? `Reward: ${l.label||''}` : (l.label||'');
+  return `<div class="fp-line ${cls}"><span class="fp-ic">${ic}</span><div style="flex:1;min-width:0"><b>${esc(title)}</b><small>${fpTime(l.at)}</small></div><span class="fp-amt num">${l.kind==='earn'?'+':'−'}${fmt(a)}</span></div>`;
+}
+function famToday(n, latest){
+  if(latest==null) return `<div class="card fp-box fp-empty">🥷 Nothing yet. After ${esc(n.name)}'s next class, you'll see the bucks they earned and lost here.</div>`;
+  const lines=famFeed(n.id, latest, latest+DAY), sm=fpSum(lines), aw=lines.filter(l=>l.kind==='earn' && !STEP_IDS.includes(l.item)).length,
+    pen=lines.filter(l=>l.kind==='penalty').length, st=lines.filter(l=>STEP_IDS.includes(l.item)), rd=lines.filter(l=>l.kind==='redeem').length;
+  const chips=[aw?`⭐ ${aw} award${aw>1?'s':''}`:'', pen?`🎯 ${pen} to work on`:'', st.some(l=>l.item!=='levelup')?'🥋 Belt up':st.length?'🥋 Level up':'', rd?`🎁 ${rd} reward${rd>1?'s':''}`:''].filter(Boolean);
+  return `<div class="fp-hero"><span class="eyebrow">${esc(daysAgoLabel(latest))} · ${esc(fpDay(latest))}</span>
+      <div class="fp-big"><b class="num">${fpSigned(sm.net)}</b><span>bucks ${daysAgoLabel(latest)==='Today'?'today':'that day'}</span></div>
+      ${chips.length?`<div class="fp-chips">${chips.map(c=>`<span>${c}</span>`).join('')}</div>`:''}</div>
+    <div class="card fp-box fp-list">${lines.map(fpLine).join('')}</div>`;
+}
+function famWeek(n){
+  const ws=weekStart(Date.now()), lines=famFeed(n.id, ws), sm=fpSum(lines), last=fpSum(famFeed(n.id, ws-7*DAY, ws)), lastAny=famFeed(n.id, ws-7*DAY, ws).length;
+  const days=Array.from({length:7},(_,i)=>{ const d=new Date(ws); d.setDate(d.getDate()+i); const t=d.getTime(), ls=lines.filter(l=>dayStart(l.at)===t); return {t, ls, ...fpSum(ls)}; });
+  const mx=Math.max(1, ...days.map(d=>Math.max(d.up,d.down))), sessions=days.filter(d=>d.ls.length).length;
+  const cmp = !lastAny ? '' : sm.net>last.net ? '<span class="fp-cmp up">▲ more than last week</span>' : sm.net<last.net ? '<span class="fp-cmp down">▼ less than last week</span>' : '<span class="fp-cmp">same as last week</span>';
+  const group=(kind)=>{ const m=new Map(); lines.filter(l=>l.kind===kind).forEach(l=>{ const step=STEP_IDS.includes(l.item), k=step?l.item:(l.item||l.label), t=step?(l.item==='levelup'?'🥋 Level up':'🥋 Belt up'):`${l.icon||''} ${l.label||''}`.trim(); const o=m.get(k)||{t,c:0}; o.c++; m.set(k,o); }); return [...m.values()].sort((a,b)=>b.c-a.c); };
+  const good=group('earn'), work=group('penalty');
+  return `<div class="card fp-box"><div class="spread" style="align-items:flex-end;flex-wrap:wrap;gap:6px"><div><small class="hint">${esc(new Date(ws).toLocaleDateString([], {month:'short', day:'numeric'}))} – ${esc(new Date(ws+6*DAY).toLocaleDateString([], {month:'short', day:'numeric'}))} · ${sessions} session${sessions===1?'':'s'}</small><div class="fp-big dark"><b class="num">${fpSigned(sm.net)}</b><span>bucks</span></div></div>${cmp}</div>
+      <div class="fp-bars">${days.map(d=>`<button class="fp-bar ${S.famDay===d.t?'on':''}" data-act="famDay" data-d="${d.t}" ${d.ls.length?'':'disabled'} aria-label="${esc(fpDay(d.t))}"><span class="up"><i style="height:${d.up/mx*100}%"></i></span><span class="dn"><i style="height:${d.down/mx*100}%"></i></span><small>${'MTWTFSS'[(new Date(d.t).getDay()+6)%7]}</small></button>`).join('')}</div>
+      ${S.famDay && days.some(d=>d.t===S.famDay) ? `<div class="fp-list" style="margin-top:8px"><span class="eyebrow">${esc(fpDay(S.famDay))}</span>${lines.filter(l=>dayStart(l.at)===S.famDay).map(fpLine).join('')}</div>` : sessions ? '<p class="hint" style="margin:6px 0 0;text-align:center">Tap a day to see what happened</p>' : ''}</div>
+    ${good.length||work.length ? `<div class="card fp-box">${good.length?`<h3 class="fp-h good">⭐ Doing great</h3><div class="fp-tags good">${good.map(o=>`<span>${esc(o.t)}${o.c>1?` ×${o.c}`:''}</span>`).join('')}</div>`:''}
+      ${work.length?`<h3 class="fp-h bad">🎯 Working on</h3><div class="fp-tags bad">${work.map(o=>`<span>${esc(o.t)}${o.c>1?` ×${o.c}`:''}</span>`).join('')}</div>`:''}</div>` : `<div class="card fp-box fp-empty">No classes yet this week.</div>`}`;
+}
+function famMonth(n, b){
+  const ms=monthStart(Date.now()), lines=famFeed(n.id, ms), sm=fpSum(lines), sessions=new Set(lines.map(l=>dayStart(l.at))).size;
+  const grp=ninjaList().filter(x=>(x.group==='junior')===(n.group==='junior')).sort((x,y)=>toNum(y.balance)-toNum(x.balance)), rank=grp.findIndex(x=>x.id===n.id)+1;
+  const steps=lines.filter(l=>STEP_IDS.includes(l.item)).length;
+  const bonus=new Set(bonusItems().map(x=>x.id)), m=new Map();
+  lines.filter(l=>l.kind!=='redeem' && !STEP_IDS.includes(l.item)).forEach(l=>{ const k=l.kind+'|'+(l.item||l.label); const o=m.get(k)||{t:l.label||'', ic:l.icon||'⭐', c:0, cls:l.kind==='penalty'?'bad':bonus.has(l.item)?'step':'good'}; o.c++; m.set(k,o); });
+  const rows=[...m.values()].sort((a,b)=>(a.cls==='bad')-(b.cls==='bad') || b.c-a.c).slice(0,8), mx=Math.max(1,...rows.map(r=>r.c));
+  const spent=lines.filter(l=>l.kind==='redeem');
+  return `<div class="card fp-box fp-stats"><div><b class="num" style="color:var(--good)">+${fmt(sm.up)}</b><small>earned</small></div><div><b class="num" style="color:var(--bad)">−${fmt(sm.down)}</b><small>lost</small></div><div><b class="num">${sessions}</b><small>session${sessions===1?'':'s'}</small></div><div><b class="num" style="color:var(--gold-deep)">#${rank||'–'}</b><small>in the dojo</small></div></div>
+    <div class="card fp-box"><h3 class="fp-h">🥷 Ninja Path</h3><div class="medals" style="margin-top:6px">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),34,k+1===b.level?'cur':k+1>b.level?'dim':'')).join('')}</div>
+      <small class="hint" style="display:block;margin-top:6px"><b style="color:var(--ink)">${b.i===BLACK?'Black Belt':`${esc(b.name)} belt · ${esc(stepName(b.i,b.level))}`}</b>${steps?` · ${steps} level${steps>1?'s':''} up this month 🎉`:''}</small></div>
+    ${rows.length?`<div class="card fp-box"><h3 class="fp-h">📊 Month at a glance</h3>${rows.map(r=>`<div class="fp-row ${r.cls}"><span>${esc(r.ic)}</span><b>${esc(r.t)}</b><span class="fp-meter"><i style="width:${r.c/mx*100}%"></i></span><b class="num">${r.c}</b></div>`).join('')}</div>`:'<div class="card fp-box fp-empty">No classes yet this month.</div>'}
+    ${spent.length?`<div class="card fp-box fp-list"><h3 class="fp-h">🎁 Rewards this month</h3>${spent.map(fpLine).join('')}</div>`:''}`;
+}
+// Families: Lobby, Leaderboard and Popular rewards fold into rows under the progress card to keep the page short.
+function renderFamFolds(){
+  const fam=isFamily(), o=S.famOpen||new Set(), n=S.ninjas[S.famNinja];
+  const grp=n ? ninjaList().filter(x=>(x.group==='junior')===(n.group==='junior')).sort((x,y)=>toNum(y.balance)-toNum(x.balance)) : [], rank=n ? grp.findIndex(x=>x.id===n.id)+1 : 0;
+  const rows=[['foldLobby','lobby','🥷','Lobby & Big Wins','swipe',['parentLobby']],['foldBoard','board','🏆','Leaderboard',rank?`${n.name} is #${rank}`:'',['boardTop','boardCard']],['foldPop','pop','🎉','Popular rewards','this month',['parentRewards']]];
+  rows.forEach(([bid,k,ic,t,sub,ids])=>{ const btn=document.getElementById(bid); btn.hidden=!fam; const open=o.has(k);
+    if(fam) btn.innerHTML=`<span class="fr-ic">${ic}</span><b>${esc(t)}</b><small>${esc(sub)}</small><span class="fr-ch">${open?'▾':'▸'}</span>`;
+    btn.setAttribute('aria-expanded', open);
+    ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.hidden = fam && !open; }); });
 }
 async function familyRequest(itemId){
   const n=S.ninjas[S.famNinja], it=findItem('redeem', itemId); if(!n || !it || !isFamily()) return;
@@ -2992,6 +3098,9 @@ document.addEventListener('click', e=>{
     case 'adjust': adjustBucks(S.drawer, Number(t.dataset.sign)); break;
     case 'famCode': createFamilyCode(S.drawer); break;
     case 'famReq': familyRequest(t.dataset.item); break;
+    case 'famRange': S.famRange=t.dataset.r; S.famDay=null; render(); break;
+    case 'famDay': S.famDay = S.famDay===+t.dataset.d ? null : +t.dataset.d; render(); break;
+    case 'famFold': { const o=S.famOpen||(S.famOpen=new Set()), k=t.dataset.k; o.has(k)?o.delete(k):o.add(k); render(); break; }
     case 'open': if(isParent()) break; S.adj={amt:'', note:''}; S.famShow=null; S.drawer=id; S.confirmRemove=false; render(); setTimeout(()=>document.getElementById('drawerClose')?.focus(),0); break;
     case 'closeDrawer': S.drawer=null; render(); break;
     case 'closeCelebrate': document.getElementById('celebrateHost').innerHTML=''; break;

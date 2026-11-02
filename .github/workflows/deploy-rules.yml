@@ -5,7 +5,7 @@ name: Publish Firestore rules
 on:
   push:
     branches: [main]
-    paths: [firestore.rules, .github/workflows/deploy-rules.yml, .github/scripts/publish-rules.mjs]
+    paths: [firestore.rules, .github/workflows/deploy-rules.yml, .github/scripts/publish-rules.mjs, .github/scripts/ensure-indexes.mjs]
   workflow_dispatch:
 
 permissions:
@@ -33,6 +33,8 @@ jobs:
           set +e
           node .github/scripts/publish-rules.mjs 2>&1 | tee "$RUNNER_TEMP/out.txt"
           status=${PIPESTATUS[0]}
+          # Indexes: the app still works without them (it falls back), so only warn if this fails.
+          node .github/scripts/ensure-indexes.mjs 2>&1 || echo "::warning::Could not create the Firestore index. The app still works; see the log above."
           rm -f "$RUNNER_TEMP/key.json"
           if [ "$status" -ne 0 ]; then
             # Show the reason on the run summary page.
