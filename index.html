@@ -1122,6 +1122,7 @@ function describeReq(r){
   const nm = id => `<b>${esc(S.ninjas[id]?.name || 'a removed ninja')}</b>`;
   if(r.type==='add') return {ic:'🥷', html:`Add new ninja <b>${esc(r.name)}</b> · ${esc(rankOf(r))}${r.start?` · ${fmt(r.start)} starting bucks`:''}${r.welcome===true?' · 👋 show on the lobby Welcome screen':''}`};
   if(r.type==='rank') return {ic:'🥋', html:`Change ${nm(r.ninjaId)} to ${esc(rankOf(r))}`};
+  if(r.type==='give'){ const it=findItem('earn', r.item); return {ic:esc(it?.icon||'⭐'), html:`Give <b>+${fmt(r.amt)}</b> for <b>${esc(it?.label||r.item)}</b> to ${(r.ninjaIds||[]).map(nm).join(', ')}`}; }
   if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); return {ic:it?.img?badge(it.img,36):'⭐', html:`${esc(it?.label||'Level Up')} for ${(r.ninjaIds||[]).map(nm).join(', ')}`}; }
   if(r.type==='redeem'){ const it=findItem('redeem', r.item), now=it?amountOf('redeem',it):r.cost, changed=r.status==='pending' && it && now!==r.cost;
     return {ic:it?iconHTML(it,40):'🛍️', html:`${nm(r.ninjaId)} wants <b>${esc(it?.label||r.item)}</b> for ${fmt(changed?now:r.cost)} bucks${changed?` <span class="status pending">price is now ${fmt(now)} (asked at ${fmt(r.cost)})</span>`:''}`}; }
@@ -1212,6 +1213,9 @@ async function approveReq(r){
   if(r.type==='add') await addNinja(r.name, r.group, r.belt|0, r.level||1, r.start||0, r.head|0, r.welcome===true);
   else if(r.type==='rank'){ if(!S.ninjas[r.ninjaId]) note='Ninja was removed';
     else await api.update('ninjas', r.ninjaId, r.group==='junior' ? {group:'junior', level:r.level} : {group:'ninja', belt:r.belt|0, level:r.level}); }
+  else if(r.type==='give'){ const it=findItem('earn', r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]);
+    if(!it || !ids.length){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Ninja or option no longer exists'}); return; }
+    await give('earn', it, ids); }
   else if(r.type==='step'){ const it=EARN.find(x=>x.id===r.item); const ids=(r.ninjaIds||[]).filter(id=>S.ninjas[id]);
     if(!it || !ids.length) note='Nothing to apply';
     else if(!(await give('earn', it, ids, r.from||null))){ await api.update('requests', r.id, {status:'rejected', decidedBy:S.me, decidedAt:Date.now(), note:'Already moved on since the request'}); return; } }
@@ -1261,8 +1265,12 @@ function stillTrue(l){
   const n=S.ninjas[l.ninjaId]; if(!n) return false;
   const b=beltFor(n); return rankKey(b.i, b.level) >= rankKey(l.toBelt, l.toLevel);
 }
+// Senseis can give or spend at most this many bucks per ninja at once; more needs the Center Director (also enforced by the rules).
+const SENSEI_LIMIT = 10000;
 async function give(kind, item, ids=[...S.selected], from=null){
   if(!ids.length){ toast('Pick at least one ninja first.'); return 0; }
+  if(kind==='earn' && !item.step && !isDir() && amountOf(kind,item) > SENSEI_LIMIT){
+    await sendRequest('give', {item:item.id, ninjaIds:ids, amt:amountOf(kind,item)}, `${item.label} (+${fmt(amountOf(kind,item))}) is more than ${fmt(SENSEI_LIMIT)} bucks, so it was sent to the Center Director for approval.`); return 0; }
   if(item.step && !isDir()){
     const dup=pendingReqs().find(r=>r.type==='step' && r.item===item.id && (r.ninjaIds||[]).some(id=>ids.includes(id)));
     if(dup){ toast(`${item.label} is already waiting for the Center Director for ${(dup.ninjaIds||[]).filter(id=>ids.includes(id)).map(id=>S.ninjas[id]?.name).join(', ')}.`); return 0; }
@@ -1317,7 +1325,7 @@ async function give(kind, item, ids=[...S.selected], from=null){
   return undo.length;
 }
 // Senseis give Quick Perks straight away; bigger rewards wait for the Center Director.
-const canRedeemNow = item => isDir() || quickIds().includes(item.id);
+const canRedeemNow = item => isDir() || (quickIds().includes(item.id) && amountOf('redeem', item) <= SENSEI_LIMIT);
 async function redeem(item, ninjaId=S.shopper, approved=false){
   const n=S.ninjas[ninjaId]; if(!n) return false; const cost=amountOf('redeem',item);
   if(!isDir() && !approved && quickIds().includes(item.id) && (n.balance||0)-heldFor(n.id) < cost){ S.confirm=null; toast(`${n.name} needs more bucks for this.`); render(); return; }
