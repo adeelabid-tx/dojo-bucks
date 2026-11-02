@@ -440,6 +440,21 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 @media (min-width:900px){ .award-grid > .card:last-child{position:sticky;top:calc(var(--hdr,120px) + 10px);max-height:calc(100vh - var(--hdr,120px) - 90px);overflow:auto} }
 .rm-x{border:0;background:transparent;color:var(--muted);font-weight:900;font-size:15px;cursor:pointer;padding:4px 6px;border-radius:8px}.rm-x:hover{background:var(--bad-soft);color:var(--bad)}
 .rm-ask{display:flex;gap:6px;grid-column:1 / -1;justify-content:flex-end}
+.sb-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}.sb-tabs button{border:0;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-weight:900;border-radius:999px;padding:8px 14px;cursor:pointer}.sb-tabs button[aria-pressed="true"]{background:var(--hero);color:#fff;border-color:var(--hero)}
+.sb-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}@media (max-width:900px){ .sb-grid{grid-template-columns:1fr} }
+.sb-col{display:grid;gap:18px}
+.sb-me{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,var(--senior),var(--hero));color:#fff;border:0}
+.sb-big{font-family:var(--f-display);font-size:42px;line-height:1;display:flex;align-items:center;gap:8px}
+.sb-rows{display:flex;flex-direction:column;margin-top:8px}.sb-row{display:flex;align-items:center;gap:12px;padding:8px 4px;border-top:1px solid var(--line)}.sb-row:first-child{border-top:0}
+.sb-rk{width:30px;text-align:center;font-size:18px}.sb-nm{flex:1;font-size:17px}.sb-amt{font-family:var(--f-display);color:var(--gold-deep);font-size:20px;display:flex;align-items:center;gap:4px}
+.sb-bar{width:120px;height:12px;background:var(--sunk);border-radius:9px;overflow:hidden}.sb-bar i{display:block;height:100%;background:var(--gold);border-radius:9px}
+.sb-shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.sb-rw{border:2px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}.sb-rw.ok{border-color:var(--gold)}
+.sb-em{font-size:32px}.sb-rw b{font-size:14px;line-height:1.2}.sb-cost{font-family:var(--f-display);color:var(--gold-deep);display:flex;align-items:center;gap:3px}
+.sb-g{margin:16px 0 6px}.sb-g.e{color:var(--good)}.sb-g.b{color:var(--gold-deep)}.sb-g.p{color:var(--bad)}
+.act.sb-bigwin{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 26%,var(--surface)),var(--surface))}.act.sb-bigwin .amt{color:var(--gold-deep)}
+.sb-emi{width:56px!important;flex:none!important;min-width:0!important;text-align:center;font-size:22px}
+.sb-feed li{grid-template-columns:32px 1fr auto auto}
 .audit-ok{margin:0;font-weight:900;color:var(--good)}.audit-bad{margin:0 0 8px;font-weight:900;color:var(--bad)}
 .lbt.audit td.bad{color:var(--bad);font-family:var(--f-body);font-size:15px}.lbt.audit td{font-size:15px}.lbt.audit th small{font-weight:800;text-transform:none;letter-spacing:0}
 .pick-search{width:100%;box-sizing:border-box;margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:17px;font-weight:800;background:var(--surface);color:var(--ink)}
@@ -624,6 +639,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
       <a href="#award" data-tab="award">Give Bucks</a>
       <a href="#shop" data-tab="shop">Reward Shop</a>
       <a href="#roster" data-tab="roster">Ninjas</a>
+      <a href="#sensei" data-tab="sensei" id="senseiTab" hidden>🥋 Sensei Bucks <span class="nb" id="sbCount" hidden></span></a>
       <a href="#admin" data-tab="admin" id="adminTab" hidden>Admin <span class="nb" id="adminCount" hidden></span></a>
     </nav>
     <img class="cn-logo" src="mascots/cn-logo.png" width="196" height="41" alt="Code Ninjas">
@@ -757,6 +773,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
   </section>
 
   <!-- ADMIN (Center Director only) -->
+  <section class="view" id="v-sensei" hidden><div id="sbHost"></div></section>
+
   <section class="view" id="v-admin" hidden>
     <div class="card">
       <div class="spread"><div><h2>Waiting for your approval</h2><p class="hint" style="margin:4px 0 0">Senseis send these when they add a ninja, change a belt or level, give Level Up or Belt Up, or redeem a reward.</p></div>
@@ -937,7 +955,7 @@ const GROUP = {junior:'JR', ninja:'Create'};
 
 /* ---------- state ---------- */
 const S = { ninjas:{}, log:[], settings:{earn:{},pen:{},shop:{}}, mode:null, loaded:false,
-  view:'board', pickMode:'one', pickQ:'', lobbyCfg:{goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}, bonusTab:0, actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
+  view:'board', sb:{}, slog:[], sreq:[], scfg:null, sbSel:new Set(), sbTab:null, sbRange:'month', sbAdj:{amt:'', note:''}, pickMode:'one', pickQ:'', lobbyCfg:{goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}, bonusTab:0, actions:null, actEdit:null, actIcon:null, tickerCfg:{hidden:[], edits:[]}, tkEditing:null, tkEditText:'', tkSel:new Set(), lbGroup:'ninja', adj:{amt:'', note:''}, rewardMonth:0, shop:null, shopEdit:null, iconFor:null, news:[], newsOpen:false, requests:[], role:'sensei', me:null, userApi:null, staff:{}, isOwner:false, ownerUid:null, pinFor:null, removeFor:null, viaPin:false, filter:'all', metric:'balance', selected:new Set(), shopper:null, confirm:null,
   editing:false, head:0, drawer:null, confirmRemove:false, readOnly:false };
 let api = null;
 
@@ -1013,6 +1031,11 @@ function startDb(db){
   } else {
   db.collection('staff').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.staff=m; if(!S.isOwner && !m[S.me]) return lockNow('You are no longer on the team.'); if(!S.isOwner){ S.role=m[S.me].role; } render(); if(S.isOwner && !S.parentChecked){ S.parentChecked=true; ensureParentLogin(db); } }, () => {});
   db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
+  // Sensei Bucks: staff only (the rules keep parents and families out).
+  db.collection('sensei').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id]=cleanNinja({id:d.id, ...d.data()})); S.sb=m; render(); }, () => {});
+  db.collection('slog').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.slog = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); render(); }, () => {});
+  db.doc('sconfig/main').onSnapshot(d => { S.scfg = d.exists ? d.data() : null; render(); }, () => {});
+  (S.isOwner ? db.collection('sreq').orderBy('at','desc').limit(200) : db.collection('sreq').where('by','==',S.me)).onSnapshot(s => { S.sreq = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b)=>b.at-a.at); render(); }, () => {});
   db.doc('settings/owner').onSnapshot(d => { S.ownerUid = d.exists ? d.data().uid : null; }, () => {});
   }
   if(S.isOwner) db.doc('settings/owner').set({uid:S.me}).catch(()=>{});
@@ -1033,7 +1056,9 @@ function startLocal(){
   let saved=null; try{ saved = JSON.parse(localStorage.getItem(LKEY)||'null'); }catch{}
   if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; S.tickerCfg=saved.tickerCfg||S.tickerCfg; S.actions=saved.actions||null; S.lobbyCfg=saved.lobbyCfg||S.lobbyCfg; S.demoFam=saved.demoFam||{}; }
   else { const s = makeSamples(); s.ninjas.forEach(n=>S.ninjas[n.id]=n); S.log = s.log.sort((a,b)=>b.at-a.at); S.news = s.news; }
-  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions, lobbyCfg:S.lobbyCfg, demoFam:S.demoFam})); }catch{} };
+  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions, lobbyCfg:S.lobbyCfg, demoFam:S.demoFam, sb:S.sb, slog:S.slog, sreq:S.sreq, scfg:S.scfg})); }catch{} };
+  S._persist=persist;
+  if(saved && saved.sb){ S.sb=saved.sb; S.slog=saved.slog||[]; S.sreq=saved.sreq||[]; S.scfg=saved.scfg||null; } else sbSamples();
   const col = c => c==='ninjas' ? 'ninjas' : c;
   api = {
     set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else if(id==='actions') S.actions=d; else if(id==='lobby') S.lobbyCfg=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
@@ -1442,6 +1467,9 @@ function render(){
   document.querySelectorAll('#metricSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.metric===S.metric));
   document.querySelectorAll('#lbGroupSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.lbgroup===S.lbGroup));
   if(S.view==='admin' && !isDir()) S.view='board';
+  if(S.view==='sensei' && !sbAllowed()) S.view='board';
+  document.getElementById('senseiTab').hidden = !sbAllowed();
+  { const n=sbBoss() ? S.sreq.filter(r=>r.status==='pending').length : 0, c=document.getElementById('sbCount'); c.hidden=!n; c.textContent=n; }
   if(isParent()) S.view='board';
   document.querySelector('a[data-tab="dash"]').hidden = isParent();
   document.getElementById('pnav').hidden = !isParent(); document.getElementById('mainNav').hidden = isParent();
@@ -1472,6 +1500,7 @@ function render(){
   if(S.view==='shop') renderShop();
   if(S.view==='roster') renderRoster();
   if(S.view==='admin') renderAdmin();
+  if(S.view==='sensei') renderSensei();
   renderDrawer();
   renderLobby(false);
 }
@@ -2270,6 +2299,7 @@ const LB_SLIDES = [
   {id:'path', name:'The Ninja Path', icon:'🗺️', secs:10},
   {id:'goal', name:'Dojo Goal', icon:'🎯', secs:8},
   {id:'legend', name:'Legendary Rewards', icon:'👑', secs:15},
+  {id:'senseis', name:'Our Senseis', icon:'🥋', secs:10},
 ];
 const LB = {i:-1, timer:null, spot:0, on:false, paused:false, resume:null};
 const LB_RESUME_MS = 2*60*1000; // a paused lobby starts again by itself after 2 minutes
@@ -2307,6 +2337,7 @@ function lbAvailable(){
     if(x.id==='spot') return lbSpotlights().length>0;
     if(x.id==='goal') return (cfg.goalTarget|0)>0;
     if(x.id==='legend') return lbLegendTier()?.items.length>0;
+    if(x.id==='senseis') return !isParent() && sbPeople().length>0;
     if(x.id==='achieve') return achievements(monthStart(now)).length>0;
     return all.length>0;
   });
@@ -2434,7 +2465,7 @@ function lbLegend(){
       <div style="flex:1;display:flex;flex-direction:column;gap:16px"><div class="d" style="font-size:46px;line-height:1">📱 Parents: scan me!</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px">${[['Scan + family code','Code from the front desk, one per child'],['Pick a reward','See your ninja\'s balance and progress'],['Front desk confirms','Bucks are held until approved']].map(([a,b],i)=>`<div style="display:flex;gap:14px;align-items:center"><span class="d" style="background:#E5402B;border-radius:50%;width:52px;height:52px;display:grid;place-items:center;font-size:28px;flex:none">${i+1}</span><div><div class="d" style="font-size:27px">${a}</div><div style="font-weight:800;font-size:18px;color:#BDB6EA">${b}</div></div></div>`).join('')}</div></div></div></div>`;
 }
-const LB_RENDER = {create:()=>lbBoard('ninja'), jr:()=>lbBoard('junior'), achieve:lbAchieve, bday:lbBday, welcome:lbWelcome, spot:lbSpot, path:lbPath, goal:lbGoal, legend:lbLegend};
+const LB_RENDER = {create:()=>lbBoard('ninja'), jr:()=>lbBoard('junior'), achieve:lbAchieve, bday:lbBday, welcome:lbWelcome, senseis:lbSenseis, spot:lbSpot, path:lbPath, goal:lbGoal, legend:lbLegend};
 function lbFit(){
   const host=document.getElementById('lobby'), st=document.getElementById('lbStage'); if(host.hidden) return;
   const dock=document.querySelector('.tk-dock .ticker')?.offsetHeight || 0; host.style.bottom=dock+'px';
@@ -2524,6 +2555,8 @@ const plCards = {
       <div class="spread" style="font-weight:900"><span>${coin(18)} ${fmt(total)} of ${fmt(target)}</span><span class="hint" style="margin:0">${left} day${left===1?'':'s'} left</span></div>
       <p class="pl-sub" style="margin:2px 0 0">🏁 Milestones</p><div class="pl-mss">${rows}</div>
       <p class="pl-foot">${total>=target?'Goal reached. Thank you, ninjas! 🎉':`📈 About ${fmt(need)} bucks a day to finish on time · we're earning about ${fmt(pace)} a day${pace>=need?' 🎉':''}`}</p>`,'pl-goal'); },
+  senseis:()=>{ const L=sbScores('month'), max=Math.max(1,...L.map(x=>x.v));
+    return plCard('🥋','Our Senseis', `<p class="hint" style="margin:-4px 0 4px">⭐ Sensei of the Month: <b>${L[0]?esc(sbName(L[0].p.id)):''}</b></p>`+L.slice(0,7).map((x,i)=>`<div class="pl-row">${avatar(x.p,40)}<div class="pl-nm"><b>${esc(sbName(x.p.id))}</b></div><span class="pl-bbar" style="max-width:90px"><i style="width:${Math.max(4,x.v/max*100)}%;background:#F6B60A"></i></span><b style="width:26px;text-align:center">${i<3?['🥇','🥈','🥉'][i]:i+1}</b></div>`).join('')); },
   legend:()=>{ const t=lbLegendTier();
     return plCard(esc(t.icon||'👑'), esc(t.name), t.items.slice(0,5).map(it=>`<div class="pl-row">${iconHTML(it,40)}<div class="pl-nm"><b>${esc(it.label)}</b></div><span class="pl-price">${coin(16)} ${fmt(amountOf('redeem',it))}</span></div>`).join('')
       + `<p class="pl-note">${isFamily()?'📱 Request these from <b>My Ninja</b> above.':'📱 Enter your family code above to request these for your ninja.'}</p>`,'pl-legend'); },
@@ -2534,7 +2567,7 @@ function plBoard(group){
 }
 function plHTML(skipBoards){
   // On the parents' page, leaderboards and rewards already have their own sections.
-  const list=lbAvailable().filter(x=>!(skipBoards && (x.id==='create'||x.id==='jr'||x.id==='legend'||x.id==='spot')));
+  const list=lbAvailable().filter(x=>!(skipBoards && (x.id==='create'||x.id==='jr'||x.id==='legend'||x.id==='spot'||x.id==='senseis')));
   if(!list.length) return '';
   return `<div class="pl-wrap"><div class="spread pl-top"><h2 style="margin:0">🥷 Lobby</h2><span class="hint" style="margin:0">Swipe →</span></div>
     <div class="pl-track" id="plTrack">${list.map(x=>plCards[x.id]()).join('')}</div>
@@ -2553,6 +2586,238 @@ document.addEventListener('click', e=>{
   const a=e.target.closest('[data-plach]'); if(a){ S.plAch=a.dataset.plach; document.querySelectorAll('#parentLobby,#lbPhone').forEach(h=>{ h.dataset.html=''; }); render(); return; }
   const d=e.target.closest('[data-pldot]'); if(d){ const tr=d.closest('.pl-wrap').querySelector('#plTrack'); tr.scrollTo({left:+d.dataset.pldot*(tr.children[0].offsetWidth+12), behavior:'smooth'}); }
 });
+
+
+/* ---------- Sensei Bucks ---------- */
+// A separate currency for staff. Only the owner (Center Director email login) gives, takes and approves;
+// senseis and other directors earn, see the leaderboard and request rewards. Parents and families never see it.
+const SB_DEFAULT = {
+  earn:[{id:'s_help',icon:'🤝',label:'Helped a ninja / ninjas',amt:10},{id:'s_clean',icon:'🧹',label:'Kept the dojo clean',amt:10},{id:'s_open',icon:'📦',label:'Opened or closed the dojo',amt:15},
+    {id:'s_rest',icon:'🚻',label:'Cleaned restrooms',amt:20},{id:'s_kitch',icon:'🍽️',label:'Cleaned kitchen or lobby',amt:15},{id:'s_ontime',icon:'⏰',label:'On time all week',amt:15}],
+  big:[{id:'s_tour',icon:'🧭',label:'Gave a parent tour',amt:50},{id:'s_signup',icon:'✍️',label:'Tour → ninja signed up',amt:300},{id:'s_review',icon:'⭐',label:'5-star Google review naming you',amt:200},
+    {id:'s_event',icon:'🎓',label:'Ran a camp or event day',amt:150},{id:'s_mentor',icon:'🌟',label:'A ninja you mentor belted up',amt:40},{id:'s_cover',icon:'🔁',label:'Covered a shift at short notice',amt:75},
+    {id:'s_praise',icon:'💬',label:'Parent compliment',amt:50},{id:'s_social',icon:'📸',label:'Posted a dojo project online',amt:25},{id:'s_train',icon:'🧑‍🏫',label:'Trained a new sensei',amt:100},
+    {id:'s_idea',icon:'💡',label:'Idea the dojo used',amt:75},{id:'s_fix',icon:'🛠️',label:'Fixed or set up equipment',amt:30},{id:'s_perfect',icon:'🎉',label:'Perfect month',amt:150},{id:'s_refer',icon:'📣',label:'Referred a family who signed up',amt:300}],
+  pen:[{id:'s_late',icon:'⏰',label:'Late for shift',amt:15},{id:'s_noshow',icon:'🚫',label:'Missed shift, no notice or cover',amt:150},{id:'s_noisy',icon:'📢',label:'Ninjas too noisy or off track',amt:20},
+    {id:'s_damage',icon:'🔧',label:'Equipment damaged on your watch',amt:50},{id:'s_attn',icon:'👀',label:'Not helping ninjas',amt:25},{id:'s_messy',icon:'🧺',label:'Dojo left messy',amt:15},{id:'s_phone',icon:'📱',label:'Phone use in the dojo',amt:20}],
+  shop:[{id:'r_coffee',icon:'☕',label:'Coffee or snack run',amt:80},{id:'r_play',icon:'🎮',label:'5–10 min play with ninjas',amt:120},{id:'r_meal',icon:'🍔',label:'Meal during shift',amt:250},
+    {id:'r_cap',icon:'🧢',label:'Code Ninjas cap or stickers',amt:350},{id:'r_movie',icon:'🎬',label:'Movie ticket',amt:400},{id:'r_early',icon:'⏳',label:'Leave 30 min early (covered)',amt:300},
+    {id:'r_shift',icon:'🅿️',label:'Pick your shifts for a week',amt:500},{id:'r_shirt',icon:'👕',label:'Code Ninjas T-shirt or hoodie',amt:600},{id:'r_gift',icon:'🎁',label:'$25 gift card',amt:1000}],
+};
+const SB_GROUPS = [['earn','Everyday chores','e'],['big','⭐ Big wins','b'],['pen','Penalties','p']];
+const sbCfg = () => ({...SB_DEFAULT, ...(S.scfg||{})});
+const sbItem = id => ['earn','big','pen','shop'].flatMap(k=>sbCfg()[k]).find(x=>x.id===id);
+const sbBoss = () => S.mode==='local' ? S.role==='director' : !!S.isOwner;
+const sbAllowed = () => S.role==='director' || S.role==='sensei';
+const sbPeople = () => Object.values(S.staff).filter(p=>p.role==='sensei' || p.role==='director').sort((a,b)=>a.name.localeCompare(b.name));
+const sbMeId = () => S.mode==='local' ? sbPeople()[0]?.id : S.me;
+const sbName = id => S.staff[id] ? (S.staff[id].role==='director' ? S.staff[id].name : `Sensei ${S.staff[id].name}`) : 'Sensei';
+const sbBal = id => S.sb[id] || {balance:0, earned:0, spent:0, lost:0};
+const sbHeld = id => S.sreq.filter(r=>r.status==='pending' && r.senseiId===id).reduce((a,r)=>a+toNum(r.cost),0);
+// Monthly score: bucks earned minus penalties this month (corrections count both ways).
+function sbScores(range){
+  const ms=monthStart(Date.now()), m={};
+  sbPeople().forEach(p=>m[p.id]=0);
+  if(range==='all') sbPeople().forEach(p=>{ const b=sbBal(p.id); m[p.id]=Math.max(0, b.earned-b.lost); });
+  else S.slog.filter(l=>l.at>=ms && m[l.senseiId]!=null).forEach(l=>{ const a=toNum(l.amt);
+    if(l.kind==='earn') m[l.senseiId]+=a; else if(l.kind==='penalty') m[l.senseiId]-=a; else if(l.kind==='fix') m[l.senseiId]+=toNum(l.delta); });
+  return sbPeople().map(p=>({p, v:m[p.id]})).sort((a,b)=>b.v-a.v || a.p.name.localeCompare(b.p.name));
+}
+// Same safe save as ninja bucks: read the latest numbers and write the balance and history together.
+async function sbump(id, fn){
+  if(S.mode==='db'){
+    const db=firebase.firestore(), ref=db.doc('sensei/'+id);
+    for(let tries=0;;tries++) try{
+      return await db.runTransaction(async tx=>{
+        const snap=await tx.get(ref), cur=cleanNinja({id, balance:0, earned:0, spent:0, lost:0, ...(snap.exists?snap.data():{})});
+        const r=fn({...cur}); if(!r) return null;
+        MONEY.forEach(k=>{ r.patch[k]=toNum(k in r.patch ? r.patch[k] : cur[k]); });
+        tx.set(ref, r.patch, {merge:true});
+        (r.logs||[]).forEach(([lid,d])=>tx.set(db.doc('slog/'+lid), {...d, by:S.me}));
+        (r.dels||[]).forEach(lid=>tx.delete(db.doc('slog/'+lid)));
+        if(r.req) tx.update(db.doc('sreq/'+r.req[0]), r.req[1]);
+        return r; });
+    }catch(e){ if(e && (e.code==='permission-denied' || e.code==='aborted') && tries<4){ await new Promise(r=>setTimeout(r,150+Math.random()*350)); continue; }
+      console.warn(e); toast(e && e.code==='permission-denied' ? 'You do not have permission to do that.' : 'Could not save. Check your connection and try again.'); throw e; }
+  }
+  const cur={balance:0, earned:0, spent:0, lost:0, ...(S.sb[id]||{})}; const r=fn({...cur}); if(!r) return null;
+  S.sb={...S.sb, [id]:{...cur, ...r.patch}};
+  (r.logs||[]).forEach(([lid,d])=>{ S.slog=[{id:lid, ...d, by:S.me}, ...S.slog].sort((a,b)=>b.at-a.at); });
+  (r.dels||[]).forEach(lid=>{ S.slog=S.slog.filter(x=>x.id!==lid); });
+  if(r.req) S.sreq=S.sreq.map(x=>x.id===r.req[0]?{...x, ...r.req[1]}:x);
+  S._persist?.(); render(); return r;
+}
+async function sbGive(kind, item, ids){
+  if(!sbBoss() || !ids.length){ if(!ids.length) toast('Pick at least one sensei first.'); return; }
+  const done=[], at=Date.now();
+  for(const id of ids){
+    try{ const r=await sbump(id, c=>{ const amt=toNum(item.amt); let d, patch;
+      if(kind==='earn'){ d=amt; patch={balance:c.balance+d, earned:c.earned+d}; }
+      else { d=Math.min(amt, c.balance); patch={balance:c.balance-d, lost:c.lost+d}; }
+      const lid=uid()+id.slice(-3);
+      return {patch, d, lid, logs:[[lid, {senseiId:id, name:S.staff[id]?.name||'', kind, item:item.id, icon:item.icon, label:item.label, amt:d, at}]]}; });
+      if(r) done.push({id, d:r.d, lid:r.lid}); }catch{}
+  }
+  if(!done.length) return;
+  const who = done.length===1 ? sbName(done[0].id) : `${done.length} senseis`, total=done.reduce((a,x)=>a+x.d,0);
+  S.sbUndo=done.map(x=>x.lid);
+  toast(`${kind==='earn'?'+':'−'}${fmt(done.length===1?done[0].d:total)}${done.length>1?' in total':''} for ${who}: ${item.label}`, [{sb:true}]);
+}
+async function sbCancel(lid){
+  const l=S.slog.find(x=>x.id===lid); if(!l || !sbBoss()) return false; const a=toNum(l.amt); let why='';
+  try{ const r=await sbump(l.senseiId, c=>{ why=''; let patch;
+    if(l.kind==='earn'){ if(c.balance<a){ why='spent'; return null; } patch={balance:c.balance-a, earned:Math.max(0,c.earned-a)}; }
+    else if(l.kind==='penalty') patch={balance:c.balance+a, lost:Math.max(0,c.lost-a)};
+    else if(l.kind==='redeem') patch={balance:c.balance+a, spent:Math.max(0,c.spent-a)};
+    else { const d=toNum(l.delta); if(c.balance<d){ why='spent'; return null; } patch={balance:c.balance-d, earned:Math.max(0,c.earned-d)}; }
+    return {patch, dels:[lid]}; });
+    if(!r){ toast(why==='spent' ? `${sbName(l.senseiId)} has already spent those bucks. Use a correction instead.` : 'Nothing to cancel.'); return false; }
+    return true; }catch{ return false; }
+}
+async function sbFix(sign){
+  const ids=[...S.sbSel], amt=Math.round(toNum(S.sbAdj.amt)); if(!sbBoss()) return;
+  if(!ids.length){ toast('Pick at least one sensei first.'); return; }
+  if(!(amt>0)){ toast('Type how many bucks first.'); return; }
+  const note=S.sbAdj.note.trim();
+  for(const id of ids){ try{ await sbump(id, c=>{ const delta = sign>0 ? amt : -Math.min(amt, c.balance); if(!delta) return null;
+    return {patch:{balance:c.balance+delta, earned:Math.max(0,c.earned+delta)}, logs:[[uid()+id.slice(-3), {senseiId:id, name:S.staff[id]?.name||'', kind:'fix', item:'fix', icon:'🛠️', label:note || (delta>0?'Correction: bucks added':'Correction: bucks removed'), amt:Math.abs(delta), delta, at:Date.now()}]]}; }); }catch{} }
+  S.sbAdj={amt:'', note:''}; toast('Correction saved.'); render();
+}
+async function sbRequest(itemId){
+  const me=sbMeId(), it=sbItem(itemId); if(!me || !it) return;
+  const cost=toNum(it.amt); if(sbBal(me).balance - sbHeld(me) < cost){ toast('Not enough sensei bucks for this one yet.'); return; }
+  if(S.sreq.some(r=>r.status==='pending' && r.senseiId===me && r.item===it.id)){ toast('Already waiting for the Center Director.'); return; }
+  const doc={senseiId:me, name:S.staff[me]?.name||'', item:it.id, label:it.label, icon:it.icon, cost, by:me, at:Date.now(), status:'pending'};
+  const id=uid();
+  if(S.mode==='db'){ try{ await firebase.firestore().doc('sreq/'+id).set(doc); }catch(e){ toast('Could not send the request.'); return; } }
+  else { S.sreq=[{id, ...doc}, ...S.sreq]; S._persist?.(); }
+  toast(`Request sent: ${it.label}. The Center Director will confirm it.`); render();
+}
+async function sbDecide(rid, ok){
+  const r=S.sreq.find(x=>x.id===rid); if(!r || !sbBoss() || r.status!=='pending') return;
+  const done={status:ok?'approved':'rejected', decidedAt:Date.now(), decidedBy:S.me};
+  if(!ok){ if(S.mode==='db') await firebase.firestore().doc('sreq/'+rid).update(done); else { S.sreq=S.sreq.map(x=>x.id===rid?{...x,...done}:x); S._persist?.(); } toast('Request declined.'); render(); return; }
+  let short=false;
+  try{ const res=await sbump(r.senseiId, c=>{ short=false; const cost=toNum(r.cost); if(c.balance<cost){ short=true; return null; }
+    return {patch:{balance:c.balance-cost, spent:c.spent+cost}, logs:[[uid(), {senseiId:r.senseiId, name:r.name, kind:'redeem', item:r.item, icon:r.icon, label:r.label, amt:cost, at:Date.now()}]], req:[rid, done]}; });
+    if(!res && short){ const no={...done, status:'rejected', note:'Not enough bucks'}; if(S.mode==='db') await firebase.firestore().doc('sreq/'+rid).update(no); else { S.sreq=S.sreq.map(x=>x.id===rid?{...x,...no}:x); S._persist?.(); } toast(`${sbName(r.senseiId)} doesn't have enough bucks any more, so it was declined.`); render(); return; }
+    toast(`Approved: ${r.label} for ${sbName(r.senseiId)}.`); }catch{}
+}
+async function sbSaveCfg(){
+  const E=S.sbEdit, out={};
+  for(const k of ['earn','big','pen','shop']){ out[k]=E[k].filter(x=>(x.label||'').trim()).map(x=>({id:x.id, icon:(x.icon||'⭐').trim()||'⭐', label:x.label.trim(), amt:Math.max(0,Math.round(toNum(x.amt)))})); }
+  if(S.mode==='db'){ try{ await firebase.firestore().doc('sconfig/main').set(out); }catch{ toast('Could not save.'); return; } }
+  else { S.scfg=out; S._persist?.(); }
+  S.scfg=out; S.sbEdit=null; toast('Sensei Bucks options saved.'); render();
+}
+function sbSamples(){
+  const names=[['Charly','sensei'],['Ada','sensei'],['Omar','sensei'],['Priya','sensei'],['Leo','director']], now=Date.now();
+  names.forEach(([n,r],i)=>{ const id='demo-s'+(i+1); S.staff={...S.staff, [id]:{id, name:n, role:r, pinLen:4}}; S.sb[id]={balance:0, earned:0, spent:0, lost:0}; });
+  const C=SB_DEFAULT, plan=[[0,'earn','s_signup'],[0,'earn','s_tour'],[0,'earn','s_tour'],[0,'earn','s_review'],[1,'earn','s_review'],[1,'earn','s_event'],[1,'earn','s_rest'],[2,'earn','s_tour'],[2,'earn','s_help'],[2,'penalty','s_late'],[3,'earn','s_clean'],[3,'earn','s_kitch'],[4,'earn','s_open'],[4,'penalty','s_phone'],[0,'earn','s_help'],[1,'earn','s_mentor']];
+  plan.forEach(([i,kind,iid],k)=>{ const id='demo-s'+(i+1), it=[...C.earn,...C.big,...C.pen].find(x=>x.id===iid), b=S.sb[id], a=it.amt;
+    if(kind==='earn'){ b.balance+=a; b.earned+=a; } else { b.balance=Math.max(0,b.balance-a); b.lost+=a; }
+    S.slog.push({id:'ds'+k, senseiId:id, name:names[i][0], kind, item:iid, icon:it.icon, label:it.label, amt:a, at:now-k*3600e3, by:'preview-director'}); });
+  Object.values(S.sb).forEach(b=>{ b.balance+=200; b.earned+=200; });
+  S.sreq=[{id:'dr1', senseiId:'demo-s2', name:'Ada', item:'r_movie', label:'Movie ticket', icon:'🎬', cost:400, by:'demo-s2', at:now-2*3600e3, status:'pending'}];
+}
+
+/* Sensei Bucks screens */
+function sbBoardHTML(showAmt=true){
+  const L=sbScores(S.sbRange), max=Math.max(1,...L.map(x=>x.v));
+  return `<div class="card"><div class="spread"><h2 style="margin:0">🏆 Sensei leaderboard</h2><div class="seg" role="group"><button data-sbrange="month" aria-pressed="${S.sbRange==='month'}">${MONTHS[new Date().getMonth()]}</button><button data-sbrange="all" aria-pressed="${S.sbRange==='all'}">All time</button></div></div>
+    <div class="sb-rows">${L.map((x,i)=>`<div class="sb-row"><b class="sb-rk">${i<3?['🥇','🥈','🥉'][i]:i+1}</b>${avatar(x.p,40)}<b class="sb-nm">${esc(sbName(x.p.id))}</b>${showAmt?`<span class="sb-amt">${coin(16)} ${fmt(x.v)}</span>`:`<span class="sb-bar"><i style="width:${Math.max(4,x.v/max*100)}%"></i></span>`}</div>`).join('') || '<p class="hint">Add senseis in Admin → Team to start.</p>'}</div>
+    <p class="hint" style="margin:8px 0 0">${S.sbRange==='month'?'Bucks earned minus penalties this month.':'All bucks earned minus penalties.'}</p></div>`;
+}
+function sbHistHTML(list, boss){
+  return `<ul class="feed sb-feed" style="max-height:none">${list.map(l=>`<li><span class="ic">${esc(l.icon||'•')}</span><span class="tx">${boss?`<b>${esc(sbName(l.senseiId))}</b> `:''}${esc(l.label)}<small>${ago(l.at)}${l.by && personName(l.by) ? ` · by ${esc(personName(l.by))}`:''}</small></span><span class="d ${l.kind==='fix'?'setup':l.kind} num">${l.kind==='earn'||(l.kind==='fix'&&toNum(l.delta)>0)?'+':'−'}${fmt(l.amt)}</span>${boss?(S.sbRm===l.id?`<span class="rm-ask"><button class="btn sm danger" data-act="sbRmGo" data-id="${esc(l.id)}">Cancel entry</button><button class="btn ghost sm" data-act="sbRmNo">Keep</button></span>`:`<button class="rm-x" data-act="sbRm" data-id="${esc(l.id)}" title="Cancel this entry" aria-label="Cancel this entry">✕</button>`):''}</li>`).join('') || '<li><span></span><span class="tx hint">Nothing yet.</span><span></span></li>'}</ul>`;
+}
+function sbShopHTML(me){
+  const bal=me?sbBal(me).balance-sbHeld(me):0;
+  return `<div class="sb-shop">${sbCfg().shop.map(it=>{ const c=toNum(it.amt), ok=me && bal>=c, w=me && S.sreq.some(r=>r.status==='pending' && r.senseiId===me && r.item===it.id);
+    return `<div class="sb-rw ${ok?'ok':''}"><span class="sb-em">${esc(it.icon)}</span><b>${esc(it.label)}</b><span class="sb-cost">${coin(16)} ${fmt(c)}</span>${!me?'':w?'<span class="status pending">Requested</span>':`<button class="btn ${ok?'gold':''} sm" data-act="sbReq" data-id="${esc(it.id)}" ${ok?'':'disabled'}>${ok?'Request':`${fmt(c-bal)} more`}</button>`}</div>`; }).join('')}</div>
+    ${me?'<p class="hint" style="margin:8px 0 0">The Center Director approves every sensei reward.</p>':''}`;
+}
+function renderSensei(){
+  const host=document.getElementById('sbHost'); if(!host || host.contains(document.activeElement) && document.activeElement.tagName==='INPUT') return;
+  const boss=sbBoss(), me=sbMeId(), people=sbPeople();
+  if(!boss){
+    const b=sbBal(me), rank=sbScores('month').findIndex(x=>x.p.id===me)+1, ms=monthStart(Date.now()), month=S.slog.filter(l=>l.senseiId===me && l.at>=ms);
+    const mScore=sbScores('month').find(x=>x.p.id===me)?.v||0, mine=S.sreq.filter(r=>r.senseiId===me).slice(0,5);
+    host.innerHTML = !S.staff[me] ? '<div class="card"><p class="hint" style="margin:0">Sensei Bucks are for people on the Team list.</p></div>' : `<div class="sb-grid">
+      <div class="sb-col"><div class="card sb-me">${avatar(S.staff[me],72)}<div><div class="eyebrow" style="color:#fff;opacity:.8">My sensei bucks</div><div class="sb-big">${coin(30)} ${fmt(b.balance)}</div><div style="font-weight:800;opacity:.9">${rank?`#${rank} this month · `:''}${mScore>=0?'+':''}${fmt(mScore)} this month</div></div></div>
+        ${sbBoardHTML(true)}</div>
+      <div class="sb-col"><div class="card"><h2 style="margin:0 0 8px">🎁 Sensei rewards</h2>${sbShopHTML(me)}
+        ${mine.length?`<div class="fam-reqs" style="margin-top:10px">${mine.map(r=>`<div><span>${esc(r.icon)} ${esc(r.label)} · ${fmt(r.cost)}</span><span class="status ${r.status}">${r.status==='pending'?'Waiting':r.status==='approved'?'Approved 🎉':'Declined'}</span></div>`).join('')}</div>`:''}</div>
+        <div class="card"><h2 style="margin:0">📜 My history</h2>${sbHistHTML(S.slog.filter(l=>l.senseiId===me).slice(0,30), false)}</div></div></div>`;
+    return;
+  }
+  const tab=S.sbTab||'give', pend=S.sreq.filter(r=>r.status==='pending');
+  const tabs=[['give','Give & take'],['reqs',`Requests${pend.length?` (${pend.length})`:''}`],['board','🏆 Leaderboard'],['hist','📜 History'],['edit','⚙️ Edit options']];
+  let body='';
+  if(tab==='give'){
+    [...S.sbSel].forEach(id=>{ if(!S.staff[id]) S.sbSel.delete(id); });
+    const C=sbCfg();
+    body=`<div class="award-grid"><div class="card"><div class="spread"><h2 style="margin:0">1. Pick senseis</h2><span class="row" style="gap:6px"><button class="btn sm" data-act="sbAll">All</button><button class="btn ghost sm" data-act="sbNone">Clear</button></span></div>
+      <div class="picker">${people.map(p=>`<button class="chip" data-act="sbPick" data-id="${esc(p.id)}" aria-pressed="${S.sbSel.has(p.id)}">${avatar(p,52)}<span class="nm">${esc(p.name)}</span><span class="bal num">${coin(14)}${fmt(sbBal(p.id).balance)}</span></button>`).join('') || '<p class="hint">Add senseis in Admin → Team first.</p>'}</div>
+      <div class="adj" style="margin-top:16px"><span class="eyebrow">Fix a mistake (correction)</span><div class="adj-row"><input id="sbAdjAmt" type="number" min="1" placeholder="Amount" value="${esc(S.sbAdj.amt)}"><input id="sbAdjNote" maxlength="60" placeholder="Reason (optional)" value="${esc(S.sbAdj.note)}"></div>
+        <div class="row"><button class="btn sm" data-act="sbFix" data-sign="1">Add (correction)</button><button class="btn ghost sm" data-act="sbFix" data-sign="-1">Remove (correction)</button></div></div></div>
+      <div class="card"><h2 style="margin:0">2. What did they do?</h2>
+      <div class="sel-bar">${S.sbSel.size?`<span class="sel-lbl">Giving to</span>${[...S.sbSel].map(id=>`<button class="sel-chip" data-act="sbPick" data-id="${esc(id)}">${avatar(S.staff[id],26)}${esc(S.staff[id]?.name)} <b>✕</b></button>`).join('')}`:'<span class="hint" style="margin:0">Tap one or more senseis first.</span>'}</div>
+      ${SB_GROUPS.map(([k,t,c])=>`<h3 class="eyebrow sb-g ${c}">${t}</h3><div class="acts">${C[k].map(it=>`<button class="act ${k==='pen'?'penalty':'earn'} ${k==='big'?'sb-bigwin':''}" data-act="sbGive" data-kind="${k==='pen'?'penalty':'earn'}" data-id="${esc(it.id)}" ${S.sbSel.size?'':'disabled'}><span class="em">${esc(it.icon)}</span><span class="lbl">${esc(it.label)}</span><span class="amt num">${k==='pen'?'−':'+'}${fmt(it.amt)}</span></button>`).join('')}</div>`).join('')}</div></div>`;
+  }
+  if(tab==='reqs') body=`<div class="card"><h2 style="margin:0 0 10px">Sensei reward requests</h2>${pend.map(r=>`<div class="req"><div class="ic2">${esc(r.icon)}</div><div><div class="what"><b>${esc(sbName(r.senseiId))}</b> wants <b>${esc(r.label)}</b> for ${fmt(r.cost)} bucks</div><div class="meta">${ago(r.at)} · has ${fmt(sbBal(r.senseiId).balance)} bucks</div></div><div class="acts2"><button class="btn primary" data-act="sbApprove" data-id="${esc(r.id)}">Approve</button><button class="btn ghost" data-act="sbDecline" data-id="${esc(r.id)}">Decline</button></div></div>`).join('') || '<p class="hint" style="margin:0">All caught up. No requests waiting.</p>'}
+    ${S.sreq.filter(r=>r.status!=='pending').slice(0,15).length?`<h3 class="eyebrow" style="margin-top:16px">Recent decisions</h3>${S.sreq.filter(r=>r.status!=='pending').slice(0,15).map(r=>`<div class="req"><div class="ic2">${esc(r.icon)}</div><div><div class="what">${esc(sbName(r.senseiId))} · ${esc(r.label)} · ${fmt(r.cost)}</div><div class="meta"><span class="status ${r.status}">${r.status}</span>${r.note?` · ${esc(r.note)}`:''}</div></div></div>`).join('')}`:''}</div>
+    <div class="card"><h2 style="margin:0 0 8px">🎁 Sensei rewards</h2>${sbShopHTML(null)}</div>`;
+  if(tab==='board') body=sbBoardHTML(true);
+  if(tab==='hist') body=`<div class="card"><h2 style="margin:0">📜 Sensei history</h2>${sbHistHTML(S.slog.slice(0,80), true)}</div>`;
+  if(tab==='edit'){
+    if(!S.sbEdit) S.sbEdit=JSON.parse(JSON.stringify(sbCfg()));
+    const E=S.sbEdit, row=(k,it,i)=>`<div class="act-ed ${k==='pen'?'penalty':'earn'}"><input class="sb-emi" data-sbe="${k}" data-i="${i}" data-f="icon" value="${esc(it.icon)}" maxlength="4" aria-label="Emoji"><input data-sbe="${k}" data-i="${i}" data-f="label" value="${esc(it.label)}" maxlength="50" placeholder="Name"><label class="cost">${k==='pen'?'−':k==='shop'?'':'+'}<input type="number" min="0" data-sbe="${k}" data-i="${i}" data-f="amt" value="${toNum(it.amt)}" aria-label="Bucks"></label><button class="btn ghost sm danger" data-act="sbEdDel" data-k="${k}" data-i="${i}">Delete</button></div>`;
+    body=`<div class="se-bar" style="position:static"><div><b>Editing Sensei Bucks options</b><small>Saved when you press Save changes.</small></div><div class="row"><button class="btn ghost" data-act="sbEdCancel">Cancel</button><button class="btn primary" data-act="sbEdSave">Save changes</button></div></div>
+      ${[['earn','Everyday chores'],['big','⭐ Big wins'],['pen','Penalties'],['shop','🎁 Rewards (price in bucks)']].map(([k,t])=>`<div class="card"><h3 style="margin:0 0 8px">${t}</h3><div class="act-eds">${E[k].map((it,i)=>row(k,it,i)).join('')}<button class="btn ghost" data-act="sbEdAdd" data-k="${k}" style="justify-self:start">+ Add</button></div></div>`).join('')}`;
+  }
+  host.innerHTML = `<div class="sb-tabs">${tabs.map(([k,t])=>`<button data-sbtab="${k}" aria-pressed="${tab===k}">${t}</button>`).join('')}</div>${body}`;
+}
+document.getElementById('sbHost').addEventListener('click', e=>{
+  const tb=e.target.closest('[data-sbtab]'); if(tb){ S.sbTab=tb.dataset.sbtab; if(S.sbTab!=='edit') S.sbEdit=null; renderSensei(); return; }
+  const rg=e.target.closest('[data-sbrange]'); if(rg){ S.sbRange=rg.dataset.sbrange; renderSensei(); return; }
+  const t=e.target.closest('[data-act]'); if(!t) return; const a=t.dataset.act, id=t.dataset.id;
+  switch(a){
+    case 'sbPick': S.sbSel.has(id)?S.sbSel.delete(id):S.sbSel.add(id); renderSensei(); break;
+    case 'sbAll': sbPeople().forEach(p=>S.sbSel.add(p.id)); renderSensei(); break;
+    case 'sbNone': S.sbSel.clear(); renderSensei(); break;
+    case 'sbGive': { const it=sbItem(id); if(it) sbGive(t.dataset.kind, it, [...S.sbSel]); break; }
+    case 'sbFix': sbFix(Number(t.dataset.sign)); break;
+    case 'sbReq': sbRequest(id); break;
+    case 'sbApprove': sbDecide(id, true); break;
+    case 'sbDecline': sbDecide(id, false); break;
+    case 'sbRm': S.sbRm=id; renderSensei(); break;
+    case 'sbRmNo': S.sbRm=null; renderSensei(); break;
+    case 'sbRmGo': sbCancel(id).then(ok=>{ S.sbRm=null; if(ok) toast('Entry cancelled.'); render(); }); break;
+    case 'sbEdAdd': S.sbEdit[t.dataset.k].push({id:'c_'+uid(), icon:'⭐', label:'', amt:10}); renderSensei(); break;
+    case 'sbEdDel': S.sbEdit[t.dataset.k].splice(+t.dataset.i,1); renderSensei(); break;
+    case 'sbEdCancel': S.sbEdit=null; S.sbTab='give'; renderSensei(); break;
+    case 'sbEdSave': sbSaveCfg(); break;
+  }
+  e.stopPropagation();
+});
+document.getElementById('sbHost').addEventListener('input', e=>{ const d=e.target.dataset;
+  if(e.target.id==='sbAdjAmt') S.sbAdj.amt=e.target.value; else if(e.target.id==='sbAdjNote') S.sbAdj.note=e.target.value;
+  else if(d.sbe && S.sbEdit) S.sbEdit[d.sbe][+d.i][d.f]=e.target.value; });
+
+/* Lobby: "Our Senseis" (no bucks amounts, since parents can see the TV) */
+function lbSenseis(){
+  const L=sbScores('month'), top=L[0], max=Math.max(1,...L.map(x=>x.v)), ms=monthStart(Date.now());
+  const hi = top ? Object.entries(S.slog.filter(l=>l.senseiId===top.p.id && l.at>=ms && l.kind==='earn' && sbCfg().big.some(b=>b.id===l.item)).reduce((m,l)=>(m[l.item]=(m[l.item]||0)+1,m),{})).sort((a,b)=>b[1]-a[1]).slice(0,3) : [];
+  return `<div class="lb-panel" style="left:60px;right:60px;${P};display:grid;grid-template-columns:1.1fr 1fr;gap:30px;padding:34px">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center"><div class="d" style="font-size:30px;color:#69658E">⭐ Sensei of the Month · ${MONTHS[new Date().getMonth()]}</div>
+      <img src="mascots/${top && sbPeople().indexOf(top.p)%2 ? 'sensei_ada' : 'sensei_alan'}.webp" alt="" style="height:330px">
+      <div class="d" style="font-size:72px;line-height:1">${top?esc(sbName(top.p.id)):''}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${hi.map(([id,n])=>{ const it=sbItem(id); return `<span class="lb-pill" style="background:#FFF1C7;color:#A86F00;font-size:24px;padding:10px 18px">${esc(it?.icon||'⭐')} ${n}× ${esc(it?.label||'')}</span>`; }).join('')}</div></div>
+    <div style="display:flex;flex-direction:column;gap:12px"><div class="d" style="font-size:40px">🏆 Sensei leaderboard</div>
+      ${L.slice(0,7).map((x,i)=>`<div style="display:flex;align-items:center;gap:16px;padding:12px 18px;background:#F1EFFA;border-radius:18px"><b style="width:40px;font-size:30px">${i<3?['🥇','🥈','🥉'][i]:i+1}</b>${lbAv(x.p,56)}<b style="flex:1;font-size:30px">${esc(sbName(x.p.id))}</b><span style="width:220px;height:16px;background:#E7E3F5;border-radius:9px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(4,x.v/max*100)}%;background:#F6B60A;border-radius:9px"></i></span></div>`).join('')}
+      <div style="font-weight:800;color:#69658E;font-size:24px;margin-top:auto">Thank you, senseis, for helping our ninjas every day! 🙏</div></div></div>`;
+}
 
 /* ---------- events ---------- */
 const findItem = (kind,id) => (kind==='earn'?[...earnList(), ...bonusItems()]:kind==='penalty'?penList():shopTiers().flatMap(t=>t.items)).find(x=>x.id===id);
@@ -2586,7 +2851,7 @@ document.addEventListener('click', e=>{
     case 'askRedeem': S.confirm=t.dataset.item; render(); break;
     case 'cancelRedeem': S.confirm=null; render(); break;
     case 'redeem': redeem(findItem('redeem', t.dataset.item)); break;
-    case 'undo': { const u=document.getElementById('toastHost')._undo; document.getElementById('toastHost').innerHTML=''; if(u) undoAll(u); break; }
+    case 'undo': { const u=document.getElementById('toastHost')._undo; document.getElementById('toastHost').innerHTML=''; if(u && u[0]?.sb){ const ids=S.sbUndo||[]; S.sbUndo=null; Promise.all(ids.map(sbCancel)).then(()=>{ toast('Undone.'); render(); }); } else if(u) undoAll(u); break; }
     case 'adjust': adjustBucks(S.drawer, Number(t.dataset.sign)); break;
     case 'famCode': createFamilyCode(S.drawer); break;
     case 'famReq': familyRequest(t.dataset.item); break;
@@ -2694,7 +2959,7 @@ document.getElementById('addForm').addEventListener('submit', e=>{
   else sendRequest('add', {name, group:grp, belt:bl, level:lv, start:st, head:S.head, welcome:wel}, `${name} is waiting for the Center Director to approve.`);
   document.getElementById('newWelcome').checked=false; document.getElementById('newName').value=''; document.getElementById('newBucks').value='0'; document.getElementById('newName').focus();
 });
-function route(){ const h=(location.hash||'').slice(1); S.view=['board','dash','award','shop','roster','admin','lobby'].includes(h)?h:'board'; S.confirm=null; render(); }
+function route(){ const h=(location.hash||'').slice(1); S.view=['board','dash','award','shop','roster','admin','lobby','sensei'].includes(h)?h:'board'; S.confirm=null; render(); }
 addEventListener('hashchange', route);
 setInterval(()=>{ if(S.loaded){ if(S.view==='dash') renderDash(); renderTicker(); } }, 60000);
 

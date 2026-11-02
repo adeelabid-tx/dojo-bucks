@@ -97,6 +97,26 @@ service cloud.firestore {
       allow update: if isDirector();
       allow delete: if isDirector() || ((isSensei() || isFamily()) && resource.data.by == request.auth.uid && resource.data.status == 'pending');
     }
+    // Sensei Bucks: staff only. Only the owner gives, takes and approves; senseis request rewards for themselves.
+    match /sensei/{uid} {
+      allow read: if canView();
+      allow write: if isOwner();
+    }
+    match /slog/{id} {
+      allow read: if canView();
+      allow write: if isOwner();
+    }
+    match /sconfig/{doc} {
+      allow read: if canView();
+      allow write: if isOwner();
+    }
+    match /sreq/{id} {
+      allow read: if isOwner() || (isSensei() && resource.data.by == request.auth.uid);
+      allow create: if isSensei() && request.resource.data.by == request.auth.uid && request.resource.data.senseiId == request.auth.uid
+        && request.resource.data.status == 'pending' && request.resource.data.cost is number;
+      allow update: if isOwner();
+      allow delete: if isOwner() || (isSensei() && resource.data.by == request.auth.uid && resource.data.status == 'pending');
+    }
     match /families/{uid} {
       allow read: if isDirector() || (signedIn() && request.auth.uid == uid);
       allow write: if isDirector();
