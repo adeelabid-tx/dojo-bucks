@@ -1082,6 +1082,7 @@ function startDb(db){
   // Everyone (staff, lobby, parents and families) needs the dojo's prices, goal, options and news.
   db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
+  db.doc('settings/goalLive').onSnapshot(d => { S.goalLive = d.exists ? d.data() : null; render(); }, () => {});
   db.doc('settings/lobby').onSnapshot(d => { S.lobbyCfg = d.exists ? d.data() : {goalTarget:10000, goalPrize:'🍕 Pizza Party for everyone!'}; render(); }, () => {});
   db.doc('settings/actions').onSnapshot(d => { S.actions = d.exists ? d.data() : null; render(); }, () => {});
   db.doc('settings/ticker').onSnapshot(d => { S.tickerCfg = d.exists ? d.data() : {hidden:[], edits:[]}; render(); }, () => {});
@@ -1125,7 +1126,7 @@ function startLocal(){
   if(saved && saved.sb){ S.sb=saved.sb; S.slog=saved.slog||[]; S.sreq=saved.sreq||[]; S.scfg=saved.scfg||null; S.sawards=saved.sawards||{}; S.bdaypay=saved.bdaypay||{}; } else sbSamples();
   const col = c => c==='ninjas' ? 'ninjas' : c;
   api = {
-    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else if(id==='actions') S.actions=d; else if(id==='lobby') S.lobbyCfg=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
+    set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else if(id==='actions') S.actions=d; else if(id==='lobby') S.lobbyCfg=d; else if(id==='goalLive') S.goalLive=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
     update:async(c,id,d)=>{ if(c==='staff' && S.staff[id]) S.staff={...S.staff,[id]:{...S.staff[id],...d}}; if(c==='ninjas' && S.ninjas[id]) S.ninjas[id]={...S.ninjas[id],...d}; else if(c==='requests') S.requests=S.requests.map(r=>r.id===id?{...r,...d}:r); else if(c==='news') S.news=S.news.map(x=>x.id===id?{...x,...d}:x); persist(); render(); },
     del:async(c,id)=>{ if(c==='staff'){ const m={...S.staff}; delete m[id]; S.staff=m; } if(c==='ninjas') delete S.ninjas[id]; else if(c==='log') S.log=S.log.filter(x=>x.id!==id); else if(c==='news') S.news=S.news.filter(x=>x.id!==id); else if(c==='requests') S.requests=S.requests.filter(x=>x.id!==id); persist(); render(); },
   };
@@ -1560,7 +1561,7 @@ function render(){
   document.querySelectorAll('section.view').forEach(s=>s.hidden = s.id!=='v-'+S.view);
   document.getElementById('editShop').hidden = !isDir() || !!S.shopEdit;
   if(!S.loaded){ renderLobby(false); return; }
-  renderTicker();
+  renderTicker(); goalLiveSync();
   if(S.view==='board') renderBoard();
   if(S.view==='dash') renderDash();
   if(S.view==='award') renderAward();
@@ -2658,7 +2659,7 @@ function lbPath(){
 }
 /* ---------- dojo goal (settings/lobby) ----------
    goalTarget/goalPrize/goalIcon belong to goalMonth ('2026-11'). goalNext holds next month's goal.
-   goalBday / goalPen choose what counts; goalCheer / goalRemind what happens when it is reached.
+   goalBday chooses whether birthday bucks count (penalties always count); goalCheer / goalRemind what happens when it is reached.
    goalHist keeps past months; goalPrizeDone is the month whose prize was marked done. */
 const GOAL_ICONS=['🍕','🎮','🍦','🎬','🍿','🧁','🎉','🏆','🎁','⚽','🍩','🎨','🌮','🥤','🎤','🏖️'];
 const monthKey = ts => { const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
@@ -2670,9 +2671,9 @@ function goalCfgNow(){
   if(c.goalMonth && c.goalMonth!==k && c.goalNext) return {target:c.goalNext.target|0, prize:c.goalNext.prize||'', icon:c.goalNext.icon||'🎯'};
   return {target:c.goalTarget|0, prize:c.goalPrize||'', icon:c.goalIcon||'🍕'};
 }
-// What counts toward a month's goal: bucks earned in class; birthday bucks and penalties only if switched on.
+// What counts toward a month's goal: bucks earned in class minus bucks lost to penalties; birthday bucks only if switched on.
 function goalLines(from, to){ const c=S.lobbyCfg||{};
-  return S.log.filter(l=>l.at>=from && l.at<to && S.ninjas[l.ninjaId] && ((l.kind==='earn' && (c.goalBday || l.item!=='bdaybonus')) || (c.goalPen && l.kind==='penalty'))); }
+  return S.log.filter(l=>l.at>=from && l.at<to && S.ninjas[l.ninjaId] && ((l.kind==='earn' && (c.goalBday || l.item!=='bdaybonus')) || l.kind==='penalty')); }
 function goalStats(from, to, target){
   const ls=goalLines(from, to).sort((a,b)=>a.at-b.at), per={}; let total=0, wonAt=null, create=0, jr=0;
   ls.forEach(l=>{ const v=(l.kind==='penalty'?-1:1)*toNum(l.amt); total+=v; per[l.ninjaId]=(per[l.ninjaId]||0)+v;
@@ -2682,8 +2683,8 @@ function goalStats(from, to, target){
 function goalNow(){
   const c=S.lobbyCfg||{}, g=goalCfgNow(), now=new Date(), ms=monthStart(now.getTime()), k=monthKey(ms);
   const st=goalStats(ms, Infinity, g.target);
-  // Parents can't see other children's penalties, so with penalties counted they use the total the director's app saved.
-  if(c.goalPen && isParent() && c.goalLive?.m===k){ st.total=c.goalLive.total|0; st.wonAt=c.goalLive.wonAt||null; }
+  // Parents can't see other children's penalties, so they show the total the dojo's devices saved (settings/goalLive).
+  if(isParent() && S.goalLive?.m===k){ st.total=Math.max(0, S.goalLive.total|0); st.wonAt=S.goalLive.wonAt||null; }
   const days=new Date(now.getFullYear(), now.getMonth()+1, 0).getDate(), left=days-now.getDate()+1, gone=now.getDate();
   const perDay=st.total/Math.max(1,gone), need=Math.max(0,Math.ceil((g.target-st.total)/left));
   const finish = perDay>0 ? ms + Math.ceil(g.target/perDay)*DAY - DAY : null;
@@ -2704,14 +2705,21 @@ async function goalHousekeeping(){
     if(c.goalNext){ patch.goalTarget=c.goalNext.target|0; patch.goalPrize=c.goalNext.prize||''; patch.goalIcon=c.goalNext.icon||'🎯'; patch.goalNext=null; }
     patch.goalMonth=k;
   }
-  if(c.goalPen){ const g=goalNow(), live={m:k, total:Math.round(g.total), wonAt:g.wonAt||null};
-    if(!c.goalLive || c.goalLive.m!==live.m || c.goalLive.total!==live.total || c.goalLive.wonAt!==live.wonAt) patch.goalLive=live; }
   if(!Object.keys(patch).length) return;
   goalSaving=true; try{ const next={...(S.lobbyCfg||{}), ...patch}; S.lobbyCfg=next; await api.set('settings','lobby',next); }catch(e){ console.warn(e); } goalSaving=false;
 }
+// Staff, director and lobby TV devices keep settings/goalLive in step with the real total (a few seconds after changes).
+let goalLiveT=null;
+function goalLiveSync(){
+  if(isParent() || !S.loaded || !['director','sensei','viewer'].includes(S.role) || goalLiveT) return;
+  goalLiveT=setTimeout(async()=>{ goalLiveT=null;
+    const g=goalNow(), live={m:g.month, total:Math.round(g.total), wonAt:g.wonAt||null}, o=S.goalLive||{};
+    if(o.m===live.m && o.total===live.total && (o.wonAt||null)===live.wonAt) return;
+    try{ await api.set('settings','goalLive',{...live, at:Date.now()}); S.goalLive={...live, at:Date.now()}; }catch(e){ console.warn(e); } }, 4000);
+}
 function goalDraftFor(tab){
   const c=S.lobbyCfg||{}, now=goalCfgNow(), src = tab==='next' ? (c.goalNext || {target:now.target, prize:now.prize, icon:now.icon}) : now;
-  return {tab, target:src.target||'', prize:src.prize||'', icon:src.icon||'🍕', bday:!!c.goalBday, pen:!!c.goalPen, cheer:c.goalCheer!==false, remind:c.goalRemind!==false};
+  return {tab, target:src.target||'', prize:src.prize||'', icon:src.icon||'🍕', bday:!!c.goalBday, cheer:c.goalCheer!==false, remind:c.goalRemind!==false};
 }
 function goalSuggest(){
   const pm=new Date(); pm.setDate(1); pm.setHours(0,0,0,0); const to=pm.getTime(); pm.setMonth(pm.getMonth()-1);
@@ -2744,7 +2752,7 @@ function renderGoalAdmin(){
     ${sug?`<p class="hint" style="margin:-6px 0 0">💡 In ${esc(sug.month)} the dojo earned ${fmt(sug.last)}. Suggested: <b style="color:var(--ink)">${fmt(sug.v)}</b> <button class="btn ghost sm" data-act="goalSug" data-v="${sug.v}">Use it</button></p>`:''}
     <label class="f">Prize<input id="glP" maxlength="60" value="${esc(D.prize)}" placeholder="e.g. Pizza Party for everyone!"></label>
     <div class="f"><span>Prize picture</span><div class="gl-icons">${GOAL_ICONS.map(e=>`<button data-act="goalIcon" data-e="${e}" aria-pressed="${D.icon===e}">${e}</button>`).join('')}</div></div>
-    <div class="gl-sec"><span class="eyebrow">What counts</span><div class="gl-fixed">✅ Bucks earned in class (awards, quick perks, bonuses, level-ups)</div>${tog('bday',`Birthday bucks <small>(+${fmt(BDAY_BONUS)} each could win the goal by itself)</small>`)}${tog('pen','Take away bucks lost to penalties')}</div>
+    <div class="gl-sec"><span class="eyebrow">What counts</span><div class="gl-fixed">✅ Bucks earned in class (awards, quick perks, bonuses, level-ups)</div>${tog('bday',`Birthday bucks <small>(+${fmt(BDAY_BONUS)} each could win the goal by itself)</small>`)}<div class="gl-fixed">➖ Bucks lost to penalties are taken away</div></div>
     <div class="gl-sec"><span class="eyebrow">When the goal is reached</span>${tog('cheer','Big "We did it!" on the ticker and lobby')}${tog('remind','Remind me to plan the prize (shows in Admin until marked done)')}</div>
     <div class="row" style="justify-content:flex-end;gap:8px">${(D.tab==='now'?g.target>0:!!c.goalNext)?`<button class="btn ghost" data-act="goalOff">${D.tab==='now'?'Turn goal off':'Clear next month'}</button>`:''}<button class="btn primary" data-act="goalSave">Save goal</button></div></div></div>`;
   renderGoalRemind();
@@ -2759,7 +2767,7 @@ async function goalSave(off){
   const D=S.goalDraft; if(!D || !isDir()) return;
   const t=document.getElementById('glT'), p=document.getElementById('glP'); if(t) D.target=t.value; if(p) D.prize=p.value;
   const target=off?0:Math.max(0, Math.round(Number(D.target)||0)), prize=String(D.prize||'').trim().slice(0,60), k=monthKey(Date.now());
-  const patch={goalBday:D.bday, goalPen:D.pen, goalCheer:D.cheer, goalRemind:D.remind};
+  const patch={goalBday:D.bday, goalCheer:D.cheer, goalRemind:D.remind};
   if(D.tab==='next') patch.goalNext = off ? null : {target, prize, icon:D.icon};
   else Object.assign(patch, {goalTarget:target, goalPrize:prize, goalIcon:D.icon, goalMonth:k});
   if(!off && !target){ toast('Type how many bucks the dojo should earn together.'); return; }

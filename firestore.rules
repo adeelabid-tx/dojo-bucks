@@ -50,6 +50,12 @@ service cloud.firestore {
       allow read: if canSee();
       allow write: if isDirector();
     }
+    // The dojo goal total (penalties included). Dojo devices keep it current so parents' phones
+    // can show it without reading other children's penalties.
+    match /settings/goalLive {
+      allow write: if canView() && request.resource.data.keys().hasOnly(['m', 'total', 'wonAt', 'at'])
+        && request.resource.data.total is number && request.resource.data.m is string;
+    }
     match /ninjas/{id} {
       allow read: if canSee();
       allow create: if isDirector() && moneyTypedNew();
