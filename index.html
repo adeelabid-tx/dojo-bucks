@@ -286,6 +286,18 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 .fam-form select,.fam-form input{border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:800;background:var(--surface);color:var(--ink)}
 .fam-form select,.fam-form input{font-size:17px;padding:12px 14px;min-width:0}
 .fam-form input{letter-spacing:.15em}
+.gl-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start}@media (max-width:900px){.gl-grid{grid-template-columns:1fr}}
+.gl-box{border:2px solid var(--line);border-radius:16px;padding:14px}.gl-prize{font-family:var(--f-display);font-size:26px;line-height:1.1}
+.gl-bar{height:22px;border-radius:999px;background:var(--sunk);overflow:hidden;margin-top:10px}.gl-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--good),#3CCB8E)}
+.gl-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;text-align:center}.gl-stats div{background:var(--sunk);border-radius:12px;padding:8px 4px}.gl-stats b{font-family:var(--f-display);font-weight:400;font-size:20px;display:block}.gl-stats small{color:var(--muted);font-weight:800;font-size:12px}
+@media (max-width:600px){.gl-stats{grid-template-columns:repeat(2,1fr)}}
+.gl-hist{width:100%;border-collapse:collapse;font-weight:800}.gl-hist th{text-align:left;color:var(--muted);font-size:13px;padding:4px}.gl-hist td{padding:8px 4px;border-top:1px solid var(--line)}
+.gl-icons{display:flex;flex-wrap:wrap;gap:6px}.gl-icons button{font-size:24px;border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:4px 8px;cursor:pointer}.gl-icons button[aria-pressed="true"]{border-color:var(--gold);background:var(--gold-soft)}
+.gl-sec{border-top:1px solid var(--line);padding-top:8px;display:grid;gap:2px}.gl-fixed{font-weight:800;padding:6px 0}
+.gl-tog{display:flex;align-items:center;gap:10px;background:none;border:0;padding:7px 0;font:inherit;font-weight:800;color:var(--ink);text-align:left;cursor:pointer}.gl-tog small{color:var(--muted)}
+.gl-sw{width:40px;height:24px;border-radius:99px;background:var(--line);position:relative;flex:none;transition:.15s}.gl-sw::after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s}
+.gl-tog[aria-pressed="true"] .gl-sw{background:var(--good)}.gl-tog[aria-pressed="true"] .gl-sw::after{left:19px}
+.gl-remind{display:flex;align-items:center;gap:12px;border:2px solid var(--gold);background:var(--gold-soft);flex-wrap:wrap}
 .fam-card2{margin-bottom:18px;display:flex;flex-direction:column;gap:12px}
 .fam-card2 .fam-head{flex-wrap:nowrap;padding:12px 14px;gap:10px}.fam-card2 .fam-head > div:nth-child(2){min-width:0}.fam-card2 .fam-head > div:last-child{width:auto!important;text-align:right!important}.fam-card2 .fam-head h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fam-card2 .fam-head .bal{font-size:30px}
 .fp-kids{display:flex;gap:8px;overflow-x:auto;padding:2px}.fp-kids button{display:flex;align-items:center;gap:8px;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 14px 4px 4px;font:inherit;cursor:pointer;flex:none}
@@ -813,6 +825,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
   <section class="view" id="v-sensei" hidden><div id="sbHost"></div></section>
 
   <section class="view" id="v-admin" hidden>
+    <div id="goalRemind"></div>
     <div class="card">
       <div class="spread"><div><h2>Waiting for your approval</h2><p class="hint" style="margin:4px 0 0">Senseis send these when they add a ninja, change a belt or level, give Level Up or Belt Up, or redeem a reward.</p></div>
         <button class="btn primary" data-act="approveAll" id="approveAllBtn">Approve all</button></div>
@@ -826,6 +839,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
         <button class="btn primary" type="submit" id="tmAdd">Add to team</button>
       </form>
       <div id="teamList" style="margin-top:14px"></div></div>
+    <div class="card"><h2>🎯 Dojo goal</h2><p class="hint" style="margin:4px 0 0">One goal the whole dojo works toward each month. It shows on the lobby TV and on parents' phones.</p><div id="goalAdmin" style="margin-top:12px"></div></div>
     <div class="card"><div class="spread"><div><h2>Lobby TV</h2><p class="hint" style="margin:4px 0 0">The View only login (for example "Lobby") shows a slideshow for parents. Choose the slides and set this month's dojo goal.</p></div><a class="btn" href="#lobby" style="text-decoration:none">Preview lobby</a></div>
       <div id="lobbyAdmin" style="margin-top:12px"></div></div>
     <div class="card"><div class="spread"><div><h2>Check bucks</h2><p class="hint" style="margin:4px 0 0">Adds up each ninja's full history (bucks given, penalties, rewards, starting bucks and your changes) and compares it with their balance and totals.</p></div><button class="btn" data-act="audit">Check now</button></div>
@@ -1050,7 +1064,7 @@ function startDb(db){
   const pm=new Date(); pm.setDate(1); pm.setHours(0,0,0,0); pm.setMonth(pm.getMonth()-1);
   const since = Math.min(weekStart(Date.now()) - 7*7*DAY, pm.getTime());
   let gotN=false, gotL=false;
-  const ready = () => { if(gotN && gotL){ S.loaded=true; setTimeout(checkBirthdayBonuses, 2500); } render(); };
+  const ready = () => { if(gotN && gotL){ S.loaded=true; setTimeout(checkBirthdayBonuses, 2500); setTimeout(goalHousekeeping, 3000); } render(); };
   db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = cleanNinja({id:d.id, ...d.data()})); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
   if(!isParent()) db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
   else {
@@ -1645,6 +1659,7 @@ const andList = names => { const n=names.map(x=>`<b>${esc(x)}</b>`); return n.le
 function tickerRaw(){
   const out=[], now=Date.now(), all=ninjaList(), add=(key, html, news)=>out.push({key, html, news});
   S.news.slice(0,8).forEach(n=>add('news:'+n.id, `<span class="tk-tag">BREAKING</span> ${esc(n.text)}`, n.id));
+  { const g=goalNow(); if(g.done && (S.lobbyCfg||{}).goalCheer!==false) add('goalwon:'+g.month, `<span class="tk-tag">WE DID IT!</span> ${esc(g.icon)} The dojo reached the ${MONTHS[new Date().getMonth()]} goal of ${fmt(g.target)} bucks${g.prize?`! Prize unlocked: <b>${esc(g.prize)}</b>`:''} 🎉 Thank you, ninjas!`); }
   // New ninjas: a personal welcome for 2 days, and a shout-out naming everyone who joined in the last 2 weeks.
   const fresh=all.filter(n=>n.createdAt && now-n.createdAt < 14*DAY).sort((a,b)=>b.createdAt-a.createdAt);
   fresh.filter(n=>now-n.createdAt < 2*DAY).forEach(n=>add('welcome:'+n.id, `<span class="tk-tag">WELCOME</span> 👋 Welcome to the dojo, <b>${esc(n.name)}</b>! We're so happy you're here. Say hi to our newest ninja! 🥷`));
@@ -2254,9 +2269,7 @@ function renderLobbyAdmin(){
   const c=S.lobbyCfg||{}, off=new Set(c.off||[]);
   host.innerHTML = `<div class="lb-admin"><div><span class="eyebrow">Slides</span><div class="lb-checks">${LB_SLIDES.map(x=>`<label class="se-check"><input type="checkbox" data-lbslide="${x.id}" ${off.has(x.id)?'':'checked'}> ${x.icon} ${x.name}</label>`).join('')}</div>
       <p class="hint" style="margin:6px 0 0">Slides with nothing to show are skipped, for example Birthdays in a month without birthdays.</p></div>
-    <div style="display:grid;gap:10px"><span class="eyebrow">Dojo goal this month</span>
-      <label class="f">Bucks to earn together<input id="lbGoalT" type="number" min="0" step="100" value="${c.goalTarget||''}" placeholder="e.g. 10000"></label>
-      <label class="f">Prize<input id="lbGoalP" maxlength="60" value="${esc(c.goalPrize||'')}" placeholder="e.g. 🍕 Pizza Party for everyone!"></label>
+    <div style="display:grid;gap:10px;align-content:start"><span class="eyebrow">Birthdays</span>
       <label class="f">Birthday message (optional)<input id="lbBday" maxlength="80" value="${esc(c.bdayNote||'')}" placeholder="e.g. Birthday ninjas get 25 bonus bucks!"></label></div></div>`;
 }
 async function saveLobbyCfg(patch){
@@ -2315,6 +2328,7 @@ function renderAdmin(){
     <p class="hint" style="margin:12px 0 0"><b>Locking:</b> tap Lock at the top when you step away. Dojo devices lock themselves after 10 minutes without use, except View only screens.</p>`;
   renderTeam();
   renderLobbyAdmin();
+  renderGoalAdmin();
   renderAudit();
   renderSetup();
   const hasSample = Object.values(S.ninjas).some(n=>n.sample);
@@ -2535,7 +2549,7 @@ function lbAvailable(){
     if(x.id==='bday'){ const L=birthdaysNow(); return L.length>0 && (L.some(b=>b.ago===0) || (LB.loop||0)%3===0); }
     if(x.id==='welcome') return lbNewNinjas().length>0;
     if(x.id==='spot') return lbSpotlights().length>0;
-    if(x.id==='goal') return (cfg.goalTarget|0)>0;
+    if(x.id==='goal') return goalNow().target>0;
     if(x.id==='legend') return lbLegendTier()?.items.length>0;
     if(x.id==='senseis') return !isParent() && sbPeople().length>0;
     if(x.id==='achieve') return achievements(monthStart(now)).length>0;
@@ -2642,17 +2656,126 @@ function lbPath(){
     <div class="lb-panel" style="left:50px;top:128px;width:400px;padding:22px;z-index:4"><div class="d" style="font-size:34px;line-height:1.05">The road to Black Belt</div><div style="display:grid;gap:8px;margin-top:12px">
       <div class="lb-pill" style="background:#DDF5EB;color:#16956A">🥋 ${mlog.filter(l=>l.item==='beltup').length} belt-ups this month</div><div class="lb-pill" style="background:#F3E8FF;color:#7B2CBF">⭐ ${mlog.filter(l=>l.item==='levelup').length} level-ups this month</div><div class="lb-pill" style="background:#FFE3E8;color:#C2255C">🌸 ${jrN} JR ninjas on JR Pink</div></div></div>`;
 }
+/* ---------- dojo goal (settings/lobby) ----------
+   goalTarget/goalPrize/goalIcon belong to goalMonth ('2026-11'). goalNext holds next month's goal.
+   goalBday / goalPen choose what counts; goalCheer / goalRemind what happens when it is reached.
+   goalHist keeps past months; goalPrizeDone is the month whose prize was marked done. */
+const GOAL_ICONS=['🍕','🎮','🍦','🎬','🍿','🧁','🎉','🏆','🎁','⚽','🍩','🎨','🌮','🥤','🎤','🏖️'];
+const monthKey = ts => { const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+const monthName = k => { const [y,m]=k.split('-').map(Number); return MONTHS[m-1]+(y!==new Date().getFullYear()?' '+y:''); };
+const goalDate = ts => ts ? new Date(ts).toLocaleDateString([], {month:'short', day:'numeric'}) : '';
+// This month's goal, even if the Center Director has not opened the app since the month changed.
+function goalCfgNow(){
+  const c=S.lobbyCfg||{}, k=monthKey(Date.now());
+  if(c.goalMonth && c.goalMonth!==k && c.goalNext) return {target:c.goalNext.target|0, prize:c.goalNext.prize||'', icon:c.goalNext.icon||'🎯'};
+  return {target:c.goalTarget|0, prize:c.goalPrize||'', icon:c.goalIcon||'🍕'};
+}
+// What counts toward a month's goal: bucks earned in class; birthday bucks and penalties only if switched on.
+function goalLines(from, to){ const c=S.lobbyCfg||{};
+  return S.log.filter(l=>l.at>=from && l.at<to && S.ninjas[l.ninjaId] && ((l.kind==='earn' && (c.goalBday || l.item!=='bdaybonus')) || (c.goalPen && l.kind==='penalty'))); }
+function goalStats(from, to, target){
+  const ls=goalLines(from, to).sort((a,b)=>a.at-b.at), per={}; let total=0, wonAt=null, create=0, jr=0;
+  ls.forEach(l=>{ const v=(l.kind==='penalty'?-1:1)*toNum(l.amt); total+=v; per[l.ninjaId]=(per[l.ninjaId]||0)+v;
+    if(S.ninjas[l.ninjaId]?.group==='junior') jr+=v; else create+=v; if(target>0 && wonAt==null && total>=target) wonAt=l.at; });
+  return {total:Math.max(0,total), wonAt, create:Math.max(0,create), jr:Math.max(0,jr), per};
+}
+function goalNow(){
+  const c=S.lobbyCfg||{}, g=goalCfgNow(), now=new Date(), ms=monthStart(now.getTime()), k=monthKey(ms);
+  const st=goalStats(ms, Infinity, g.target);
+  // Parents can't see other children's penalties, so with penalties counted they use the total the director's app saved.
+  if(c.goalPen && isParent() && c.goalLive?.m===k){ st.total=c.goalLive.total|0; st.wonAt=c.goalLive.wonAt||null; }
+  const days=new Date(now.getFullYear(), now.getMonth()+1, 0).getDate(), left=days-now.getDate()+1, gone=now.getDate();
+  const perDay=st.total/Math.max(1,gone), need=Math.max(0,Math.ceil((g.target-st.total)/left));
+  const finish = perDay>0 ? ms + Math.ceil(g.target/perDay)*DAY - DAY : null;
+  const done=g.target>0 && st.total>=g.target;
+  return {...g, ...st, month:k, left, days, perDay:Math.round(perDay), need, finish, done, onTrack: done || st.total + perDay*left >= g.target};
+}
+// Director's app: close last month into history, start the new month (from "next month" if set), keep goalLive fresh.
+let goalSaving=false;
+async function goalHousekeeping(){
+  if(!isDir() || !S.loaded || goalSaving) return;
+  const c=S.lobbyCfg||{}, k=monthKey(Date.now()), patch={};
+  if(c.goalMonth!==k){
+    if(c.goalMonth && (c.goalTarget|0)>0 && !(c.goalHist||[]).some(h=>h.m===c.goalMonth)){
+      const [y,m]=c.goalMonth.split('-').map(Number), from=new Date(y,m-1,1).getTime(), to=new Date(y,m,1).getTime();
+      const known = from >= monthStart(Date.now()) - 40*DAY, st=known ? goalStats(from, to, c.goalTarget|0) : null;
+      patch.goalHist=[{m:c.goalMonth, target:c.goalTarget|0, prize:c.goalPrize||'', icon:c.goalIcon||'', total:st?Math.round(st.total):null, wonAt:st?st.wonAt:null}, ...(c.goalHist||[])].slice(0,24);
+    }
+    if(c.goalNext){ patch.goalTarget=c.goalNext.target|0; patch.goalPrize=c.goalNext.prize||''; patch.goalIcon=c.goalNext.icon||'🎯'; patch.goalNext=null; }
+    patch.goalMonth=k;
+  }
+  if(c.goalPen){ const g=goalNow(), live={m:k, total:Math.round(g.total), wonAt:g.wonAt||null};
+    if(!c.goalLive || c.goalLive.m!==live.m || c.goalLive.total!==live.total || c.goalLive.wonAt!==live.wonAt) patch.goalLive=live; }
+  if(!Object.keys(patch).length) return;
+  goalSaving=true; try{ const next={...(S.lobbyCfg||{}), ...patch}; S.lobbyCfg=next; await api.set('settings','lobby',next); }catch(e){ console.warn(e); } goalSaving=false;
+}
+function goalDraftFor(tab){
+  const c=S.lobbyCfg||{}, now=goalCfgNow(), src = tab==='next' ? (c.goalNext || {target:now.target, prize:now.prize, icon:now.icon}) : now;
+  return {tab, target:src.target||'', prize:src.prize||'', icon:src.icon||'🍕', bday:!!c.goalBday, pen:!!c.goalPen, cheer:c.goalCheer!==false, remind:c.goalRemind!==false};
+}
+function goalSuggest(){
+  const pm=new Date(); pm.setDate(1); pm.setHours(0,0,0,0); const to=pm.getTime(); pm.setMonth(pm.getMonth()-1);
+  const last=goalStats(pm.getTime(), to, 0).total; if(last<=0) return null;
+  return {last:Math.round(last), month:MONTHS[pm.getMonth()], v:Math.ceil(last*1.08/500)*500};
+}
+function renderGoalAdmin(){
+  const host=document.getElementById('goalAdmin'); if(!host) return;
+  const ae=document.activeElement; if(host.contains(ae) && (ae.tagName==='INPUT')) return;
+  if(!S.goalDraft || !S.goalDraft.dirty) S.goalDraft=goalDraftFor(S.goalDraft?.tab||'now');
+  const D=S.goalDraft, g=goalNow(), c=S.lobbyCfg||{}, now=new Date(), nm=MONTHS[now.getMonth()], nx=MONTHS[(now.getMonth()+1)%12];
+  const top=Object.entries(g.per).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const sug=goalSuggest(), pct=g.target? Math.min(100, g.total/g.target*100) : 0;
+  const tog=(k,t)=>`<button class="gl-tog" data-act="goalTog" data-k="${k}" aria-pressed="${!!D[k]}"><span class="gl-sw"></span>${t}</button>`;
+  const hist=(c.goalHist||[]);
+  host.innerHTML = `<div class="gl-grid"><div style="display:grid;gap:14px;align-content:start">
+    <div class="gl-box">${g.target>0 ? `<div class="spread" style="align-items:flex-start;gap:8px"><div style="min-width:0"><span class="eyebrow">${esc(nm)} goal</span><div class="gl-prize">${esc(g.icon)} ${esc(g.prize||'Dojo goal')}</div></div>
+        <span class="status ${g.done?'approved':g.onTrack?'pending':'rejected'}">${g.done?'🏆 Reached':g.onTrack?'🔥 On track':'🐢 Behind'}</span></div>
+      <div class="gl-bar"><i style="width:${pct}%"></i></div>
+      <div class="spread" style="font-weight:900;margin-top:6px"><span>${fmt(g.total)} of ${fmt(g.target)} bucks · ${Math.floor(pct)}%</span><span class="hint" style="margin:0">${g.done?`Reached ${esc(goalDate(g.wonAt))}`:`${g.left} day${g.left===1?'':'s'} left`}</span></div>
+      <div class="gl-stats">${[[fmt(g.perDay),'bucks a day now','var(--good)'],[g.done?'—':fmt(g.need),'bucks a day needed','var(--ink)'],[g.done?esc(goalDate(g.wonAt)):g.finish && g.finish<new Date(now.getFullYear(),now.getMonth()+1,1).getTime()?esc(goalDate(g.finish)):'Not this month', g.done?'reached on':'finish at this pace','var(--legend)'],[`⚡${fmt(g.create)} · 🌸${fmt(g.jr)}`,'Create · JR','var(--ink)']].map(([v,t,col])=>`<div><b style="color:${col}">${v}</b><small>${t}</small></div>`).join('')}</div>
+      ${top.length?`<p class="hint" style="margin:10px 0 0">Top helpers this month: <b style="color:var(--ink)">${top.map(([id,v])=>`${esc(S.ninjas[id]?.name||'')} ${fmt(v)}`).join(' · ')}</b></p>`:''}`
+      : `<p class="hint" style="margin:0">No goal this month. Set one on the right to show it on the lobby TV and parents' phones.</p>`}</div>
+    <div class="gl-box"><h3 style="margin:0 0 6px">📜 Goal history</h3>${hist.length?`<table class="gl-hist"><tr><th>Month</th><th>Goal</th><th>Earned</th><th>Result</th></tr>${hist.map(h=>{ const won=h.total!=null && h.total>=h.target;
+        return `<tr><td>${esc(monthName(h.m))}</td><td>${fmt(h.target)}</td><td>${h.total==null?'–':fmt(h.total)}</td><td>${h.total==null?'<span class="hint">not recorded</span>':won?`<span class="status approved">🏆 Won${h.wonAt?' · '+esc(goalDate(h.wonAt)):''}</span>`:`<span class="status rejected">${Math.floor(h.total/Math.max(1,h.target)*100)}% · missed</span>`}</td></tr>`; }).join('')}</table>`:'<p class="hint" style="margin:0">Each month is saved here when the next one starts.</p>'}</div></div>
+   <div class="gl-box" style="display:grid;gap:12px;align-content:start">
+    <div class="seg" role="group" aria-label="Which month"><button data-act="goalTab" data-t="now" aria-pressed="${D.tab==='now'}">This month (${esc(nm)})</button><button data-act="goalTab" data-t="next" aria-pressed="${D.tab==='next'}">Next month (${esc(nx)})${c.goalNext?' ✓':''}</button></div>
+    ${D.tab==='next'?`<p class="hint" style="margin:0">Starts by itself on ${esc(nx)} 1. ${c.goalNext?'':'If you leave it, this month\'s goal carries on.'}</p>`:''}
+    <label class="f">Bucks to earn together<input id="glT" type="number" min="0" step="100" inputmode="numeric" value="${esc(D.target)}" placeholder="e.g. 10000"></label>
+    ${sug?`<p class="hint" style="margin:-6px 0 0">💡 In ${esc(sug.month)} the dojo earned ${fmt(sug.last)}. Suggested: <b style="color:var(--ink)">${fmt(sug.v)}</b> <button class="btn ghost sm" data-act="goalSug" data-v="${sug.v}">Use it</button></p>`:''}
+    <label class="f">Prize<input id="glP" maxlength="60" value="${esc(D.prize)}" placeholder="e.g. Pizza Party for everyone!"></label>
+    <div class="f"><span>Prize picture</span><div class="gl-icons">${GOAL_ICONS.map(e=>`<button data-act="goalIcon" data-e="${e}" aria-pressed="${D.icon===e}">${e}</button>`).join('')}</div></div>
+    <div class="gl-sec"><span class="eyebrow">What counts</span><div class="gl-fixed">✅ Bucks earned in class (awards, quick perks, bonuses, level-ups)</div>${tog('bday',`Birthday bucks <small>(+${fmt(BDAY_BONUS)} each could win the goal by itself)</small>`)}${tog('pen','Take away bucks lost to penalties')}</div>
+    <div class="gl-sec"><span class="eyebrow">When the goal is reached</span>${tog('cheer','Big "We did it!" on the ticker and lobby')}${tog('remind','Remind me to plan the prize (shows in Admin until marked done)')}</div>
+    <div class="row" style="justify-content:flex-end;gap:8px">${(D.tab==='now'?g.target>0:!!c.goalNext)?`<button class="btn ghost" data-act="goalOff">${D.tab==='now'?'Turn goal off':'Clear next month'}</button>`:''}<button class="btn primary" data-act="goalSave">Save goal</button></div></div></div>`;
+  renderGoalRemind();
+}
+function renderGoalRemind(){
+  const host=document.getElementById('goalRemind'); if(!host) return;
+  const c=S.lobbyCfg||{}, g=goalNow();
+  host.innerHTML = isDir() && c.goalRemind!==false && g.done && c.goalPrizeDone!==g.month
+    ? `<div class="card gl-remind"><span style="font-size:34px">${esc(g.icon)}</span><div style="flex:1;min-width:0"><b>The dojo reached the ${esc(MONTHS[new Date().getMonth()])} goal on ${esc(goalDate(g.wonAt))}!</b><div class="hint" style="margin:0">Time to plan the prize: <b style="color:var(--ink)">${esc(g.prize||'the prize')}</b></div></div><button class="btn primary" data-act="goalPrizeDone">Prize done ✓</button></div>` : '';
+}
+async function goalSave(off){
+  const D=S.goalDraft; if(!D || !isDir()) return;
+  const t=document.getElementById('glT'), p=document.getElementById('glP'); if(t) D.target=t.value; if(p) D.prize=p.value;
+  const target=off?0:Math.max(0, Math.round(Number(D.target)||0)), prize=String(D.prize||'').trim().slice(0,60), k=monthKey(Date.now());
+  const patch={goalBday:D.bday, goalPen:D.pen, goalCheer:D.cheer, goalRemind:D.remind};
+  if(D.tab==='next') patch.goalNext = off ? null : {target, prize, icon:D.icon};
+  else Object.assign(patch, {goalTarget:target, goalPrize:prize, goalIcon:D.icon, goalMonth:k});
+  if(!off && !target){ toast('Type how many bucks the dojo should earn together.'); return; }
+  const next={...(S.lobbyCfg||{}), ...patch}; S.lobbyCfg=next;
+  try{ await api.set('settings','lobby',next); toast(off ? (D.tab==='next'?'Next month\'s goal cleared.':'Goal turned off.') : D.tab==='next' ? `Saved. It starts on ${MONTHS[(new Date().getMonth()+1)%12]} 1.` : 'Goal saved. The lobby TV and parents\' phones show it now.'); }catch{}
+  S.goalDraft=goalDraftFor(D.tab); render(); goalHousekeeping();
+}
 function lbGoal(){
-  const cfg=S.lobbyCfg||{}, target=cfg.goalTarget|0, now=new Date(), ms=monthStart(now.getTime());
-  const earnL=S.log.filter(l=>l.at>=ms && l.kind==='earn'), sum=L=>L.reduce((a,l)=>a+(l.amt||0),0), total=sum(earnL);
-  const jrSum=sum(earnL.filter(l=>S.ninjas[l.ninjaId]?.group==='junior')), pct=Math.min(100, target? total/target*100 : 0);
-  const left=new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()-now.getDate()+1, done=total>=target;
+  const g=goalNow(), target=g.target, total=g.total, now=new Date();
+  const pct=Math.min(100, target? total/target*100 : 0), done=g.done, left=g.left;
   return `<div class="lb-panel" style="left:110px;right:110px;${P};display:grid;grid-template-columns:1.25fr 1fr;overflow:hidden">
     <div style="padding:56px 64px;display:flex;flex-direction:column;gap:22px;justify-content:center"><span class="lb-pill" style="align-self:flex-start;background:#DDF5EB;color:#16956A;font-size:24px">🎯 ${MONTHS[now.getMonth()].toUpperCase()} DOJO GOAL</span>
-      <div class="d" style="font-size:88px;line-height:.95">${done?'We did it! 🎉':`Earn ${fmt(target)} bucks together!`}</div>${cfg.goalPrize?`<div style="font-size:36px;font-weight:900">Prize: <span style="color:#E5402B">${esc(cfg.goalPrize)}</span></div>`:''}
+      <div class="d" style="font-size:88px;line-height:.95">${done?'We did it! 🎉':`Earn ${fmt(target)} bucks together!`}</div>${g.prize?`<div style="font-size:36px;font-weight:900">${done?'Prize unlocked':'Prize'}: <span style="color:#E5402B">${esc(g.prize)}</span></div>`:''}
       <div style="height:66px;border-radius:999px;background:#E7E3F5;position:relative;overflow:hidden"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#16956A,#3CCB8E);border-radius:999px"></div><span class="d" style="position:absolute;left:22px;top:9px;font-size:38px;color:${pct>25?'#fff':'#1E1A3C'};display:flex;align-items:center;gap:8px">${lbCoin(34)} ${fmt(total)}</span><span class="d" style="position:absolute;right:22px;top:9px;font-size:38px;color:#69658E">${fmt(target)}</span></div>
-      <div style="display:flex;gap:14px"><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">📅 ${left} day${left===1?'':'s'} left</span><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">⚡ Create ${fmt(total-jrSum)}</span><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">🌸 JR ${fmt(jrSum)}</span></div></div>
-    <div style="background:linear-gradient(160deg,#FFE07A,#F6B60A);display:grid;place-items:center;position:relative"><div style="font-size:260px;filter:drop-shadow(0 20px 30px rgba(0,0,0,.25))">${esc(cfg.goalIcon||'🍕')}</div><img src="mascots/hiyah.webp" alt="" style="position:absolute;bottom:10px;right:20px;height:300px"></div></div>`;
+      <div style="display:flex;gap:14px"><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">${done?`🏆 Reached ${esc(goalDate(g.wonAt))}`:`📅 ${left} day${left===1?'':'s'} left`}</span><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">⚡ Create ${fmt(g.create)}</span><span class="lb-pill" style="background:#F1EFFA;padding:12px 18px;font-size:24px">🌸 JR ${fmt(g.jr)}</span></div></div>
+    <div style="background:linear-gradient(160deg,#FFE07A,#F6B60A);display:grid;place-items:center;position:relative"><div style="font-size:260px;filter:drop-shadow(0 20px 30px rgba(0,0,0,.25))">${esc(g.icon)}</div><img src="mascots/hiyah.webp" alt="" style="position:absolute;bottom:10px;right:20px;height:300px"></div></div>`;
 }
 function lbLegend(){
   const t=lbLegendTier(), ms=monthStart(Date.now()), items=t.items.slice(0,5);
@@ -2745,8 +2868,8 @@ const plCards = {
       return `<div class="pl-belt">${badge(DONE(k),28)}<b class="pl-bn">${esc(BELTS[k].name)}</b><span class="pl-bbar"><i style="width:${c?Math.max(8,c/mx*100):0}%;background:${col};${col==='#F4F4F2'?'box-shadow:inset 0 0 0 1px #C9C9D6':''}"></i></span><b class="pl-bc">${c} ninja${c===1?'':'s'}</b><span class="pl-bf">${here.map(n=>avatar(n,24)).join('')}</span></div>`; }).join('');
     return plCard('🗺️','The Ninja Path', `<p class="hint" style="margin:-4px 0 4px">Leading the road to Black Belt</p>${hero}<p class="pl-sub">How many ninjas are at each belt</p><div class="pl-belts2">${rows}</div>`); },
   // Goal: five milestones on the way to the target, and the daily pace needed to finish this month.
-  goal:()=>{ const c=S.lobbyCfg||{}, target=c.goalTarget|0, now=new Date(), total=S.log.filter(l=>l.at>=monthStart(now.getTime()) && l.kind==='earn').reduce((a,l)=>a+(l.amt||0),0);
-    const days=new Date(now.getFullYear(), now.getMonth()+1, 0).getDate(), left=days-now.getDate()+1, gone=now.getDate();
+  goal:()=>{ const g=goalNow(), c={goalIcon:g.icon, goalPrize:g.prize}, target=g.target, now=new Date(), total=g.total;
+    const left=g.left, gone=now.getDate();
     const steps=[1,2,3,4,5].map(k=>Math.round(target*k/5)), next=steps.find(v=>total<v);
     const need=Math.max(0,Math.ceil((target-total)/left)), pace=Math.round(total/gone);
     const rows=steps.map(v=>{ const done=total>=v, isNext=v===next;
@@ -3154,6 +3277,13 @@ document.addEventListener('click', e=>{
     case 'famKid': S.famNinja=t.dataset.id; S.famDay=null; try{ localStorage.setItem('fam-kid', S.famNinja); }catch{} render(); window.scrollTo({top:0}); break;
     case 'famLink': { const sel=document.getElementById('famAddSel'); if(sel?.value) linkSibling(t.dataset.base==='1' ? S.drawer : sel.value, t.dataset.base==='1' ? sel.value : S.drawer); break; }
     case 'famUnlink': unlinkSibling(t.dataset.id); break;
+    case 'goalTab': S.goalDraft=goalDraftFor(t.dataset.t); renderGoalAdmin(); break;
+    case 'goalIcon': S.goalDraft.icon=t.dataset.e; S.goalDraft.dirty=true; renderGoalAdmin(); break;
+    case 'goalTog': S.goalDraft[t.dataset.k]=!S.goalDraft[t.dataset.k]; S.goalDraft.dirty=true; renderGoalAdmin(); break;
+    case 'goalSug': S.goalDraft.target=t.dataset.v; S.goalDraft.dirty=true; renderGoalAdmin(); break;
+    case 'goalSave': goalSave(false); break;
+    case 'goalOff': goalSave(true); break;
+    case 'goalPrizeDone': { const g=goalNow(); S.lobbyCfg={...(S.lobbyCfg||{}), goalPrizeDone:g.month}; api.set('settings','lobby',S.lobbyCfg).then(()=>toast('Marked as done. Enjoy the prize! 🎉')).catch(()=>{}); renderGoalRemind(); break; }
     case 'famRange': S.famRange=t.dataset.r; S.famDay=null; render(); break;
     case 'famDay': S.famDay = S.famDay===+t.dataset.d ? null : +t.dataset.d; render(); break;
     case 'famFold': { const o=S.famOpen||(S.famOpen=new Set()), k=t.dataset.k; o.has(k)?o.delete(k):o.add(k); render(); break; }
@@ -3211,8 +3341,6 @@ document.addEventListener('change', e=>{
   const el=e.target;
   if(el.dataset && el.dataset.item && el.type==='number'){ const v=Number(el.value); if(Number.isFinite(v)) saveAmount(el.dataset.kind, el.dataset.item, v); }
   if(el.dataset && el.dataset.lbslide){ const off=new Set(S.lobbyCfg?.off||[]); el.checked ? off.delete(el.dataset.lbslide) : off.add(el.dataset.lbslide); saveLobbyCfg({off:[...off]}); return; }
-  if(el.id==='lbGoalT'){ saveLobbyCfg({goalTarget:Math.max(0, Math.round(Number(el.value)||0))}); return; }
-  if(el.id==='lbGoalP'){ saveLobbyCfg({goalPrize:el.value.trim()}); return; }
   if(el.id==='lbBday'){ saveLobbyCfg({bdayNote:el.value.trim()}); return; }
   if(el.id==='editWelcome'){ if(isDir()) api.update('ninjas', S.drawer, {welcome:el.checked}).then(()=>toast(el.checked?'Shown on the lobby Welcome screen.':'Hidden from the lobby Welcome screen.')).catch(()=>{}); return; }
   if(el.dataset && el.dataset.sbd){ const id=el.dataset.sbd, row=el.closest('td'), v=f=>row.querySelector(`[data-f="${f}"]`).value, m=v('m'), d=v('d'), y=v('y');
@@ -3242,7 +3370,7 @@ document.addEventListener('change', e=>{ const el=e.target;
   if(el.dataset && el.dataset.tksel!=null){ el.checked ? S.tkSel.add(el.dataset.tksel) : S.tkSel.delete(el.dataset.tksel); renderNewsPanel(); }
   else if(el.id==='tkSelAll'){ tickerShown().forEach(x=>el.checked ? S.tkSel.add(x.key) : S.tkSel.delete(x.key)); renderNewsPanel(); }
 });
-document.addEventListener('input', e=>{ if(e.target.id==='pickSearch'){ S.pickQ=e.target.value; renderAward(); return; } if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='adjNote') S.adj.note=e.target.value; if(e.target.id==='tkEditText') S.tkEditText=e.target.value; });
+document.addEventListener('input', e=>{ if(e.target.id==='pickSearch'){ S.pickQ=e.target.value; renderAward(); return; } if(e.target.dataset && e.target.dataset.su) markSetup(); if(e.target.id==='adjAmt') S.adj.amt=e.target.value; if(e.target.id==='glT' && S.goalDraft){ S.goalDraft.target=e.target.value; S.goalDraft.dirty=true; } if(e.target.id==='glP' && S.goalDraft){ S.goalDraft.prize=e.target.value; S.goalDraft.dirty=true; } if(e.target.id==='adjNote') S.adj.note=e.target.value; if(e.target.id==='tkEditText') S.tkEditText=e.target.value; });
 { const vp=document.querySelector('.tk-viewport'); vp.addEventListener('mouseenter',()=>tk.paused=true); vp.addEventListener('mouseleave',()=>tk.paused=false); }
 window.addEventListener('resize', ()=>tkFill());
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.id==='pickSearch'){ const c=document.querySelector('#picker .chip'); if(c) c.click(); e.target.select(); return; }
