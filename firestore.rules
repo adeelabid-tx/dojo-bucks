@@ -106,6 +106,10 @@ service cloud.firestore {
       allow read: if canView();
       allow write: if isOwner();
     }
+    match /sawards/{period} {
+      allow read: if canView();
+      allow write: if isOwner();
+    }
     match /sconfig/{doc} {
       allow read: if canView();
       allow write: if isOwner();

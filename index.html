@@ -639,7 +639,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:14p
       <a href="#award" data-tab="award">Give Bucks</a>
       <a href="#shop" data-tab="shop">Reward Shop</a>
       <a href="#roster" data-tab="roster">Ninjas</a>
-      <a href="#sensei" data-tab="sensei" id="senseiTab" hidden>🥋 Sensei Bucks <span class="nb" id="sbCount" hidden></span></a>
+      <a href="#sensei" data-tab="sensei" id="senseiTab" hidden>Senseis <span class="nb" id="sbCount" hidden></span></a>
       <a href="#admin" data-tab="admin" id="adminTab" hidden>Admin <span class="nb" id="adminCount" hidden></span></a>
     </nav>
     <img class="cn-logo" src="mascots/cn-logo.png" width="196" height="41" alt="Code Ninjas">
@@ -1033,7 +1033,7 @@ function startDb(db){
   db.collection('requests').orderBy('at','desc').limit(200).onSnapshot(s => { S.requests = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   // Sensei Bucks: staff only (the rules keep parents and families out).
   db.collection('sensei').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id]=cleanNinja({id:d.id, ...d.data()})); S.sb=m; render(); }, () => {});
-  db.collection('slog').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.slog = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); render(); }, () => {});
+  db.collection('slog').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.slog = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); render(); if(S.isOwner) setTimeout(checkSbAwards, 1500); }, () => {});
   db.doc('sconfig/main').onSnapshot(d => { S.scfg = d.exists ? d.data() : null; render(); }, () => {});
   (S.isOwner ? db.collection('sreq').orderBy('at','desc').limit(200) : db.collection('sreq').where('by','==',S.me)).onSnapshot(s => { S.sreq = s.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b)=>b.at-a.at); render(); }, () => {});
   db.doc('settings/owner').onSnapshot(d => { S.ownerUid = d.exists ? d.data().uid : null; }, () => {});
@@ -1056,9 +1056,9 @@ function startLocal(){
   let saved=null; try{ saved = JSON.parse(localStorage.getItem(LKEY)||'null'); }catch{}
   if(saved && saved.ninjas){ S.ninjas=saved.ninjas; S.log=saved.log||[]; S.settings=saved.settings||S.settings; S.news=saved.news||[]; S.requests=saved.requests||[]; S.staff=saved.staff||{}; S.shop=saved.shop||null; S.tickerCfg=saved.tickerCfg||S.tickerCfg; S.actions=saved.actions||null; S.lobbyCfg=saved.lobbyCfg||S.lobbyCfg; S.demoFam=saved.demoFam||{}; }
   else { const s = makeSamples(); s.ninjas.forEach(n=>S.ninjas[n.id]=n); S.log = s.log.sort((a,b)=>b.at-a.at); S.news = s.news; }
-  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions, lobbyCfg:S.lobbyCfg, demoFam:S.demoFam, sb:S.sb, slog:S.slog, sreq:S.sreq, scfg:S.scfg})); }catch{} };
+  const persist = () => { try{ localStorage.setItem(LKEY, JSON.stringify({ninjas:S.ninjas, log:S.log, settings:S.settings, news:S.news, requests:S.requests, staff:S.staff, shop:S.shop, tickerCfg:S.tickerCfg, actions:S.actions, lobbyCfg:S.lobbyCfg, demoFam:S.demoFam, sb:S.sb, slog:S.slog, sreq:S.sreq, scfg:S.scfg, sawards:S.sawards})); }catch{} };
   S._persist=persist;
-  if(saved && saved.sb){ S.sb=saved.sb; S.slog=saved.slog||[]; S.sreq=saved.sreq||[]; S.scfg=saved.scfg||null; } else sbSamples();
+  if(saved && saved.sb){ S.sb=saved.sb; S.slog=saved.slog||[]; S.sreq=saved.sreq||[]; S.scfg=saved.scfg||null; S.sawards=saved.sawards||{}; } else sbSamples();
   const col = c => c==='ninjas' ? 'ninjas' : c;
   api = {
     set:async(c,id,d)=>{ if(c==='ninjas') S.ninjas[id]={id,...d}; else if(c==='log'){ S.log=[{id,...d},...S.log.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='settings'){ if(id==='shop') S.shop=d; else if(id==='ticker') S.tickerCfg=d; else if(id==='actions') S.actions=d; else if(id==='lobby') S.lobbyCfg=d; else S.settings=d; } else if(c==='staff'){ S.staff={...S.staff,[id]:{id,...d}}; } else if(c==='news'){ S.news=[{id,...d},...S.news.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } else if(c==='requests'){ S.requests=[{id,...d},...S.requests.filter(x=>x.id!==id)].sort((a,b)=>b.at-a.at); } persist(); render(); },
@@ -2619,9 +2619,60 @@ function sbScores(range){
   const ms=monthStart(Date.now()), m={};
   sbPeople().forEach(p=>m[p.id]=0);
   if(range==='all') sbPeople().forEach(p=>{ const b=sbBal(p.id); m[p.id]=Math.max(0, b.earned-b.lost); });
-  else S.slog.filter(l=>l.at>=ms && m[l.senseiId]!=null).forEach(l=>{ const a=toNum(l.amt);
+  else sbScoreLines(S.slog.filter(l=>l.at>=ms)).forEach(l=>{ if(m[l.senseiId]==null) return; const a=toNum(l.amt);
     if(l.kind==='earn') m[l.senseiId]+=a; else if(l.kind==='penalty') m[l.senseiId]-=a; else if(l.kind==='fix') m[l.senseiId]+=toNum(l.delta); });
   return sbPeople().map(p=>({p, v:m[p.id]})).sort((a,b)=>b.v-a.v || a.p.name.localeCompare(b.p.name));
+}
+// Award lines don't count toward later months' or years' scores.
+const SB_AWARD_IDS = ['s_sotm','s_soty'];
+const sbScoreLines = L => L.filter(l=>!SB_AWARD_IDS.includes(l.item));
+function sbPeriodScores(lines){
+  const m={}; sbScoreLines(lines).forEach(l=>{ const a=toNum(l.amt); m[l.senseiId]=(m[l.senseiId]||0) + (l.kind==='earn'?a : l.kind==='penalty'?-a : l.kind==='fix'?toNum(l.delta):0); });
+  return m;
+}
+// Sensei of the Month (+10,000) and of the Year (+250,000). There is no server, so the owner's app pays them the first
+// time it opens after the month or year ends. A record in sawards/<period> makes sure each prize is paid only once;
+// a tie pays everyone with the top score.
+const SB_AWARDS = {month:{amt:10000, item:'s_sotm', icon:'🏅'}, year:{amt:250000, item:'s_soty', icon:'🏆'}};
+async function sbAward(key, kind, label, lines){
+  const sc=sbPeriodScores(lines), people=new Set(sbPeople().map(p=>p.id)), best=Math.max(0,...Object.entries(sc).filter(([id])=>people.has(id)).map(([,v])=>v));
+  if(!(best>0)) return [];
+  const winners=Object.entries(sc).filter(([id,v])=>people.has(id) && v===best).map(([id])=>id), A=SB_AWARDS[kind], at=Date.now(), paid=[];
+  if(S.mode==='db'){
+    const db=firebase.firestore();
+    try{ await db.runTransaction(async tx=>{
+      const aref=db.doc('sawards/'+key), done=await tx.get(aref); if(done.exists) return;
+      const refs=winners.map(id=>db.doc('sensei/'+id)), snaps=[]; for(const r of refs) snaps.push(await tx.get(r));
+      winners.forEach((id,i)=>{ const c=cleanNinja({balance:0,earned:0,spent:0,lost:0, ...(snaps[i].exists?snaps[i].data():{})});
+        tx.set(refs[i], {balance:c.balance+A.amt, earned:c.earned+A.amt, spent:c.spent, lost:c.lost}, {merge:true});
+        tx.set(db.doc('slog/'+key+'-'+id), {senseiId:id, name:S.staff[id]?.name||'', kind:'earn', item:A.item, icon:A.icon, label, amt:A.amt, at, by:S.me}); paid.push(id); });
+      tx.set(aref, {winners, score:best, amt:A.amt, at}); }); }
+    catch(e){ console.warn(e); return []; }
+  } else {
+    S.sawards=S.sawards||{}; if(S.sawards[key]) return [];
+    winners.forEach(id=>{ const c={balance:0,earned:0,spent:0,lost:0, ...(S.sb[id]||{})}; S.sb[id]={...c, balance:c.balance+A.amt, earned:c.earned+A.amt};
+      S.slog=[{id:key+'-'+id, senseiId:id, name:S.staff[id]?.name||'', kind:'earn', item:A.item, icon:A.icon, label, amt:A.amt, at, by:S.me}, ...S.slog]; paid.push(id); });
+    S.sawards[key]={winners, score:best, at}; S._persist?.();
+  }
+  return paid;
+}
+async function checkSbAwards(){
+  if(!sbBoss() || S.sbAwardsChecked || !sbPeople().length) return; S.sbAwardsChecked=true;
+  const now=new Date(), mFrom=new Date(now.getFullYear(), now.getMonth()-1, 1), mTo=new Date(now.getFullYear(), now.getMonth(), 1);
+  const mKey=`m-${mFrom.getFullYear()}-${String(mFrom.getMonth()+1).padStart(2,'0')}`, mName=`${MONTHS[mFrom.getMonth()]} ${mFrom.getFullYear()}`;
+  const msg=[];
+  let w=await sbAward(mKey, 'month', `Sensei of the Month · ${mName}`, S.slog.filter(l=>l.at>=mFrom.getTime() && l.at<mTo.getTime()));
+  if(w.length) msg.push(`🏅 Sensei of the Month (${mName}): ${w.map(sbName).join(' & ')} +${fmt(SB_AWARDS.month.amt)}`);
+  const y=now.getFullYear()-1, yKey=`y-${y}`;
+  // The year's history is only fetched when that year's prize hasn't been paid yet.
+  let yearDone = S.mode==='db' ? (await firebase.firestore().doc('sawards/'+yKey).get().catch(()=>null))?.exists : !!(S.sawards||{})[yKey];
+  if(!yearDone){
+    const from=new Date(y,0,1).getTime(), to=new Date(y+1,0,1).getTime();
+    const lines = S.mode==='db' ? (await firebase.firestore().collection('slog').where('at','>=',from).where('at','<',to).get().catch(()=>({docs:[]}))).docs.map(d=>cleanLog(d.data())) : S.slog.filter(l=>l.at>=from && l.at<to);
+    w=await sbAward(yKey, 'year', `Sensei of the Year · ${y}`, lines);
+    if(w.length) msg.push(`🏆 Sensei of the Year (${y}): ${w.map(sbName).join(' & ')} +${fmt(SB_AWARDS.year.amt)}`);
+  }
+  if(msg.length){ toast(msg.join(' · ')); render(); }
 }
 // Same safe save as ninja bucks: read the latest numbers and write the balance and history together.
 async function sbump(id, fn){
