@@ -21,6 +21,13 @@ service cloud.firestore {
       return exists(shop) && ('parentIds' in get(shop).data) ? get(shop).data.parentIds : ['gaming', 'daycamp', 'bday', 'fee', 'summer'];
     }
     function num(m, k) { return m.get(k, 0); }
+    // Bucks must be saved as numbers (text like "73" would be glued to new bucks instead of added).
+    function typed(k) { return !request.resource.data.diff(resource.data).affectedKeys().hasAny([k]) || request.resource.data[k] is number; }
+    function moneyTyped() { return typed('balance') && typed('earned') && typed('spent') && typed('lost'); }
+    function newTyped(k) { return !(k in request.resource.data) || request.resource.data[k] is number; }
+    function oldTyped() { return resource.data.get('balance', 0) is number && resource.data.get('earned', 0) is number && resource.data.get('spent', 0) is number && resource.data.get('lost', 0) is number; }
+    function allNumbers() { return request.resource.data.get('balance', 0) is number && request.resource.data.get('earned', 0) is number && request.resource.data.get('spent', 0) is number && request.resource.data.get('lost', 0) is number; }
+    function moneyTypedNew() { return newTyped('balance') && newTyped('earned') && newTyped('spent') && newTyped('lost'); }
     // Rewards a sensei can give without director approval: the categories marked for it in the Reward Shop
     // (settings/shop.quickIds), or the built-in Quick Perks until the director first saves the shop.
     function quickPerks() {
@@ -43,17 +50,22 @@ service cloud.firestore {
     }
     match /ninjas/{id} {
       allow read: if canSee();
-      allow create, delete: if isDirector();
+      allow create: if isDirector() && moneyTypedNew();
+      allow delete: if isDirector();
       // Senseis may change bucks earned or lost (and the avatar), or spend bucks on Quick Perks.
       // Belts, levels, names and bigger rewards need a director.
-      allow update: if isDirector() || (isSensei()
+      allow update: if moneyTyped() && (isDirector() || (isSensei()
         && num(request.resource.data, 'balance') >= 0
         && ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'earned', 'lost', 'head'])
             && num(request.resource.data, 'balance') - num(resource.data, 'balance')
                == (num(request.resource.data, 'earned') - num(resource.data, 'earned')) - (num(request.resource.data, 'lost') - num(resource.data, 'lost')))
           || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'spent'])
             && num(request.resource.data, 'balance') - num(resource.data, 'balance')
-               == num(resource.data, 'spent') - num(request.resource.data, 'spent'))));
+               == num(resource.data, 'spent') - num(request.resource.data, 'spent')))
+        // A ninja whose bucks were once saved as text gets turned back into numbers by the next change.
+        || (isSensei() && !oldTyped() && allNumbers()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'earned', 'lost', 'spent', 'head'])
+            && request.resource.data.balance >= 0)));
     }
     match /log/{id} {
       allow read: if canSee();

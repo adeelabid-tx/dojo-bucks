@@ -425,6 +425,7 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 
 /* feed */
 .feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:420px;overflow:auto}
+.drawer .feed li{grid-template-columns:32px 1fr auto auto}
 .feed li{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}
 .feed li:first-child{border-top:0}
 .feed .ic{font-size:20px;text-align:center}
@@ -437,6 +438,8 @@ header.top .hdr nav.tabs{grid-area:nav;justify-self:start}
 /* award */
 .award-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
 @media (min-width:900px){ .award-grid > .card:last-child{position:sticky;top:calc(var(--hdr,120px) + 10px);max-height:calc(100vh - var(--hdr,120px) - 90px);overflow:auto} }
+.rm-x{border:0;background:transparent;color:var(--muted);font-weight:900;font-size:15px;cursor:pointer;padding:4px 6px;border-radius:8px}.rm-x:hover{background:var(--bad-soft);color:var(--bad)}
+.rm-ask{display:flex;gap:6px;grid-column:1 / -1;justify-content:flex-end}
 .audit-ok{margin:0;font-weight:900;color:var(--good)}.audit-bad{margin:0 0 8px;font-weight:900;color:var(--bad)}
 .lbt.audit td.bad{color:var(--bad);font-family:var(--f-body);font-size:15px}.lbt.audit td{font-size:15px}.lbt.audit th small{font-weight:800;text-transform:none;letter-spacing:0}
 .pick-search{width:100%;box-sizing:border-box;margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font-size:17px;font-weight:800;background:var(--surface);color:var(--ink)}
@@ -940,7 +943,15 @@ let api = null;
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt = n => Math.round(n||0).toLocaleString();
+// Bucks are always numbers. A value saved as text (e.g. "7325") would otherwise be glued to new bucks ("7325"+20 = "732520").
+const toNum = v => { if(typeof v==='number') return Number.isFinite(v) ? v : 0; const x=parseFloat(String(v??'').replace(/[^0-9.\-]/g,'')); return Number.isFinite(x) ? x : 0; };
+const MONEY = ['balance','earned','spent','lost'];
+function cleanNinja(n){ const bad=MONEY.filter(k=>n[k]!=null && typeof n[k]!=='number'); MONEY.forEach(k=>n[k]=toNum(n[k])); if(bad.length) n._text=bad; return n; }
+const cleanLog = l => { l.amt=toNum(l.amt); if(l.delta!=null) l.delta=toNum(l.delta); return l; };
+const fmt = n => Math.round(toNum(n)).toLocaleString();
+// "Earned" shown everywhere is bucks earned minus bucks taken away (penalties and removals), so a penalty moves a ninja down.
+const netEarned = n => Math.max(0, toNum(n?.earned) - toNum(n?.lost));
+const metricOf = (n, k) => k==='earned' ? netEarned(n) : toNum(n?.[k]);
 const DAY = 864e5;
 function weekStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d.getTime(); }
 const amountOf = (kind,item) => { if(kind==='redeem' && S.shop) return item.cost||0; if(kind!=='redeem' && !item.step && S.actions) return item.amt||0; const o = S.settings[kind==='earn'?'earn':kind==='penalty'?'pen':'shop'] || {}; const v = o[item.id]; return Number.isFinite(v) ? v : (item.amt ?? item.cost); };
@@ -985,8 +996,8 @@ function startDb(db){
   const since = Math.min(weekStart(Date.now()) - 7*7*DAY, pm.getTime());
   let gotN=false, gotL=false;
   const ready = () => { if(gotN && gotL){ S.loaded=true; } render(); };
-  db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = {id:d.id, ...d.data()}); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
-  db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => ({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
+  db.collection('ninjas').onSnapshot(s => { const m={}; s.docs.forEach(d => m[d.id] = cleanNinja({id:d.id, ...d.data()})); S.ninjas=m; gotN=true; ready(); }, e => dbErr(e));
+  db.collection('log').where('at','>=',since).orderBy('at','desc').onSnapshot(s => { S.log = s.docs.map(d => cleanLog({id:d.id, ...d.data()})); gotL=true; ready(); }, e => dbErr(e));
   // Everyone (staff, lobby, parents and families) needs the dojo's prices, goal, options and news.
   db.collection('news').orderBy('at','desc').limit(20).onSnapshot(s => { S.news = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
   db.doc('settings/values').onSnapshot(d => { const v = d.exists ? d.data() : {}; S.settings = {earn:{...(v.earn||{})}, pen:{...(v.pen||{})}, shop:{...(v.shop||{})}}; render(); }, () => {});
@@ -1224,7 +1235,8 @@ async function bump(id, fn){
     for(let tries=0;;tries++) try{
       return await db.runTransaction(async tx=>{
         const snap=await tx.get(ref); if(!snap.exists) return null;
-        const r=fn({id, ...snap.data()}); if(!r) return null;
+        const cur=cleanNinja({id, ...snap.data()}); const r=fn({...cur}); if(!r) return null;
+        MONEY.forEach(k=>{ if(k in r.patch) r.patch[k]=toNum(r.patch[k]); else if(cur._text) r.patch[k]=cur[k]; });
         tx.update(ref, r.patch);
         (r.logs||[]).forEach(([lid,d])=>tx.set(db.doc('log/'+lid), {...d, by:d.by||S.me}));
         (r.dels||[]).forEach(lid=>tx.delete(db.doc('log/'+lid)));
@@ -1235,7 +1247,8 @@ async function bump(id, fn){
       console.warn(e); toast(e && e.code==='permission-denied' ? 'You do not have permission to do that.' : 'Could not save. Check your connection and try again.'); throw e; }
   }
   const n=S.ninjas[id]; if(!n) return null;
-  const r=fn({...n}); if(!r) return null;
+  const r=fn(cleanNinja({...n})); if(!r) return null;
+  MONEY.forEach(k=>{ if(k in r.patch) r.patch[k]=toNum(r.patch[k]); });
   await api.update('ninjas', id, r.patch);
   for(const [lid,d] of (r.logs||[])) await api.set('log', lid, d);
   for(const lid of (r.dels||[])) await api.del('log', lid);
@@ -1319,6 +1332,24 @@ async function redeem(item, ninjaId=S.shopper, approved=false){
   celebrate(n, item, cost);
   toast(`${n.name} spent ${fmt(cost)} bucks on ${item.label}`, [{id:n.id,kind:'redeem',d:cost,logId}]);
   return true;
+}
+// Center Director: cancel one past history entry made by mistake. Its bucks are reversed exactly and the line is
+// deleted, so it also disappears from the ticker, Big Wins and the lobby.
+async function cancelEntry(logId){
+  const l=S.log.find(x=>x.id===logId); if(!l || !isDir()) return;
+  const a=toNum(l.amt); let why='';
+  try{ const r=await bump(l.ninjaId, n=>{ why='';
+    let patch;
+    if(l.kind==='earn'){ if(n.balance < a){ why='spent'; return null; } patch={balance:n.balance-a, earned:Math.max(0,n.earned-a)}; }
+    else if(l.kind==='penalty') patch={balance:n.balance+a, lost:Math.max(0,n.lost-a)};
+    else if(l.kind==='redeem') patch={balance:n.balance+a, spent:Math.max(0,n.spent-a)};
+    else { const d=l.delta!=null ? toNum(l.delta) : a; if(n.balance < d){ why='spent'; return null; }
+      patch={balance:n.balance-d}; if(d>0 || l.fix) patch.earned=Math.max(0,n.earned-d); }
+    return {patch, dels:[logId]}; });
+    S.rmLog=null;
+    if(!r){ toast(why==='spent' ? `${l.name} has already spent those bucks. Use "Remove (correction)" instead.` : 'Nothing to cancel.'); render(); return; }
+    toast(`Cancelled: ${l.label} for ${l.name}.`);
+  }catch{}
 }
 async function undoAll(list){
   const blocked=[]; let done=0;
@@ -1446,7 +1477,7 @@ function emptyDojo(){
 
 function renderDash(){
   const all=ninjaList();
-  const total=all.reduce((s,n)=>s+(n.balance||0),0), earnedAll=all.reduce((s,n)=>s+(n.earned||0),0), spentAll=all.reduce((s,n)=>s+(n.spent||0),0);
+  const total=all.reduce((s,n)=>s+(n.balance||0),0), earnedAll=all.reduce((s,n)=>s+netEarned(n),0), spentAll=all.reduce((s,n)=>s+(n.spent||0),0);
   document.getElementById('vaultTotal').innerHTML = coin(64)+`<span>${fmt(total)}</span>`;
   document.getElementById('vaultSub').textContent = all.length ? `${all.length} ninjas · ${fmt(earnedAll)} earned all time · ${fmt(spentAll)} spent in the shop` : 'Add ninjas to start filling the vault.';
   document.getElementById('vaultBelts').innerHTML = ALL_BELTS.map(i=>{ const c=all.filter(n=>beltFor(n).i===i).length, b=beltInfo(i); return `<div class="vb ${c?'':'none'}" title="${b.name} belt: ${c} ninja${c===1?'':'s'}">${badge(DONE(i),44)}<span class="num">${c}</span></div>`; }).join('');
@@ -1454,7 +1485,7 @@ function renderDash(){
   const ws=weekStart(Date.now()); const wk=S.log.filter(l=>l.at>=ws);
   const sum=k=>wk.filter(l=>l.kind===k).reduce((s,l)=>s+l.amt,0);
   const topBy=(k)=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); const e=Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; return e && S.ninjas[e[0]] ? {n:S.ninjas[e[0]], v:e[1]} : null; };
-  const ts=topBy('redeem'), te=topBy('earn');
+  const ts=topBy('redeem'), te=(()=>{ const m={}; wk.forEach(l=>{ if(l.kind==='earn') m[l.ninjaId]=(m[l.ninjaId]||0)+toNum(l.amt); if(l.kind==='penalty') m[l.ninjaId]=(m[l.ninjaId]||0)-toNum(l.amt); }); const e=Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])[0]; return e && S.ninjas[e[0]] ? {n:S.ninjas[e[0]], v:e[1]} : null; })();
   const allSp=[...all].sort((a,b)=>(b.spent||0)-(a.spent||0))[0];
   const redemptions=wk.filter(l=>l.kind==='redeem').length;
   const who=(x,label,empty)=> x ? `<div class="who">${avatar(x.n,44)}<div style="min-width:0"><b>${esc(x.n.name)}</b><small class="num">${fmt(x.v)} ${label}</small></div></div>` : `<small>${empty}</small>`;
@@ -1477,21 +1508,21 @@ function renderBoard(){
   renderParentRewards();
   const all=ninjaList();
   const board=document.getElementById('boardList');
-  const list=ninjaList().filter(n=>n.group===S.lbGroup).sort((a,b)=>(b[S.metric]||0)-(a[S.metric]||0));
+  const list=ninjaList().filter(n=>n.group===S.lbGroup).sort((a,b)=>metricOf(b,S.metric)-metricOf(a,S.metric) || toNum(b.balance)-toNum(a.balance) || a.name.localeCompare(b.name));
   if(!all.length){ board.innerHTML=emptyDojo(); }
   else if(!list.length){ board.innerHTML='<div class="empty"><p>No ninjas in this group yet.</p></div>'; }
   else {
     const top=list.slice(0,3); const order=[top[1],top[0],top[2]]; const cls=['p2','p1','p3']; const place=[2,1,3];
     const pod = order.map((n,i)=> n ? `<button class="pod ${cls[i]}" data-act="open" data-id="${n.id}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0">
         ${avatar(n, cls[i]==='p1'?72:56)}<span class="name">${esc(n.name)}</span>${beltBadge(n, 34)}
-        <div class="block"><span class="place">${place[i]}</span><span class="amt num">${coin(16)}${fmt(n[S.metric])}</span></div></button>` : '<div></div>').join('');
+        <div class="block"><span class="place">${place[i]}</span><span class="amt num">${coin(16)}${fmt(metricOf(n,S.metric))}</span></div></button>` : '<div></div>').join('');
     const on = k => S.metric===k ? ' on' : '';
     const cut = isParent() && !S.lbAll ? 10 : list.length;
     const rest = list.slice(3, cut).map((n,i)=>`<tr data-act="open" data-id="${n.id}" tabindex="0">
         <td class="rk">${i+4}</td>
         <td><span class="who">${avatar(n,40)}<span class="nm"><b>${esc(n.name)}</b><small>${rankText(n)}</small></span></span></td>
         <td class="bc">${beltBadge(n,34)}</td>
-        <td class="n hide-sm${on('earned')}">${fmt(n.earned)}</td>
+        <td class="n hide-sm${on('earned')}">${fmt(netEarned(n))}</td>
         <td class="n hide-sm${on('spent')}">${fmt(n.spent)}</td>
         <td class="n bal${on('balance')}"><span>${coin(18)}${fmt(n.balance)}</span></td></tr>`).join('');
     board.innerHTML = `<div class="podium">${pod}</div>${rest?`${isParent()?'<div style="height:14px"></div>':'<h3 class="eyebrow" style="margin:18px 0 6px">All other ninjas</h3>'}
@@ -1558,7 +1589,7 @@ function tickerRaw(){
   });
   const ws=weekStart(now), wk=S.log.filter(l=>l.at>=ws);
   const sumBy=k=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; };
-  const te=sumBy('earn'); if(te && S.ninjas[te[0]]) add('top-earner:'+ws, `🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
+  const te=(()=>{ const m={}; wk.forEach(l=>{ if(l.kind==='earn') m[l.ninjaId]=(m[l.ninjaId]||0)+toNum(l.amt); if(l.kind==='penalty') m[l.ninjaId]=(m[l.ninjaId]||0)-toNum(l.amt); }); return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])[0]; })(); if(te && S.ninjas[te[0]]) add('top-earner:'+ws, `🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
   const ts=sumBy('redeem'); if(ts && S.ninjas[ts[0]]) add('top-spender:'+ws, `💸 <b>${esc(S.ninjas[ts[0]].name)}</b> is the top spender this week: ${fmt(ts[1])} bucks!`);
   const rich=[...all].sort((a,b)=>(b.balance||0)-(a.balance||0))[0]; if(rich && rich.balance) add('richest', `💰 <b>${esc(rich.name)}</b> has the biggest balance in the dojo: ${fmt(rich.balance)} bucks!`);
   const earnedWk=wk.filter(l=>l.kind==='earn').reduce((a,l)=>a+l.amt,0); if(earnedWk) add('dojo-week:'+ws, `🪙 The dojo has earned ${fmt(earnedWk)} Ninja Bucks this week. Keep it up, ninjas!`);
@@ -2032,12 +2063,13 @@ async function adjustBucks(id, sign){
   if(!(amt>0)){ toast('Type how many bucks first.'); return; }
   const note=S.adj.note.trim(); let delta=0;
   try{ await bump(id, c=>{ delta = sign>0 ? amt : -Math.min(amt, c.balance||0); if(!delta) return null;
-      const patch={balance:(c.balance||0)+delta}; if(delta>0) patch.earned=(c.earned||0)+delta;
-      const label = note || (delta>0 ? 'Bucks added by the Center Director' : 'Bucks removed by the Center Director');
-      return {patch, logs:[[uid(), {ninjaId:id, name:c.name, kind:'setup', item:'adjust', icon:delta>0?'➕':'➖', label, amt:Math.abs(delta), delta, at:Date.now()}]]}; }); }catch{ return; }
+      // A correction fixes a mistake: it moves Balance and Earned together and is never an award or a penalty.
+      const patch={balance:(c.balance||0)+delta, earned:Math.max(0,(c.earned||0)+delta)};
+      const label = note || (delta>0 ? 'Correction: bucks added' : 'Correction: bucks removed');
+      return {patch, logs:[[uid(), {ninjaId:id, name:c.name, kind:'setup', item:'adjust', fix:true, icon:'🛠️', label, amt:Math.abs(delta), delta, at:Date.now()}]]}; }); }catch{ return; }
   if(!delta){ toast(`${n.name} has no bucks to remove.`); return; }
   S.adj={amt:'', note:''}; render();
-  toast(delta>0 ? `Added ${fmt(delta)} bucks for ${n.name}.` : `Removed ${fmt(-delta)} bucks from ${n.name}.`);
+  toast(delta>0 ? `Correction: added ${fmt(delta)} bucks for ${n.name}.` : `Correction: removed ${fmt(-delta)} bucks from ${n.name}.`);
 }
 async function saveSetup(){
   const ch=setupChanges(); if(!ch.length){ toast('Nothing to save yet.'); return; }
@@ -2074,11 +2106,11 @@ async function saveLobbyCfg(patch){
 function bucksFromHistory(logs){
   const m={};
   logs.forEach(l=>{ const x=m[l.ninjaId] ||= {balance:0, earned:0, spent:0, lost:0, lines:0}; x.lines++;
-    const a=l.amt||0;
+    const a=toNum(l.amt);
     if(l.kind==='earn'){ x.balance+=a; x.earned+=a; }
     else if(l.kind==='penalty'){ x.balance-=a; x.lost+=a; }
     else if(l.kind==='redeem'){ x.balance-=a; x.spent+=a; }
-    else if(l.kind==='setup'){ const d = Number.isFinite(l.delta) ? l.delta : a; x.balance+=d; if(d>0) x.earned+=d; } });
+    else if(l.kind==='setup'){ const d = l.delta!=null ? toNum(l.delta) : a; x.balance+=d; if(d>0 || l.fix) x.earned+=d; } });
   return m;
 }
 async function runAudit(){
@@ -2088,7 +2120,7 @@ async function runAudit(){
   catch(e){ console.warn(e); host.innerHTML='<p class="hint" style="margin:0">Could not read the history. Check the connection and try again.</p>'; return; }
   const exp=bucksFromHistory(logs), keys=['balance','earned','spent','lost'];
   S.audit = ninjaList().map(n=>{ const e=exp[n.id]||{balance:0,earned:0,spent:0,lost:0,lines:0};
-    const diff=keys.filter(k=>(n[k]||0)!==e[k]); return {id:n.id, e, diff}; }).filter(r=>r.diff.length);
+    const diff=keys.filter(k=>toNum(n[k])!==e[k] || (n._text||[]).includes(k)); return {id:n.id, e, diff, text:n._text||[]}; }).filter(r=>r.diff.length);
   S.auditAt=Date.now(); S.auditCount=ninjaList().length; S.auditLines=logs.length; renderAudit();
 }
 function renderAudit(){
@@ -2097,7 +2129,7 @@ function renderAudit(){
   host.innerHTML = !L.length ? `<p class="audit-ok">✅ All ${S.auditCount} ninjas match their history (${fmt(S.auditLines)} history lines checked).</p>`
     : `<p class="audit-bad">⚠️ ${L.length} of ${S.auditCount} ninjas don't match their history.</p>
       <div class="lbt-wrap"><table class="lbt audit"><thead><tr><th>Ninja</th>${keys.map(([,t])=>`<th class="n">${t}<br><small>now → history</small></th>`).join('')}<th></th></tr></thead><tbody>
-      ${L.map(r=>{ const n=S.ninjas[r.id]; return `<tr><td><b>${esc(n?.name||'?')}</b></td>${keys.map(([k])=>`<td class="n ${r.diff.includes(k)?'bad':''}">${fmt(n?.[k]||0)}${r.diff.includes(k)?` → <b>${fmt(r.e[k])}</b>`:''}</td>`).join('')}
+      ${L.map(r=>{ const n=S.ninjas[r.id]; return `<tr><td><b>${esc(n?.name||'?')}</b>${r.text.length?'<br><small class="bad">saved as text</small>':''}</td>${keys.map(([k])=>`<td class="n ${r.diff.includes(k)?'bad':''}">${fmt(n?.[k]||0)}${r.diff.includes(k)?` → <b>${fmt(r.e[k])}</b>`:''}</td>`).join('')}
         <td><button class="btn sm" data-act="auditFix" data-id="${esc(r.id)}">Use history</button></td></tr>`; }).join('')}</tbody></table></div>
       <div class="row" style="margin-top:10px"><button class="btn primary" data-act="auditFixAll">Use history for all ${L.length}</button><span class="hint" style="margin:0">Sets the four numbers to what the history adds up to.</span></div>`;
 }
@@ -2141,7 +2173,7 @@ function renderRoster(){
   document.getElementById('roster').innerHTML = list.map(n=>{ const b=beltFor(n);
     return `<button class="rcard" data-act="open" data-id="${n.id}">${avatar(n,56)}<div style="min-width:0"><div class="nm">${esc(n.name)}</div>
       <div class="meta">${medal(n,26)}${b.i===BLACK?'Black Belt':`${b.name} · ${stepName(b.i,b.level).replace('Level ','Lv ')}`} ${groupTag(n.group)} ${n.sample?'<span class="tag sample">Sample</span>':''}</div></div>
-      <div class="nums num"><div><b>${fmt(n.balance)}</b><small>Balance</small></div><div><b>${fmt(n.earned)}</b><small>Earned</small></div><div><b>${fmt(n.spent)}</b><small>Spent</small></div></div></button>`; }).join('')
+      <div class="nums num"><div><b>${fmt(n.balance)}</b><small>Balance</small></div><div><b>${fmt(netEarned(n))}</b><small>Earned</small></div><div><b>${fmt(n.spent)}</b><small>Spent</small></div></div></button>`; }).join('')
     || `<div class="card empty" style="grid-column:1/-1"><p>No ninjas yet. Add your first one above.</p></div>`;
 }
 
@@ -2184,13 +2216,13 @@ function renderDrawer(){
     <div class="head">${avatar(n,84)}<div style="min-width:0"><h2>${esc(n.name)}</h2><div class="row" style="margin-top:6px">${groupTag(n.group)}<span class="hint" style="margin:0">${rankText(n)}</span></div></div><div style="margin-left:auto">${medal(n,76)}</div></div>
     <div class="card" style="padding:16px"><div class="wallet"><div><div class="eyebrow">Balance</div><div class="bal num">${coin(36)}${fmt(n.balance)}</div></div></div>
       <div class="nums num" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;text-align:center">
-        <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--good)">${fmt(n.earned)}</b><div class="eyebrow">Earned</div></div>
+        <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--good)">${fmt(netEarned(n))}</b><div class="eyebrow">Earned</div></div>
         <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--gold-deep)">${fmt(n.spent)}</b><div class="eyebrow">Spent</div></div>
         <div><b style="font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--bad)">${fmt(n.lost)}</b><div class="eyebrow">Lost</div></div></div>
-      ${isDir() ? `<div class="adj"><span class="eyebrow">Add or remove bucks (Center Director)</span>
+      ${isDir() ? `<div class="adj"><span class="eyebrow">Fix a mistake: add or remove bucks</span><small class="hint" style="margin:0">A correction changes Balance and Earned. It isn't an award or a penalty and never shows on the ticker. To cancel one wrong entry, use ✕ next to it in Recent history below.</small>
         <div class="adj-row"><input id="adjAmt" type="number" min="1" step="1" inputmode="numeric" placeholder="Amount" aria-label="Amount of bucks" value="${esc(S.adj.amt)}">
           <input id="adjNote" maxlength="60" placeholder="Reason (optional)" aria-label="Reason" value="${esc(S.adj.note)}"></div>
-        <div class="row"><button class="btn primary" data-act="adjust" data-sign="1">Add bucks</button><button class="btn ghost" data-act="adjust" data-sign="-1">Remove bucks</button></div></div>` : ''}</div>
+        <div class="row"><button class="btn primary" data-act="adjust" data-sign="1">Add (correction)</button><button class="btn ghost" data-act="adjust" data-sign="-1">Remove (correction)</button></div></div>` : ''}</div>
     <div class="progress"><div class="spread"><b>${rankText(n)}${b.i===BLACK?'':` <span class="hint" style="margin:0">(${b.projects?'project':'step'} ${b.level} of ${levelsOf(b.i)})</span>`}</b><span class="hint" style="margin:0">${b.level>=levelsOf(b.i) ? (b.next?`Ready for ${b.next.name} belt!`:'Capstone done. Top of the dojo!') : (b.next?`Next belt: ${b.next.name}`:'Black belt')}</span></div>
       <div class="medals">${Array.from({length:levelsOf(b.i)},(_,k)=>badge(BADGE(b.i,k+1),44,k+1===b.level?'cur':k+1>b.level?'dim':'',`${b.name} · ${stepName(b.i,k+1)}`)).join('')}</div>
       <span class="eyebrow" style="margin-top:8px">Belt collection</span>
@@ -2211,7 +2243,7 @@ function renderDrawer(){
         ${!isDir() ? (canWrite() ? `<div class="row">${pendingReqs().some(r=>r.type==='rank'&&r.ninjaId===n.id)?'<span class="status pending">Belt change waiting for approval</span>':''}<button class="btn" data-act="reqRank">Request belt or level change</button></div><p class="hint" style="margin:0">Belt, level and group changes are sent to the Center Director for approval.</p>` : '') : S.confirmRemove ? `<div class="confirm"><p>Remove ${esc(n.name)} from the dojo? Their balance of ${fmt(n.balance)} bucks goes with them.</p><div class="row"><button class="btn primary" data-act="remove">Yes, remove</button><button class="btn ghost" data-act="cancelRemove">Keep</button></div></div>`
           : `<button class="btn ghost" data-act="askRemove" style="justify-self:start">Remove ninja</button>`}
       </div></div>
-    <div><h3 style="font-size:18px">Recent history</h3><ul class="feed" style="max-height:none">${hist.map(l=>`<li><span class="ic">${l.icon}</span><span class="tx">${esc(l.label)}<small>${ago(l.at)}${l.by && personName(l.by) ? ` · by ${esc(personName(l.by))}` : ''}</small></span><span class="d ${l.kind} num">${(l.kind==='setup' ? ((l.delta??0)>=0?'+':'−') : l.kind==='earn'?'+':'−')}${fmt(l.amt)}</span></li>`).join('') || '<li><span></span><span class="tx hint">No activity in the last 8 weeks.</span><span></span></li>'}</ul></div>
+    <div><h3 style="font-size:18px">Recent history</h3><ul class="feed" style="max-height:none">${hist.map(l=>`<li><span class="ic">${l.icon}</span><span class="tx">${esc(l.label)}<small>${ago(l.at)}${l.by && personName(l.by) ? ` · by ${esc(personName(l.by))}` : ''}</small></span><span class="d ${l.kind} num">${(l.kind==='setup' ? ((l.delta??0)>=0?'+':'−') : l.kind==='earn'?'+':'−')}${fmt(l.amt)}</span>${isDir() ? (S.rmLog===l.id ? `<span class="rm-ask"><button class="btn sm danger" data-act="rmLogGo" data-id="${esc(l.id)}">Cancel entry</button><button class="btn ghost sm" data-act="rmLogNo">Keep</button></span>` : `<button class="rm-x" data-act="rmLog" data-id="${esc(l.id)}" title="Cancel this entry (fix a mistake)" aria-label="Cancel this entry">✕</button>`) : ''}</li>`).join('') || '<li><span></span><span class="tx hint">No activity in the last 8 weeks.</span><span></span></li>'}</ul></div>
   </aside></div>`;
   host.querySelector('.drawer').scrollTop = prevScroll; S.drawerShown = S.drawer;
   if(keep){ const el=document.getElementById(keep); el && el.focus({preventScroll:true}); }
@@ -2360,7 +2392,7 @@ function lbPath(){
   const pts=[[130,840],[330,760],[520,840],[720,760],[920,830],[1120,750],[1320,820],[1540,720],[1770,610]].map(([x,y])=>[x,y-90]);
   const path=pts.map(([x,y],i)=>(i?'L':'M')+x+','+y).join(' ');
   const st=MAIN_BELTS.map((k,i)=>{ const c=create.filter(n=>beltFor(n).i===k).length, [x,y]=pts[i]; return `<div style="position:absolute;left:${x-60}px;top:${y-62}px;width:120px;text-align:center;z-index:3"><img src="badges/${DONE(k)}.webp" alt="" style="width:96px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.25))${c?'':';opacity:.55'}"><div style="background:#fff;border-radius:999px;font-weight:900;font-size:19px;padding:3px 0;margin-top:-6px;box-shadow:0 4px 10px rgba(0,0,0,.15)">${BELTS[k].name} · ${c}</div></div>`; }).join('');
-  const leaders=[...create].sort((a,b)=>beltFor(b).i-beltFor(a).i || beltFor(b).level-beltFor(a).level || (b.earned||0)-(a.earned||0)).slice(0,3);
+  const leaders=[...create].sort((a,b)=>beltFor(b).i-beltFor(a).i || beltFor(b).level-beltFor(a).level || netEarned(b)-netEarned(a)).slice(0,3);
   const card=(n,i)=>{ const b=beltFor(n); return `<div style="background:${i?'#fff':'linear-gradient(160deg,#FFF4C2,#fff)'};border-radius:28px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 0 3px ${i?'#DCD7EE':'#F6B60A'};position:relative;${i?'':'transform:translateY(-14px)'}"><span style="position:absolute;top:-24px;font-size:46px">${['🥇','🥈','🥉'][i]}</span>${lbAv(n,118)}<div class="d" style="font-size:38px;line-height:1">${esc(n.name)}</div><div style="display:flex;align-items:center;gap:6px;font-weight:900;font-size:21px"><img src="badges/${BADGE(b.i,b.level)}.webp" alt="" style="height:36px">${esc(b.name)} Belt</div><div style="font-weight:800;font-size:18px;color:#69658E">${esc(stepName(b.i,b.level))}</div></div>`; };
   const order=[1,0,2].filter(i=>leaders[i]).map(i=>card(leaders[i],i)).join('');
   const recent=S.log.find(l=>l.item==='beltup' && Date.now()-l.at<7*DAY && S.ninjas[l.ninjaId] && stillTrue(l) && S.ninjas[l.ninjaId].group!=='junior');
@@ -2466,7 +2498,7 @@ const plCards = {
   spot:()=>{ const l=lbSpotlights()[0], n=S.ninjas[l.ninjaId], a=achText(l), b=beltFor(n);
     return plCard('🌟','Ninja spotlight', `<div class="pl-spot">${avatar(n,84)}<div><span class="lb-pill" style="background:var(--gold-soft);color:var(--gold-deep);font-size:13px">${l.item==='beltup'||l.item==='blackbelt'?'🥋 NEW BELT!':'⭐ BIG WIN!'}</span><div class="pl-big">${esc(n.name)}</div><b>${esc(a.t)}!</b><small>${esc(b.name)} · ${ago(l.at)}</small></div>${a.img?badge(a.img,56):''}</div>`); },
   // Belt ladder: Black at the top, White at the bottom; each row says how many ninjas are on that belt.
-  path:()=>{ const create=ninjaList().filter(n=>n.group!=='junior'), leaders=[...create].sort((a,b)=>beltFor(b).i-beltFor(a).i || beltFor(b).level-beltFor(a).level || (b.earned||0)-(a.earned||0)).slice(0,3);
+  path:()=>{ const create=ninjaList().filter(n=>n.group!=='junior'), leaders=[...create].sort((a,b)=>beltFor(b).i-beltFor(a).i || beltFor(b).level-beltFor(a).level || netEarned(b)-netEarned(a)).slice(0,3);
     const counts=MAIN_BELTS.map(k=>create.filter(n=>beltFor(n).i===k).length), mx=Math.max(1,...counts), top=leaders[0];
     const topB=top && beltFor(top);
     const hero = top ? `<div class="pl-lead">${avatar(top,44)}<div class="pl-nm"><b>${esc(top.name)}</b><small>🥇 ${topB.i===BLACK?'First to Black Belt':`Furthest along · ${esc(topB.name)} Belt`}</small></div>${badge(topB.i===BLACK?DONE(BLACK):BADGE(topB.i,topB.level),38)}</div>` : '';
@@ -2583,6 +2615,9 @@ document.addEventListener('click', e=>{
     case 'lobbyExit': location.hash='#board'; break;
     case 'lbAll': S.lbAll=true; render(); break;
     case 'audit': runAudit(); break;
+    case 'rmLog': S.rmLog=id; renderDrawer(); break;
+    case 'rmLogNo': S.rmLog=null; renderDrawer(); break;
+    case 'rmLogGo': cancelEntry(id); break;
     case 'auditFix': auditFix([id]); break;
     case 'auditFixAll': auditFix(S.audit.map(r=>r.id)); break;
     case 'lbLock': {
