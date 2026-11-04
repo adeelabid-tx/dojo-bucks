@@ -1735,6 +1735,24 @@ function tickerRaw(){
   groups.forEach((g, line)=>{
     add('act:'+hashStr(line), (g.fresh?'<span class="tk-tag">JUST IN</span> ':'')+line.split(WHO).join(andList(g.names)));
   });
+  // Senseis: awards and titles for the lobby TV and staff screens only (never on parents' phones), without bucks amounts.
+  if(!isParent() && S.slog.length){
+    const SAY={s_help:'helping ninjas',s_clean:'keeping the dojo clean',s_open:'opening or closing the dojo',s_rest:'cleaning the restrooms',s_kitch:'cleaning the kitchen and lobby',s_ontime:'being on time all week',
+      s_tour:'giving a parent tour',s_signup:'a tour that turned into a new ninja',s_review:'earning a 5-star Google review',s_event:'running a camp or event day',s_mentor:'mentoring a ninja who belted up',
+      s_cover:'covering a shift at short notice',s_praise:'a lovely parent compliment',s_social:'sharing a dojo project online',s_train:'training a new sensei',s_idea:'an idea the dojo now uses',
+      s_fix:'fixing or setting up equipment',s_perfect:'a perfect month',s_refer:'referring a new family'};
+    let bigs=0;
+    const big=new Set((sbCfg().big||[]).map(x=>x.id)), sg=new Map(); let chores=0;
+    S.slog.filter(l=>l.kind==='earn' && now-l.at < 3*DAY && !SB_AWARD_IDS.includes(l.item) && S.staff[l.senseiId]).slice(0,40).forEach(l=>{
+      const it=sbItem(l.item), isBig=big.has(l.item), key=l.item||l.label;
+      let g=sg.get(key); if(!g){ if(isBig){ if(bigs>=5) return; bigs++; } else { if(chores>=3) return; chores++; } g={icon:it?.icon||l.icon||'⭐', label:it?.label||l.label||'', say:SAY[l.item]&&(!it||it.label===SB_DEFAULT.big.concat(SB_DEFAULT.earn).find(x=>x.id===l.item)?.label)?SAY[l.item]:null, big:isBig, ids:[], fresh:false}; sg.set(key,g); }
+      if(!g.ids.includes(l.senseiId)) g.ids.push(l.senseiId); g.fresh = g.fresh || now-l.at < 15*60e3; });
+    sg.forEach((g,key)=>add('sact:'+hashStr(key+'|'+g.ids.join()), `${g.fresh?'<span class="tk-tag">JUST IN</span> ':g.big?'<span class="tk-tag">SENSEI STAR</span> ':''}${esc(g.icon)} Shout-out to ${andList(g.ids.map(sbName))}${g.say?` for ${esc(g.say)}`:`: ${esc(g.label)}`}! Thank you! 🙌`));
+    const title=(id,days,em,word)=>{ const L=S.slog.filter(l=>l.item===id && now-l.at < days*DAY); if(!L.length) return;
+      const when=(L[0].label||'').split('·')[1]?.trim()||'', ids=[...new Set(L.map(l=>l.senseiId))].filter(x=>S.staff[x]);
+      if(ids.length) add(id+':'+when, `<span class="tk-tag">${word.toUpperCase()}</span> ${em} Congratulations to ${andList(ids.map(sbName))}, ${word}${when?` for ${esc(when)}`:''}! 🎉`); };
+    title('s_sotm',10,'🏅','Sensei of the Month'); title('s_soty',14,'🏆','Sensei of the Year');
+  }
   const ws=weekStart(now), wk=S.log.filter(l=>l.at>=ws);
   const sumBy=k=>{ const m={}; wk.filter(l=>l.kind===k).forEach(l=>m[l.ninjaId]=(m[l.ninjaId]||0)+l.amt); return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]; };
   const te=isParent() ? null : (()=>{ const m={}; wk.forEach(l=>{ if(l.kind==='earn') m[l.ninjaId]=(m[l.ninjaId]||0)+toNum(l.amt); if(l.kind==='penalty') m[l.ninjaId]=(m[l.ninjaId]||0)-toNum(l.amt); }); return Object.entries(m).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1])[0]; })(); if(te && S.ninjas[te[0]]) add('top-earner:'+ws, `🏆 <b>${esc(S.ninjas[te[0]].name)}</b> is the top earner this week with ${fmt(te[1])} bucks!`);
